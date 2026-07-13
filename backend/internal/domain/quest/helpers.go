@@ -219,7 +219,9 @@ func (s MissionSanitizer) Execute(mission *CustomMission) CustomMission {
 	return clean
 }
 
-const staleImageGeneration = 4 * time.Minute
+// Must exceed the in-process image job timeout (8m) so polling does not mark a
+// still-running generation as failed while Retry is blocked by the in-memory lock.
+const staleImageGeneration = 10 * time.Minute
 
 func CharacterAvatarKey(name string) string {
 	key := strings.ToLower(strings.TrimSpace(name))

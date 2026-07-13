@@ -92,7 +92,18 @@ func (s *Images) generateCover(userID, missionID string, chain bool) {
 		return
 	}
 	key := userID + ":" + missionID + ":cover"
+	mark := func() error {
+		return s.updateMission(userID, missionID, func(mission *quest.CustomMission) {
+			mission.CoverImageStatus = "generating"
+			mission.CoverImageError = ""
+			if mission.CoverImageGenStartedAt == "" {
+				mission.CoverImageGenStartedAt = time.Now().UTC().Format(time.RFC3339)
+			}
+		})
+	}
 	if !s.start(key) {
+		// Already running — keep UI on "generating" instead of leaving a stale error.
+		_ = mark()
 		return
 	}
 
@@ -184,25 +195,31 @@ func (s *Images) GenerateSceneAsync(userID, missionID string, stage int) {
 		return
 	}
 	key := fmt.Sprintf("%s:%s:scene:%d", userID, missionID, stage)
+	stageKey := fmt.Sprintf("%d", stage)
+	mark := func(resetStarted bool) error {
+		return s.updateMission(userID, missionID, func(mission *quest.CustomMission) {
+			if mission.SceneImageStatus == nil {
+				mission.SceneImageStatus = map[string]string{}
+			}
+			if mission.SceneImageGenStartedAt == nil {
+				mission.SceneImageGenStartedAt = map[string]string{}
+			}
+			if mission.SceneImageErrors == nil {
+				mission.SceneImageErrors = map[string]string{}
+			}
+			mission.SceneImageStatus[stageKey] = "generating"
+			delete(mission.SceneImageErrors, stageKey)
+			if resetStarted || mission.SceneImageGenStartedAt[stageKey] == "" {
+				mission.SceneImageGenStartedAt[stageKey] = time.Now().UTC().Format(time.RFC3339)
+			}
+		})
+	}
 	if !s.start(key) {
+		_ = mark(false)
 		return
 	}
-	stageKey := fmt.Sprintf("%d", stage)
 
-	if err := s.updateMission(userID, missionID, func(mission *quest.CustomMission) {
-		if mission.SceneImageStatus == nil {
-			mission.SceneImageStatus = map[string]string{}
-		}
-		if mission.SceneImageGenStartedAt == nil {
-			mission.SceneImageGenStartedAt = map[string]string{}
-		}
-		if mission.SceneImageErrors == nil {
-			mission.SceneImageErrors = map[string]string{}
-		}
-		mission.SceneImageStatus[stageKey] = "generating"
-		delete(mission.SceneImageErrors, stageKey)
-		mission.SceneImageGenStartedAt[stageKey] = time.Now().UTC().Format(time.RFC3339)
-	}); err != nil {
+	if err := mark(true); err != nil {
 		s.finish(key)
 		return
 	}
@@ -324,24 +341,30 @@ func (s *Images) GenerateCharacterAvatarAsync(userID, missionID, characterName s
 		return
 	}
 	key := fmt.Sprintf("%s:%s:avatar:%s", userID, missionID, avatarKey)
+	mark := func(resetStarted bool) error {
+		return s.updateMission(userID, missionID, func(mission *quest.CustomMission) {
+			if mission.CharacterAvatarStatus == nil {
+				mission.CharacterAvatarStatus = map[string]string{}
+			}
+			if mission.CharacterAvatarGenStartedAt == nil {
+				mission.CharacterAvatarGenStartedAt = map[string]string{}
+			}
+			if mission.CharacterAvatarErrors == nil {
+				mission.CharacterAvatarErrors = map[string]string{}
+			}
+			mission.CharacterAvatarStatus[avatarKey] = "generating"
+			delete(mission.CharacterAvatarErrors, avatarKey)
+			if resetStarted || mission.CharacterAvatarGenStartedAt[avatarKey] == "" {
+				mission.CharacterAvatarGenStartedAt[avatarKey] = time.Now().UTC().Format(time.RFC3339)
+			}
+		})
+	}
 	if !s.start(key) {
+		_ = mark(false)
 		return
 	}
 
-	if err := s.updateMission(userID, missionID, func(mission *quest.CustomMission) {
-		if mission.CharacterAvatarStatus == nil {
-			mission.CharacterAvatarStatus = map[string]string{}
-		}
-		if mission.CharacterAvatarGenStartedAt == nil {
-			mission.CharacterAvatarGenStartedAt = map[string]string{}
-		}
-		if mission.CharacterAvatarErrors == nil {
-			mission.CharacterAvatarErrors = map[string]string{}
-		}
-		mission.CharacterAvatarStatus[avatarKey] = "generating"
-		delete(mission.CharacterAvatarErrors, avatarKey)
-		mission.CharacterAvatarGenStartedAt[avatarKey] = time.Now().UTC().Format(time.RFC3339)
-	}); err != nil {
+	if err := mark(true); err != nil {
 		s.finish(key)
 		return
 	}

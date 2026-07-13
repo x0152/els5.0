@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api.ts'
-import { avatarKey, missionBusy, summaryBusy } from '../lib/helpers.ts'
+import { missionBusy, summaryBusy } from '../lib/helpers.ts'
 import type { ActiveReply, Mission, MissionSummary } from '../lib/types.ts'
 
 const listKey = ['quest', 'missions'] as const
@@ -88,14 +88,9 @@ export function useRegenerateImage(id: string) {
         params: { path: { id } },
         body: { kind: vars.kind, key: vars.key },
       }),
-    onSuccess: (res, vars) => {
+    onSuccess: (res) => {
       const mission = res?.mission as Mission | undefined
       if (mission) {
-        if (vars.kind === 'cover') mission.coverImageStatus = 'generating'
-        if (vars.kind === 'scene' && vars.key)
-          mission.sceneImageStatus = { ...(mission.sceneImageStatus ?? {}), [vars.key]: 'generating' }
-        if (vars.kind === 'avatar' && vars.key)
-          mission.characterAvatarStatus = { ...(mission.characterAvatarStatus ?? {}), [avatarKey(vars.key)]: 'generating' }
         qc.setQueryData(missionKey(id), (prev: { mission: Mission; activeReply?: ActiveReply } | undefined) => ({
           mission,
           activeReply: prev?.activeReply,
