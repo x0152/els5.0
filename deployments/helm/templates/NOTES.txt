@@ -1,0 +1,37 @@
+
+Els Expert {{ .Chart.AppVersion }} deployed as release "{{ .Release.Name }}"
+in namespace "{{ .Release.Namespace }}".
+
+Infra:
+  postgres.enabled = {{ .Values.postgres.enabled }}
+  redis.enabled    = {{ .Values.redis.enabled }}
+  minio.enabled    = {{ .Values.minio.enabled }}
+
+Apps:
+{{- range $name, $cfg := .Values.apps }}
+  {{- if and (ne $name "global") $cfg.enabled }}
+  - {{ $name }} :{{ default "—" $cfg.port }} ({{ $cfg.replicaCount }} replicas)
+  {{- end }}
+{{- end }}
+
+Endpoints (once ingress comes up):
+{{- if .Values.ingress.enabled }}
+  https://{{ .Values.ingress.host }}/        → frontend
+  https://{{ .Values.ingress.host }}/api     → main (aggregator, all modules)
+{{- else }}
+  ingress disabled — use kubectl port-forward.
+{{- end }}
+
+Useful commands:
+
+  kubectl -n {{ .Release.Namespace }} get pods
+  kubectl -n {{ .Release.Namespace }} logs -l app.kubernetes.io/instance={{ .Release.Name }} --tail=100
+  kubectl -n {{ .Release.Namespace }} get ingress
+
+Migration logs:
+
+  kubectl -n {{ .Release.Namespace }} logs job/$(kubectl -n {{ .Release.Namespace }} get jobs -o name | grep migrate | head -1)
+
+Re-run bootstrap (idempotent):
+
+  helm upgrade {{ .Release.Name }} . -n {{ .Release.Namespace }} --reuse-values --force

@@ -1,0 +1,37 @@
+config:
+  app:
+    env: "prod"
+  smtp:
+    enabled: false
+  postgres:
+    host: ""
+    sslmode: "disable"
+  redis:
+    addr: ""
+  s3:
+    endpoint: ""
+    useSSL: "false"
+  impersonation:
+    enabled: true
+
+ingress:
+  host: "els-app.mooo.com"
+  certManagerIssuer: "letsencrypt-prod"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "20g"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "1500"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "1500"
+
+postgres:
+  enabled: true
+redis:
+  enabled: true
+minio:
+  enabled: true
+
+jobs:
+  migration:
+    hook: false

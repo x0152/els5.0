@@ -1,0 +1,87 @@
+{{- /*
+Non-sensitive env. Infra hosts (postgres/redis/s3) fall back to in-cluster
+service names when their .enabled flag is true and config.* is empty.
+*/ -}}
+{{- $fullName := include "els-expert.fullname" . -}}
+{{- $pgHost := .Values.config.postgres.host -}}
+{{- if and (not $pgHost) .Values.postgres.enabled -}}
+  {{- $pgHost = .Values.postgres.service.name -}}
+{{- end -}}
+{{- $pgPort := .Values.config.postgres.port -}}
+{{- if and (not $pgPort) .Values.postgres.enabled -}}
+  {{- $pgPort = .Values.postgres.service.port | toString -}}
+{{- end -}}
+{{- $redisAddr := .Values.config.redis.addr -}}
+{{- if and (not $redisAddr) .Values.redis.enabled -}}
+  {{- $redisAddr = printf "%s:%v" .Values.redis.service.name .Values.redis.service.port -}}
+{{- end -}}
+{{- $s3Endpoint := .Values.config.s3.endpoint -}}
+{{- if and (not $s3Endpoint) .Values.minio.enabled -}}
+  {{- $s3Endpoint = printf "%s:%v" .Values.minio.service.name .Values.minio.service.apiPort -}}
+{{- end -}}
+{{- $defaultBase := "" -}}
+{{- if .Values.ingress.host -}}
+  {{- $defaultBase = printf "https://%s" .Values.ingress.host -}}
+{{- end -}}
+{{- $setPwdURL := .Values.config.invite.setPasswordUrl -}}
+{{- if and (not $setPwdURL) $defaultBase -}}
+  {{- $setPwdURL = printf "%s/set-password?token={token}" $defaultBase -}}
+{{- end -}}
+{{- $magicURL := .Values.config.invite.magicLoginUrl -}}
+{{- if and (not $magicURL) $defaultBase -}}
+  {{- $magicURL = printf "%s/login/confirm?token={token}" $defaultBase -}}
+{{- end -}}
+{{- $resetURL := .Values.config.invite.resetPasswordUrl -}}
+{{- if and (not $resetURL) $defaultBase -}}
+  {{- $resetURL = printf "%s/reset-password?token={token}" $defaultBase -}}
+{{- end -}}
+{{- if not .Values.global.configName }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "els-expert.configName" . }}
+  labels:
+    {{- include "els-expert.labels" . | nindent 4 }}
+  annotations:
+    # Hook with weight -10 so the ConfigMap exists before the migration job (weight 5).
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  APP_ENV: {{ .Values.config.app.env | quote }}
+  APP_NAME: {{ .Values.config.app.name | quote }}
+  LOG_LEVEL: {{ .Values.config.log.level | quote }}
+  LOG_FORMAT: {{ .Values.config.log.format | quote }}
+  LOG_ADD_SOURCE: {{ .Values.config.log.addSource | quote }}
+  POSTGRES_HOST: {{ $pgHost | quote }}
+  POSTGRES_PORT: {{ $pgPort | quote }}
+  POSTGRES_SSLMODE: {{ .Values.config.postgres.sslmode | quote }}
+  POSTGRES_TIMEZONE: {{ .Values.config.postgres.timezone | quote }}
+  REDIS_ADDR: {{ $redisAddr | quote }}
+  REDIS_DB: {{ .Values.config.redis.db | quote }}
+  S3_ENDPOINT: {{ $s3Endpoint | quote }}
+  S3_USE_SSL: {{ .Values.config.s3.useSSL | quote }}
+  S3_REGION: {{ .Values.config.s3.region | quote }}
+  S3_AVATAR_BUCKET: {{ .Values.config.s3.avatarBucket | quote }}
+  MEDIA_PUBLIC_URL_BASE: {{ .Values.config.media.publicUrlBase | quote }}
+  INVITE_SET_PASSWORD_URL: {{ $setPwdURL | quote }}
+  INVITE_MAGIC_LOGIN_URL: {{ $magicURL | quote }}
+  INVITE_RESET_PASSWORD_URL: {{ $resetURL | quote }}
+  INVITE_MAGIC_LOGIN_PERSISTENT: {{ .Values.config.invite.magicLoginPersistent | quote }}
+  SMTP_ENABLED: {{ .Values.config.smtp.enabled | quote }}
+  SMTP_HOST: {{ .Values.config.smtp.host | quote }}
+  SMTP_PORT: {{ .Values.config.smtp.port | quote }}
+  SMTP_FROM_EMAIL: {{ .Values.config.smtp.fromEmail | quote }}
+  SMTP_FROM_NAME: {{ .Values.config.smtp.fromName | quote }}
+  SMTP_SECURE: {{ .Values.config.smtp.secure | quote }}
+  IMPERSONATION_ENABLED: {{ .Values.config.impersonation.enabled | quote }}
+  SECURITY_AUTH_RATE_LIMIT: {{ .Values.config.security.authRateLimit | quote }}
+  SECURITY_AUTH_RATE_WINDOW: {{ .Values.config.security.authRateWindow | quote }}
+  SECURITY_AUTH_LOCKOUT_ATTEMPTS: {{ .Values.config.security.authLockoutAttempts | quote }}
+  SECURITY_AUTH_LOCKOUT_WINDOW: {{ .Values.config.security.authLockoutWindow | quote }}
+  CORE_WORKER_ENABLED: {{ .Values.config.core.workerEnabled | quote }}
+  LLM_BASE_URL: {{ .Values.config.llm.baseUrl | quote }}
+  LLM_MODEL: {{ .Values.config.llm.model | quote }}
+  LLM_TIMEOUT_SECONDS: {{ .Values.config.llm.timeoutSeconds | quote }}
+  SPACY_URL: {{ if .Values.spacy.enabled }}{{ printf "http://%s-spacy:%v" (include "els-expert.fullname" .) .Values.spacy.service.port | quote }}{{ else }}{{ "http://localhost:8000" | quote }}{{ end }}
+{{- end }}

@@ -1,0 +1,996 @@
+components:
+  schemas:
+    AddUnitInputBody:
+      additionalProperties: false
+      properties:
+        text:
+          description: Word, phrase, phrasal verb or idiom to add
+          maxLength: 200
+          minLength: 1
+          type: string
+      required:
+        - text
+      type: object
+    AddUnitOutput:
+      additionalProperties: false
+      properties:
+        correct:
+          type: boolean
+        correction:
+          type: string
+        explanation:
+          type: string
+        unit:
+          $ref: "#/components/schemas/UnitOutput"
+      required:
+        - correct
+      type: object
+    AnalyzeInputBody:
+      additionalProperties: false
+      properties:
+        context:
+          description: Optional surrounding text for disambiguation
+          maxLength: 2000
+          type: string
+        text:
+          description: Selected text to break into vocabulary items
+          maxLength: 500
+          minLength: 1
+          type: string
+      required:
+        - text
+      type: object
+    AnalyzeItemOutput:
+      additionalProperties: false
+      properties:
+        cefr:
+          type: string
+        common:
+          type: boolean
+        description:
+          type: string
+        existing:
+          type: boolean
+        frequency:
+          format: int64
+          type: integer
+        kind:
+          type: string
+        media:
+          items:
+            $ref: "#/components/schemas/OccurrenceOutput"
+          type:
+            - array
+            - "null"
+        media_count:
+          format: int64
+          type: integer
+        text:
+          type: string
+        total:
+          format: int64
+          type: integer
+      required:
+        - text
+        - kind
+        - description
+        - frequency
+        - cefr
+        - common
+        - existing
+        - total
+        - media_count
+        - media
+      type: object
+    AnalyzeOutput:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/AnalyzeItemOutput"
+          type:
+            - array
+            - "null"
+      required:
+        - items
+      type: object
+    CheckPracticeInputBody:
+      additionalProperties: false
+      properties:
+        answer:
+          description: The learner's free-form sentence
+          maxLength: 1000
+          minLength: 1
+          type: string
+        instruction:
+          description: The exercise instruction the answer responds to
+          maxLength: 500
+          type: string
+      required:
+        - instruction
+        - answer
+      type: object
+    CheckPracticeOutput:
+      additionalProperties: false
+      properties:
+        correct:
+          type: boolean
+        correction:
+          type: string
+        explanation:
+          type: string
+      required:
+        - correct
+      type: object
+    CheckResult:
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        name:
+          examples:
+            - postgres
+          type: string
+        ok:
+          type: boolean
+      required:
+        - name
+        - ok
+      type: object
+    DeleteUnitOutput:
+      additionalProperties: false
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
+      type: object
+    ErrorBody:
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        details:
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+          type:
+            - array
+            - "null"
+        message:
+          type: string
+      required:
+        - code
+        - message
+      type: object
+    ErrorDetail:
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+      required:
+        - message
+      type: object
+    ErrorResponse:
+      additionalProperties: false
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorBody"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - error
+      type: object
+    HealthOutput:
+      additionalProperties: false
+      properties:
+        module:
+          examples:
+            - auth
+          type: string
+        status:
+          examples:
+            - ok
+          type: string
+        time:
+          format: date-time
+          type: string
+      required:
+        - status
+        - time
+      type: object
+    Meta:
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        request_id:
+          type: string
+      type: object
+    OccurrenceOutput:
+      additionalProperties: false
+      properties:
+        author:
+          type: string
+        count:
+          format: int64
+          type: integer
+        episode:
+          format: int64
+          type: integer
+        kind:
+          type: string
+        media_id:
+          type: string
+        media_type:
+          type: string
+        season:
+          format: int64
+          type: integer
+        series_title:
+          type: string
+        spots:
+          items:
+            $ref: "#/components/schemas/SpotOutput"
+          type:
+            - array
+            - "null"
+        title:
+          type: string
+      required:
+        - media_id
+        - media_type
+        - title
+        - count
+        - spots
+      type: object
+    OccurrencesOutput:
+      additionalProperties: false
+      properties:
+        common:
+          type: boolean
+        media:
+          items:
+            $ref: "#/components/schemas/OccurrenceOutput"
+          type:
+            - array
+            - "null"
+        media_count:
+          format: int64
+          type: integer
+        total:
+          format: int64
+          type: integer
+      required:
+        - common
+        - total
+        - media_count
+        - media
+      type: object
+    Pagination:
+      additionalProperties: false
+      properties:
+        has_more:
+          type: boolean
+        limit:
+          format: int64
+          type: integer
+        offset:
+          format: int64
+          type: integer
+        total:
+          format: int64
+          type: integer
+      required:
+        - limit
+        - offset
+        - total
+        - has_more
+      type: object
+    PracticeAnswerDTO:
+      additionalProperties: false
+      properties:
+        answer:
+          type: string
+        correct:
+          type: boolean
+        correction:
+          type: string
+        explanation:
+          type: string
+      required:
+        - answer
+        - correct
+      type: object
+    PracticeOutput:
+      additionalProperties: false
+      properties:
+        answers:
+          additionalProperties:
+            $ref: "#/components/schemas/PracticeAnswerDTO"
+          type: object
+        completed:
+          type: boolean
+        error:
+          type: string
+        exercises:
+          type: string
+        id:
+          type: string
+        status:
+          type: string
+        words:
+          items:
+            $ref: "#/components/schemas/UnitOutput"
+          type:
+            - array
+            - "null"
+      required:
+        - id
+        - status
+        - exercises
+        - words
+        - answers
+        - completed
+      type: object
+    ReadyOutput:
+      additionalProperties: false
+      properties:
+        checks:
+          items:
+            $ref: "#/components/schemas/CheckResult"
+          type:
+            - array
+            - "null"
+        module:
+          examples:
+            - auth
+          type: string
+        ready:
+          type: boolean
+        time:
+          format: date-time
+          type: string
+      required:
+        - ready
+        - time
+      type: object
+    SavePracticeProgressInputBody:
+      additionalProperties: false
+      properties:
+        answers:
+          additionalProperties:
+            $ref: "#/components/schemas/PracticeAnswerDTO"
+          type: object
+        completed:
+          type: boolean
+        session_id:
+          type: string
+      required:
+        - session_id
+        - answers
+        - completed
+      type: object
+    SavePracticeProgressOutput:
+      additionalProperties: false
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
+      type: object
+    SpotOutput:
+      additionalProperties: false
+      properties:
+        example:
+          type: string
+        ref:
+          format: int64
+          type: integer
+      required:
+        - ref
+      type: object
+    SuccessBodyAddUnitOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/AddUnitOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyAnalyzeOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/AnalyzeOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyCheckPracticeOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/CheckPracticeOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyDeleteUnitOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/DeleteUnitOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyHealthOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/HealthOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyOccurrencesOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/OccurrencesOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyPracticeOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/PracticeOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyReadyOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ReadyOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodySavePracticeProgressOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/SavePracticeProgressOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyUnitOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/UnitOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyUnitsOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/UnitsOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    UnitOutput:
+      additionalProperties: false
+      properties:
+        cefr:
+          type: string
+        created_at:
+          type: string
+        definition:
+          type: string
+        example:
+          type: string
+        frequency:
+          format: int64
+          type: integer
+        id:
+          type: string
+        kind:
+          type: string
+        status:
+          type: string
+        text:
+          type: string
+        transcription:
+          type: string
+        translation:
+          type: string
+      required:
+        - id
+        - text
+        - kind
+        - frequency
+        - cefr
+        - status
+        - created_at
+      type: object
+    UnitsOutput:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/UnitOutput"
+          type:
+            - array
+            - "null"
+        limit:
+          format: int64
+          type: integer
+        offset:
+          format: int64
+          type: integer
+        total:
+          format: int64
+          type: integer
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      type: object
+    UpdateStatusInputBody:
+      additionalProperties: false
+      properties:
+        status:
+          enum:
+            - new
+            - learning
+            - learned
+          type: string
+      required:
+        - status
+      type: object
+info:
+  title: vocab
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /api/v1/vocab/analyze:
+    post:
+      operationId: analyzeVocab
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyAnalyzeOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Break selected text into candidate vocabulary items via the LLM
+      tags:
+        - vocab
+  /api/v1/vocab/occurrences:
+    get:
+      operationId: vocabOccurrences
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - description: Word or phrase to look up in the parsed lexicon
+          explode: false
+          in: query
+          name: text
+          required: true
+          schema:
+            description: Word or phrase to look up in the parsed lexicon
+            maxLength: 200
+            minLength: 1
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyOccurrencesOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: List media where a word or phrase occurs, from the parsed lexicon
+      tags:
+        - vocab
+  /api/v1/vocab/practice:
+    get:
+      operationId: getVocabPractice
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyPracticeOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Get the learner's latest practice session, with saved answers
+      tags:
+        - vocab
+    post:
+      operationId: generateVocabPractice
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyPracticeOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Generate a fresh LLM practice session from the learner's learning words
+      tags:
+        - vocab
+  /api/v1/vocab/practice/check:
+    post:
+      operationId: checkVocabPractice
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckPracticeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyCheckPracticeOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Check a free-form practice sentence via the LLM
+      tags:
+        - vocab
+  /api/v1/vocab/practice/progress:
+    put:
+      operationId: saveVocabPracticeProgress
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SavePracticeProgressInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodySavePracticeProgressOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Save the learner's answers for the current practice session
+      tags:
+        - vocab
+  /api/v1/vocab/units:
+    get:
+      operationId: listVocabUnits
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - explode: false
+          in: query
+          name: q
+          schema:
+            maxLength: 200
+            type: string
+        - explode: false
+          in: query
+          name: status
+          schema:
+            enum:
+              - ""
+              - new
+              - learning
+              - learned
+            type: string
+        - explode: false
+          in: query
+          name: limit
+          schema:
+            default: 50
+            format: int64
+            maximum: 100
+            minimum: 1
+            type: integer
+        - explode: false
+          in: query
+          name: offset
+          schema:
+            default: 0
+            format: int64
+            minimum: 0
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyUnitsOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: List vocabulary items with search, status filter and pagination
+      tags:
+        - vocab
+    post:
+      operationId: addVocabUnit
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddUnitInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyAddUnitOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Add a vocabulary item; the LLM validates it and writes its description
+      tags:
+        - vocab
+  /api/v1/vocab/units/{id}:
+    delete:
+      operationId: deleteVocabUnit
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyDeleteUnitOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Delete a vocabulary item
+      tags:
+        - vocab
+  /api/v1/vocab/units/{id}/status:
+    patch:
+      operationId: updateVocabUnitStatus
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyUnitOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Update a vocabulary item's memorization status
+      tags:
+        - vocab
+  /health:
+    get:
+      description: Returns 200 if the process is alive. Does not depend on external services.
+      operationId: health
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyHealthOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Liveness probe
+      tags:
+        - probes
+  /ready:
+    get:
+      description: Returns 200 if the module is ready to accept traffic (all dependencies alive). 503 if any check failed.
+      operationId: ready
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyReadyOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Readiness probe
+      tags:
+        - probes

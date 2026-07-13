@@ -1,0 +1,31 @@
+{
+  "name": "@els/frontend",
+  "private": true,
+  "version": "0.0.0",
+  "description": "ELS — English Learning Studio frontend monorepo",
+  "packageManager": "pnpm@10.17.1",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @els/main-app dev",
+    "dev:chat": "pnpm --filter @els/chat-app dev",
+    "dev:phrasebook": "pnpm --filter @els/phrasebook-app dev",
+    "dev:films": "pnpm --filter @els/films-app dev",
+    "dev:journal": "pnpm --filter @els/journal-app dev",
+    "dev:grammarbook": "pnpm --filter @els/grammarbook-app dev",
+    "dev:profile": "pnpm --filter @els/profile-app dev",
+    "dev:quest": "pnpm --filter @els/quest-app dev",
+    "dev:reader": "pnpm --filter @els/reader-app dev",
+    "dev:settings": "pnpm --filter @els/settings-app dev",
+    "dev:vocab": "pnpm --filter @els/vocab-app dev",
+    "dev:wordbook": "pnpm --filter @els/wordbook-app dev",
+    "dev:essentialbook": "pnpm --filter @els/essentialbook-app dev",
+    "new-app": "node scripts/create-feature-app.mjs",
+    "build": "pnpm --filter @els/main-app build",
+    "preview": "pnpm --filter @els/main-app preview",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck"
+  }
+}

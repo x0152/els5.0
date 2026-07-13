@@ -1,0 +1,191 @@
+{{- if .Values.minio.enabled }}
+---
+{{- if .Values.minio.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.minio.service.name }}-data
+  labels:
+    {{- include "els-expert.labels" . | nindent 4 }}
+    app.kubernetes.io/component: minio
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.minio.persistence.size }}
+  {{- with .Values.minio.persistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+---
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.minio.service.name }}
+  labels:
+    {{- include "els-expert.labels" . | nindent 4 }}
+    app.kubernetes.io/component: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "els-expert.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: minio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        {{- include "els-expert.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: minio
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: minio
+          image: "{{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}"
+          imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
+          command: ["minio"]
+          args:
+            - "server"
+            - "/data"
+            - "--console-address"
+            - ":{{ .Values.minio.service.consolePort }}"
+          ports:
+            - name: api
+              containerPort: {{ .Values.minio.service.apiPort }}
+            - name: console
+              containerPort: {{ .Values.minio.service.consolePort }}
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone | quote }}
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "els-expert.secretName" . }}
+                  key: S3_ACCESS_KEY
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "els-expert.secretName" . }}
+                  key: S3_SECRET_KEY
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: api
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: api
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.minio.resources | nindent 12 }}
+          {{- if .Values.minio.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          {{- end }}
+      {{- if .Values.minio.persistence.enabled }}
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Values.minio.service.name }}-data
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.minio.service.name }}
+  labels:
+    {{- include "els-expert.labels" . | nindent 4 }}
+    app.kubernetes.io/component: minio
+spec:
+  type: ClusterIP
+  ports:
+    - name: api
+      port: {{ .Values.minio.service.apiPort }}
+      targetPort: api
+      protocol: TCP
+    - name: console
+      port: {{ .Values.minio.service.consolePort }}
+      targetPort: console
+      protocol: TCP
+  selector:
+    {{- include "els-expert.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: minio
+---
+# Ensure the avatars bucket exists; backend EnsureBucket can fail without
+# Admin API access on some MinIO configurations.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "els-expert.fullname" . }}-minio-setup
+  labels:
+    {{- include "els-expert.labels" . | nindent 4 }}
+    app.kubernetes.io/component: minio-setup
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        {{- include "els-expert.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: minio-setup
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: wait-for-minio
+          image: busybox:1.37
+          command: ["sh", "-c"]
+          args:
+            - |
+              until wget -q --spider http://{{ .Values.minio.service.name }}:{{ .Values.minio.service.apiPort }}/minio/health/live; do
+                sleep 3
+              done
+      containers:
+        - name: mc
+          image: "{{ .Values.minio.mcImage.repository }}:{{ .Values.minio.mcImage.tag }}"
+          imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              set -euo pipefail
+              mc alias set local \
+                http://{{ .Values.minio.service.name }}:{{ .Values.minio.service.apiPort }} \
+                "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY"
+              mc mb --ignore-existing "local/$S3_AVATAR_BUCKET"
+              # Avatars are served via backend /api/v1/media; keep bucket private.
+              mc anonymous set none "local/$S3_AVATAR_BUCKET"
+              echo "minio setup done"
+          env:
+            - name: TZ
+              value: {{ .Values.global.timezone | quote }}
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "els-expert.secretName" . }}
+                  key: S3_ACCESS_KEY
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "els-expert.secretName" . }}
+                  key: S3_SECRET_KEY
+            - name: S3_AVATAR_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "els-expert.configName" . }}
+                  key: S3_AVATAR_BUCKET
+{{- end }}

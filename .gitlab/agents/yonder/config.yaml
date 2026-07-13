@@ -1,0 +1,8 @@
+ci_access:
+  projects:
+    - id: e.evdomashenko/els5.0
+      default_namespace: els-expert-prod
+
+user_access:
+  access_as:
+    agent: {}

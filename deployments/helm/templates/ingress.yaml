@@ -1,0 +1,71 @@
+{{- if .Values.ingress.enabled }}
+{{- /*
+Single ingress per release. The main aggregator serves the whole /api/v1
+surface (all modules), so everything under /api goes to main; the rest
+falls through to the frontend. Use ingress.extraPaths for ad-hoc routes.
+*/ -}}
+{{- $fullName := include "els-expert.fullname" . -}}
+{{- $routes := list
+    (dict "path" "/api" "svc" "main" "port" .Values.apps.main.port)
+-}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "els-expert.labels" . | nindent 4 }}
+  {{- if or .Values.ingress.annotations .Values.ingress.certManagerIssuer }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with .Values.ingress.certManagerIssuer }}
+    cert-manager.io/cluster-issuer: {{ . | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . | quote }}
+  {{- end }}
+  {{- if .Values.ingress.tlsSecretName }}
+  tls:
+    - secretName: {{ .Values.ingress.tlsSecretName | quote }}
+      hosts:
+        - {{ .Values.ingress.host | quote }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          {{- range $routes }}
+          {{- if (index $.Values.apps .svc).enabled }}
+          - path: {{ .path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ printf "%s-%s" $fullName .svc }}
+                port:
+                  number: {{ .port }}
+          {{- end }}
+          {{- end }}
+          {{- range $.Values.ingress.extraPaths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType | default "Prefix" }}
+            backend:
+              service:
+                name: {{ .serviceName }}
+                port:
+                  number: {{ .servicePort }}
+          {{- end }}
+          {{- if $.Values.frontend.enabled }}
+          # Catch-all → frontend. Must stay last so /api/v1/* matches first.
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}-frontend
+                port:
+                  number: {{ $.Values.frontend.service.port }}
+          {{- end }}
+{{- end }}

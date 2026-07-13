@@ -1,0 +1,194 @@
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { BookOpen, CheckCircle2, ChevronRight, ListChecks, Loader2, Play, Sparkles, Trash2, TriangleAlert } from 'lucide-react'
+import { parseExercises } from '@els/blocks'
+import { Badge, Button, Input, useAgentView } from '@els/ui'
+import { setActiveBook, useActiveBook, useBooks, useDeleteUnit, useGenerateUnit, useMainCompletion, useUnits } from '../lib/units.ts'
+
+const countSections = (theory: string) => theory.split('\n').filter((l) => l.startsWith('## ')).length
+
+export function UnitsList() {
+  const navigate = useNavigate()
+  const book = useActiveBook()
+  const { data: books = [] } = useBooks()
+  const current = books.find((b) => b.slug === book)
+  const { data: units = [] } = useUnits(book)
+  const generate = useGenerateUnit(book)
+  const remove = useDeleteUnit(book)
+  const completion = useMainCompletion(book, units.map((u) => u.number))
+  const [topic, setTopic] = useState('')
+
+  useAgentView({
+    app: 'grammarbook',
+    screen: 'units',
+    info: 'The user is on the grammar units list (Murphy). List — list_book_units book=grammar; unit text — read_book_unit book=grammar.',
+    state: { units: units.length, book },
+  })
+
+  const ready = units.filter((u) => u.status !== 'generating' && u.status !== 'error')
+  const doneCount = ready.filter((u) => completion[u.number] === 'done').length
+  const pct = ready.length ? Math.round((doneCount / ready.length) * 100) : 0
+  const totalExercises = ready.reduce((sum, u) => sum + parseExercises(u.exercises).length, 0)
+  const next = ready.find((u) => completion[u.number] !== 'done')
+
+  const onGenerate = () => {
+    const value = topic.trim()
+    if (!value || generate.isPending) return
+    generate.mutate(value, { onSuccess: () => setTopic('') })
+  }
+  return (
+    <div className="h-full min-h-0 w-full overflow-y-auto bg-neutral-50">
+      <div className="mx-auto max-w-3xl space-y-6 p-6">
+        <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-6 text-white shadow-lg">
+          <BookOpen className="absolute -right-6 -top-6 h-40 w-40 text-white/10" />
+          <div className="relative">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-white/60">Grammar</span>
+              {current?.level && (
+                <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold">{current.level}</span>
+              )}
+            </div>
+            <h1 className="mt-1 text-2xl font-bold">{current?.title ?? 'English Grammar in Use'}</h1>
+            {current?.description && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/75">{current.description}</p>}
+            {books.length > 1 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {books.map((b) => (
+                  <button
+                    key={b.slug}
+                    onClick={() => setActiveBook(b.slug)}
+                    className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+                      b.slug === book ? 'bg-white text-brand-700' : 'bg-white/10 text-white/80 hover:bg-white/20'
+                    }`}
+                  >
+                    {b.level || b.title}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              <span className="flex items-center gap-1.5 text-white/90">
+                <BookOpen className="h-4 w-4 text-white/60" /> {ready.length} units
+              </span>
+              <span className="flex items-center gap-1.5 text-white/90">
+                <ListChecks className="h-4 w-4 text-white/60" /> {totalExercises} exercises
+              </span>
+              <span className="flex items-center gap-1.5 text-white/90">
+                <CheckCircle2 className="h-4 w-4 text-white/60" /> {doneCount} of {ready.length} completed
+              </span>
+            </div>
+            <div className="mt-4 flex items-center gap-4">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/20">
+                <div className="h-full rounded-full bg-white transition-all" style={{ width: `${pct}%` }} />
+              </div>
+              <span className="text-sm font-semibold">{pct}%</span>
+              {next && (
+                <Button variant="secondary" className="shrink-0 rounded-xl bg-white text-brand-700 hover:bg-white/90" onClick={() => navigate(String(next.number))}>
+                  <Play className="h-4 w-4" /> Continue
+                </Button>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <section>
+          <h2 className="mb-3 px-1 text-xs font-semibold uppercase tracking-wider text-neutral-400">Contents</h2>
+          <div className="space-y-2">
+            {units.map((u) => {
+              if (u.status === 'generating') {
+                return (
+                  <div key={u.number} className="flex items-center gap-4 rounded-2xl bg-white px-5 py-4 ring-1 ring-neutral-200">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-neutral-100">
+                      <Loader2 className="h-4 w-4 animate-spin text-brand-600" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-neutral-900">{u.title}</div>
+                      <div className="text-xs text-neutral-500">Generating theory and exercises…</div>
+                    </div>
+                    <button onClick={() => remove.mutate(u.number)} className="rounded-lg p-2 text-neutral-400 hover:bg-red-50 hover:text-red-600">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )
+              }
+              if (u.status === 'error') {
+                return (
+                  <div key={u.number} className="flex items-center gap-4 rounded-2xl bg-red-50 px-5 py-4 ring-1 ring-red-200">
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-red-100">
+                      <TriangleAlert className="h-4 w-4 text-red-600" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-neutral-900">{u.title}</div>
+                      <div className="text-xs text-red-600">Generation failed</div>
+                    </div>
+                    <button onClick={() => remove.mutate(u.number)} className="rounded-lg p-2 text-neutral-400 hover:bg-red-100 hover:text-red-600">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                )
+              }
+              const state = completion[u.number]
+              const sections = countSections(u.theory)
+              const exercises = parseExercises(u.exercises).length
+              return (
+                <button
+                  key={u.number}
+                  onClick={() => navigate(String(u.number))}
+                  className={`group flex w-full items-center gap-4 rounded-2xl px-5 py-4 text-left ring-1 transition hover:shadow-md ${
+                    state === 'done' ? 'bg-emerald-50/60 ring-emerald-200 hover:ring-emerald-300' : 'bg-white ring-neutral-200 hover:ring-brand-300'
+                  }`}
+                >
+                  <span
+                    className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl text-base font-bold shadow-sm ${
+                      state === 'done' ? 'bg-emerald-600 text-white' : 'bg-gradient-to-br from-brand-500 to-brand-700 text-white'
+                    }`}
+                  >
+                    {state === 'done' ? <CheckCircle2 className="h-5 w-5" /> : u.number}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold text-neutral-900">{u.title}</div>
+                    <div className="mt-0.5 text-xs text-neutral-500">
+                      {sections} theory sections · {exercises} exercises
+                    </div>
+                  </div>
+                  {state === 'done' && (
+                    <Badge tone="success" className="shrink-0 font-semibold">Completed</Badge>
+                  )}
+                  {state === 'started' && (
+                    <Badge tone="warning" className="shrink-0 font-semibold">In progress</Badge>
+                  )}
+                  <ChevronRight className="h-4 w-4 shrink-0 text-neutral-300 transition group-hover:translate-x-0.5 group-hover:text-neutral-500" />
+                </button>
+              )
+            })}
+          </div>
+        </section>
+
+        <div className="rounded-2xl bg-white p-5 ring-1 ring-neutral-200">
+          <div className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
+            <Sparkles className="h-4 w-4 text-brand-600" />
+            Generate a unit
+          </div>
+          <p className="mt-1 text-xs text-neutral-500">
+            Describe a topic — the LLM will build theory and exercises. Images stay as prompts; generate them with a click inside the unit.
+          </p>
+          <div className="mt-3 flex gap-2">
+            <Input
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && onGenerate()}
+              placeholder="e.g. Present perfect, Phrasal verbs with get…"
+              disabled={generate.isPending}
+              className="min-w-0 flex-1 rounded-xl px-3.5"
+            />
+            <Button variant="brand" className="shrink-0 rounded-xl" onClick={onGenerate} disabled={generate.isPending || !topic.trim()}>
+              {generate.isPending ? 'Generating…' : 'Create'}
+            </Button>
+          </div>
+          {generate.isError && (
+            <p className="mt-2 text-xs text-red-600">Generation failed. Please try again.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,1 @@
+ALTER TABLE films DROP COLUMN IF EXISTS description;

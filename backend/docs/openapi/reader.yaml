@@ -1,0 +1,765 @@
+components:
+  schemas:
+    BookOutput:
+      additionalProperties: false
+      properties:
+        author:
+          type: string
+        content_url:
+          type: string
+        cover_url:
+          type: string
+        created_at:
+          type: string
+        description:
+          type: string
+        error:
+          type: string
+        group_title:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+        percent:
+          format: int64
+          type: integer
+        position:
+          format: int64
+          type: integer
+        status:
+          type: string
+        text_length:
+          format: int64
+          type: integer
+        title:
+          type: string
+      required:
+        - id
+        - title
+        - status
+        - kind
+        - text_length
+        - position
+        - percent
+        - created_at
+      type: object
+    BookSummary:
+      additionalProperties: false
+      properties:
+        author:
+          type: string
+        cover_url:
+          type: string
+        created_at:
+          type: string
+        description:
+          type: string
+        group_title:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+        percent:
+          format: int64
+          type: integer
+        position:
+          format: int64
+          type: integer
+        status:
+          type: string
+        text_length:
+          format: int64
+          type: integer
+        title:
+          type: string
+      required:
+        - id
+        - title
+        - status
+        - kind
+        - text_length
+        - position
+        - percent
+        - created_at
+      type: object
+    BooksOutput:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/BookSummary"
+          type:
+            - array
+            - "null"
+      required:
+        - items
+      type: object
+    CheckResult:
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        name:
+          examples:
+            - postgres
+          type: string
+        ok:
+          type: boolean
+      required:
+        - name
+        - ok
+      type: object
+    CollectionOutput:
+      additionalProperties: false
+      properties:
+        cover_url:
+          type: string
+        description:
+          type: string
+        title:
+          type: string
+      required:
+        - title
+      type: object
+    CollectionsOutput:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/CollectionOutput"
+          type:
+            - array
+            - "null"
+      required:
+        - items
+      type: object
+    DeleteBookOutput:
+      additionalProperties: false
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
+      type: object
+    ErrorBody:
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        details:
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+          type:
+            - array
+            - "null"
+        message:
+          type: string
+      required:
+        - code
+        - message
+      type: object
+    ErrorDetail:
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+      required:
+        - message
+      type: object
+    ErrorResponse:
+      additionalProperties: false
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorBody"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - error
+      type: object
+    FormFile:
+      additionalProperties: false
+      properties:
+        ContentType:
+          type: string
+        Filename:
+          type: string
+        IsSet:
+          type: boolean
+        Size:
+          format: int64
+          type: integer
+      required:
+        - ContentType
+        - IsSet
+        - Size
+        - Filename
+      type: object
+    HealthOutput:
+      additionalProperties: false
+      properties:
+        module:
+          examples:
+            - auth
+          type: string
+        status:
+          examples:
+            - ok
+          type: string
+        time:
+          format: date-time
+          type: string
+      required:
+        - status
+        - time
+      type: object
+    ImportArticleInputBody:
+      additionalProperties: false
+      properties:
+        group_title:
+          description: Optional collection to group the article under
+          type: string
+        url:
+          description: Public article URL
+          format: uri
+          minLength: 1
+          type: string
+      required:
+        - url
+      type: object
+    Meta:
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        request_id:
+          type: string
+      type: object
+    Pagination:
+      additionalProperties: false
+      properties:
+        has_more:
+          type: boolean
+        limit:
+          format: int64
+          type: integer
+        offset:
+          format: int64
+          type: integer
+        total:
+          format: int64
+          type: integer
+      required:
+        - limit
+        - offset
+        - total
+        - has_more
+      type: object
+    ReadyOutput:
+      additionalProperties: false
+      properties:
+        checks:
+          items:
+            $ref: "#/components/schemas/CheckResult"
+          type:
+            - array
+            - "null"
+        module:
+          examples:
+            - auth
+          type: string
+        ready:
+          type: boolean
+        time:
+          format: date-time
+          type: string
+      required:
+        - ready
+        - time
+      type: object
+    SaveBookProgressInputBody:
+      additionalProperties: false
+      properties:
+        position:
+          format: int64
+          minimum: 0
+          type: integer
+      required:
+        - position
+      type: object
+    SaveBookProgressOutput:
+      additionalProperties: false
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
+      type: object
+    SuccessBodyBookOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/BookOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyBooksOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/BooksOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyCollectionOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/CollectionOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyCollectionsOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/CollectionsOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyDeleteBookOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/DeleteBookOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyHealthOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/HealthOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyReadyOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ReadyOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodySaveBookProgressOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/SaveBookProgressOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+info:
+  title: reader
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /api/v1/reader/articles:
+    post:
+      operationId: importArticle
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportArticleInputBody"
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyBookOutput"
+          description: Accepted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Import an article by URL; readable text and images are extracted and converted in the background
+      tags:
+        - reader
+  /api/v1/reader/books:
+    get:
+      operationId: listBooks
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyBooksOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: List the reader's books
+      tags:
+        - reader
+    post:
+      operationId: uploadBook
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            encoding:
+              cover:
+                contentType: image/png,image/jpeg,image/webp
+              file:
+                contentType: application/octet-stream
+            schema:
+              properties:
+                cover:
+                  contentEncoding: binary
+                  contentMediaType: application/octet-stream
+                  format: binary
+                  type: string
+                file:
+                  contentEncoding: binary
+                  contentMediaType: application/octet-stream
+                  format: binary
+                  type: string
+              required:
+                - file
+              type: object
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyBookOutput"
+          description: Accepted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Upload a book (FB2/EPUB/HTML); it is converted to HTML in the background
+      tags:
+        - reader
+  /api/v1/reader/books/{id}:
+    delete:
+      operationId: deleteBook
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyDeleteBookOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Delete a book
+      tags:
+        - reader
+    get:
+      operationId: getBook
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyBookOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Get a book with its content URL and reading position
+      tags:
+        - reader
+    patch:
+      operationId: updateBook
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            encoding:
+              cover:
+                contentType: image/png,image/jpeg,image/webp
+            schema:
+              properties:
+                cover:
+                  contentEncoding: binary
+                  contentMediaType: application/octet-stream
+                  format: binary
+                  type: string
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyBookOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Update a book's title, author, description and cover
+      tags:
+        - reader
+  /api/v1/reader/books/{id}/progress:
+    put:
+      operationId: saveBookProgress
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveBookProgressInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodySaveBookProgressOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Save the reading position for a book
+      tags:
+        - reader
+  /api/v1/reader/collections:
+    get:
+      operationId: listCollections
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyCollectionsOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: List article collections (cover and description)
+      tags:
+        - reader
+    patch:
+      operationId: updateCollection
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            encoding:
+              cover:
+                contentType: image/png,image/jpeg,image/webp
+            schema:
+              properties:
+                cover:
+                  contentEncoding: binary
+                  contentMediaType: application/octet-stream
+                  format: binary
+                  type: string
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyCollectionOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Update an article collection's title, description and cover
+      tags:
+        - reader
+  /health:
+    get:
+      description: Returns 200 if the process is alive. Does not depend on external services.
+      operationId: health
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyHealthOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Liveness probe
+      tags:
+        - probes
+  /ready:
+    get:
+      description: Returns 200 if the module is ready to accept traffic (all dependencies alive). 503 if any check failed.
+      operationId: ready
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyReadyOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Readiness probe
+      tags:
+        - probes

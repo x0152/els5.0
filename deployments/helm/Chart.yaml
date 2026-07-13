@@ -1,0 +1,14 @@
+apiVersion: v2
+name: els-expert
+description: |
+  Helm chart for the ELS platform.
+  Deploys the Go backend aggregator (main — bundles all modules: auth, account,
+  admin, core, quest, films, learn, vocab, reader, ai, media), the static
+  frontend, and optional in-cluster infrastructure (PostgreSQL, Redis, MinIO).
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.27.0-0"
+home: https://github.com/els/expert-backend
+maintainers:
+  - name: Els

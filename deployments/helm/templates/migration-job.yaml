@@ -1,0 +1,66 @@
+{{- if .Values.jobs.migration.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # Image tag in the name keeps Jobs unique across upgrades (Jobs are immutable).
+  name: {{ include "els-expert.fullname" . }}-migrate-{{ .Values.apps.global.image.tag | replace "." "-" | replace "+" "-" | trunc 40 }}
+  labels:
+    {{- include "els-expert.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migrate
+  {{- if .Values.jobs.migration.hook }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  {{- end }}
+spec:
+  backoffLimit: {{ .Values.jobs.migration.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "els-expert.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migrate
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: wait-for-postgres
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
+          command: ["sh", "-c"]
+          args:
+            - |
+              until pg_isready -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER"; do
+                sleep 2
+              done
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "els-expert.configName" . }}
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "els-expert.configName" . }}
+                  key: POSTGRES_PORT
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "els-expert.secretName" . }}
+                  key: POSTGRES_USER
+      containers:
+        - name: migrate
+          image: "{{ .Values.apps.global.image.repository }}:{{ .Values.apps.global.image.tag }}"
+          imagePullPolicy: {{ .Values.apps.global.image.pullPolicy }}
+          command: ["/app/bin/migrator"]
+          args: ["-direction=up"]
+          env:
+            {{- include "els-expert.commonEnv" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.jobs.migration.resources | nindent 12 }}
+{{- end }}

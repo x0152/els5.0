@@ -1,0 +1,479 @@
+components:
+  schemas:
+    CheckResult:
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        name:
+          examples:
+            - postgres
+          type: string
+        ok:
+          type: boolean
+      required:
+        - name
+        - ok
+      type: object
+    ErrorBody:
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        details:
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+          type:
+            - array
+            - "null"
+        message:
+          type: string
+      required:
+        - code
+        - message
+      type: object
+    ErrorDetail:
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+      required:
+        - message
+      type: object
+    ErrorResponse:
+      additionalProperties: false
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorBody"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - error
+      type: object
+    HealthOutput:
+      additionalProperties: false
+      properties:
+        module:
+          examples:
+            - auth
+          type: string
+        status:
+          examples:
+            - ok
+          type: string
+        time:
+          format: date-time
+          type: string
+      required:
+        - status
+        - time
+      type: object
+    HistoryOutput:
+      additionalProperties: false
+      properties:
+        default_model:
+          type: string
+        generating:
+          type: boolean
+        messages:
+          items:
+            $ref: "#/components/schemas/MessageOutput"
+          type:
+            - array
+            - "null"
+        model:
+          type: string
+      required:
+        - model
+        - default_model
+        - generating
+        - messages
+      type: object
+    MessageOutput:
+      additionalProperties: false
+      properties:
+        content:
+          type: string
+        created_at:
+          type: string
+        id:
+          type: string
+        model:
+          type: string
+        role:
+          type: string
+        tool_call_id:
+          type: string
+        tool_calls:
+          items:
+            $ref: "#/components/schemas/ToolCallOutput"
+          type:
+            - array
+            - "null"
+        tool_name:
+          type: string
+      required:
+        - id
+        - role
+        - content
+        - created_at
+      type: object
+    Meta:
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        request_id:
+          type: string
+      type: object
+    ModelOutput:
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        owned_by:
+          type: string
+      required:
+        - id
+      type: object
+    ModelsOutput:
+      additionalProperties: false
+      properties:
+        default:
+          type: string
+        models:
+          items:
+            $ref: "#/components/schemas/ModelOutput"
+          type:
+            - array
+            - "null"
+        selected:
+          type: string
+      required:
+        - models
+        - selected
+        - default
+      type: object
+    OKOutput:
+      additionalProperties: false
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
+      type: object
+    Pagination:
+      additionalProperties: false
+      properties:
+        has_more:
+          type: boolean
+        limit:
+          format: int64
+          type: integer
+        offset:
+          format: int64
+          type: integer
+        total:
+          format: int64
+          type: integer
+      required:
+        - limit
+        - offset
+        - total
+        - has_more
+      type: object
+    ReadyOutput:
+      additionalProperties: false
+      properties:
+        checks:
+          items:
+            $ref: "#/components/schemas/CheckResult"
+          type:
+            - array
+            - "null"
+        module:
+          examples:
+            - auth
+          type: string
+        ready:
+          type: boolean
+        time:
+          format: date-time
+          type: string
+      required:
+        - ready
+        - time
+      type: object
+    SetModelInputBody:
+      additionalProperties: false
+      properties:
+        model:
+          type: string
+      required:
+        - model
+      type: object
+    SuccessBodyHealthOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/HealthOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyHistoryOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/HistoryOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyModelsOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ModelsOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyOKOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/OKOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyReadyOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ReadyOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    ToolCallOutput:
+      additionalProperties: false
+      properties:
+        arguments:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+      required:
+        - id
+        - name
+        - arguments
+      type: object
+info:
+  title: ai
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /api/v1/ai/clear:
+    post:
+      operationId: aiClearChat
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyOKOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Clear chat history
+      tags:
+        - ai
+  /api/v1/ai/history:
+    get:
+      operationId: aiHistory
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyHistoryOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Get current chat history and selected model
+      tags:
+        - ai
+  /api/v1/ai/model:
+    post:
+      operationId: aiSetModel
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetModelInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyOKOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Select chat model
+      tags:
+        - ai
+  /api/v1/ai/models:
+    get:
+      operationId: aiModels
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyModelsOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: List available chat models
+      tags:
+        - ai
+  /api/v1/ai/reset:
+    post:
+      operationId: aiResetContext
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyOKOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Reset conversation context
+      tags:
+        - ai
+  /health:
+    get:
+      description: Returns 200 if the process is alive. Does not depend on external services.
+      operationId: health
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyHealthOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Liveness probe
+      tags:
+        - probes
+  /ready:
+    get:
+      description: Returns 200 if the module is ready to accept traffic (all dependencies alive). 503 if any check failed.
+      operationId: ready
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyReadyOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Readiness probe
+      tags:
+        - probes

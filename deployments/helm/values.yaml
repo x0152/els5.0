@@ -1,0 +1,293 @@
+# els-expert — prod-ready base.
+# values-stage.yaml — overlay for stage (only differences from prod).
+# The secret is placed by CI into templates/secrets.yaml from GitLab Secure Files.
+
+global:
+  nameOverride: ""
+  fullnameOverride: ""
+  timezone: "Europe/Moscow"
+  secretName: ""
+  configName: ""
+  imagePullSecrets:
+    - name: gitlab-registry-secret
+
+config:
+  app:
+    env: "prod"
+    name: "els-expert-backend"
+  log:
+    level: "info"
+    format: "json"
+    addSource: "true"
+  postgres:
+    host: "pg.prod.internal.example.com"
+    port: "5432"
+    sslmode: "require"
+    timezone: "Europe/Moscow"
+  redis:
+    addr: "redis.prod.internal.example.com:6379"
+    db: "0"
+  s3:
+    endpoint: "s3.prod.internal.example.com"
+    useSSL: "true"
+    region: "ru-central1"
+    avatarBucket: "els-expert-avatars"
+  media:
+    publicUrlBase: "/api/v1/media"
+  invite:
+    setPasswordUrl: ""
+    magicLoginUrl: ""
+    resetPasswordUrl: ""
+    magicLoginPersistent: false
+  smtp:
+    enabled: true
+    host: "smtp.mail.ru"
+    port: "465"
+    fromEmail: "bot.noreply@els.expert"
+    fromName: "Els Expert"
+    secure: "true"
+  impersonation:
+    enabled: false
+  security:
+    # Auth endpoint limit: requests per IP+path per window.
+    # Raised for mass onboarding (tens/hundreds of logins in a row).
+    authRateLimit: "10000"
+    authRateWindow: "60s"
+    # Brute-force lockout per account (password mismatch). Raised so that
+    # legitimate typos during mass sign-in do not lock the account.
+    authLockoutAttempts: "50"
+    authLockoutWindow: "15m"
+  llm:
+    baseUrl: "http://192.168.15.182:1234/v1"
+    model: "qwen/qwen3.5-35b-a3b"
+    timeoutSeconds: "600"
+  core:
+    workerEnabled: "true"
+
+postgres:
+  enabled: false
+  image:
+    repository: postgres
+    tag: "16-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    name: postgres
+    port: 5432
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: ""
+  serverArgs:
+    - "-c"
+    - "shared_preload_libraries=pg_stat_statements"
+    - "-c"
+    - "pg_stat_statements.track=all"
+    - "-c"
+    - "pg_stat_statements.max=10000"
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+redis:
+  enabled: false
+  image:
+    repository: redis
+    tag: "7-alpine"
+    pullPolicy: IfNotPresent
+  service:
+    name: redis
+    port: 6379
+  auth:
+    enabled: true
+  persistence:
+    enabled: true
+    size: 5Gi
+    storageClass: ""
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+minio:
+  enabled: false
+  image:
+    repository: minio/minio
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  mcImage:
+    repository: minio/mc
+    tag: "latest"
+  service:
+    name: minio
+    apiPort: 9000
+    consolePort: 9001
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: ""
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 1Gi
+      cpu: 500m
+
+# migration: pre-install,pre-upgrade hook — blocks the release until migrations finish.
+# bootstrap: post-install,post-upgrade hook — idempotent admin seed.
+jobs:
+  migration:
+    enabled: true
+    backoffLimit: 3
+    hook: true
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+  bootstrap:
+    enabled: true
+    backoffLimit: 2
+    hook: true
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 256Mi
+        cpu: 300m
+
+# Backend services. One image, one binary per service: /app/bin/<name>.
+apps:
+  global:
+    image:
+      repository: registry.example.com/els/expert-backend
+      tag: "1.0.0"
+      pullPolicy: IfNotPresent
+    deploymentStrategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 0
+        maxSurge: 1
+    podAnnotations: {}
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 65532
+      runAsGroup: 65532
+      fsGroup: 65532
+    containerSecurityContext:
+      readOnlyRootFilesystem: true
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: ["ALL"]
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 1Gi
+        cpu: 1000m
+    autoscaling:
+      enabled: false
+      minReplicas: 1
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 70
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+
+  # Aggregator — the only backend: mounts all modules (auth, account,
+  # admin, core, quest, films, learn, vocab, reader, ai, media) on :8080.
+  main:
+    enabled: true
+    replicaCount: 1
+    port: 8080
+    command: ["/app/bin/main"]
+    args: []
+    # Headroom for in-pod ffmpeg transcoding and pandoc conversion.
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 3Gi
+        cpu: 2000m
+    env:
+      - name: APP_HTTP_ADDR
+        value: ":8080"
+      - name: APP_HTTP_READ_TIMEOUT
+        value: "10s"
+      - name: APP_HTTP_WRITE_TIMEOUT
+        value: "1500s"
+      - name: APP_HTTP_IDLE_TIMEOUT
+        value: "60s"
+      - name: APP_HTTP_SHUTDOWN_TIMEOUT
+        value: "30s"
+
+# spaCy lexicon analyzer (FastAPI). Backend calls it via SPACY_URL for
+# subtitle/book linguistic analysis (units, base forms, segments).
+spacy:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: registry.example.com/els/expert-spacy
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    port: 8000
+  resources:
+    requests:
+      memory: 2Gi
+      cpu: 250m
+    limits:
+      memory: 6Gi
+      cpu: 1500m
+
+# Frontend: built Vite bundle served by nginx on :8080 inside the container.
+frontend:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: registry.example.com/els/expert-frontend
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  port: 8080
+  service:
+    port: 80
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 50m
+    limits:
+      memory: 256Mi
+      cpu: 200m
+
+metrics:
+  prometheusScrape: false
+  path: "/metrics"
+
+# Ingress: /api/v1/<resource> → backend services, everything else → frontend.
+# tls block is generated by the template from host + tlsSecretName.
+ingress:
+  enabled: true
+  className: "nginx"
+  host: "app.els.expert"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "20m"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "1500"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "1500"
+  certManagerIssuer: "letsencrypt-prod"
+  tlsSecretName: "els-expert-tls"
+  extraPaths: []

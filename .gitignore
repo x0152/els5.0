@@ -1,0 +1,39 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Local env (provide ONLY .env.example in git; secrets live in CI Secure Files / Helm values)
+.env
+**/.env
+!**/.env.example
+
+# Helm secrets (заполненные — идут в GitLab Secure Files, НЕ в git)
+deployments/helm/secrets-stage.yaml
+deployments/helm/secrets-prod.yaml
+deployments/helm/templates/secrets.yaml
+.secure_files/
+
+# Kubeconfig
+*kubeconfig*.yaml
+
+# TLS certs (self-signed для стейджа — локально, НЕ в git)
+deployments/tls/
+*.key
+*.crt
+*.pem
+
+tmp/
+
+# Copyrighted book content — kept locally only, never committed (demo seeds are committed instead)
+/backend/internal/application/learn/seed/essentialbook/
+/backend/internal/application/learn/seed/grammarbook/
+/backend/internal/application/learn/seed/wordbook/
+/backend/internal/application/learn/seed/phrasebook/
+/backend/internal/application/learn/seed/wordbook-advanced/
+/frontend/apps/grammarbook-app/public/book/

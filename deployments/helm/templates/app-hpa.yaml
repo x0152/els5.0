@@ -1,0 +1,38 @@
+{{- range $appName, $appCfg := .Values.apps }}
+{{- if and (ne $appName "global") $appCfg.enabled }}
+{{- $hpa := default dict $appCfg.autoscaling -}}
+{{- /* App-level autoscaling overrides global; off by default. */ -}}
+{{- $enabled := false -}}
+{{- if hasKey $appCfg "autoscaling" -}}
+  {{- $enabled = $hpa.enabled -}}
+{{- else -}}
+  {{- $enabled = $.Values.apps.global.autoscaling.enabled -}}
+  {{- $hpa = $.Values.apps.global.autoscaling -}}
+{{- end -}}
+{{- if $enabled }}
+{{- $fullAppName := include "els-expert.appName" (dict "ctx" $ "app" $appName) }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $fullAppName }}
+  labels:
+    {{- include "els-expert.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $appName }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $fullAppName }}
+  minReplicas: {{ $hpa.minReplicas | default $.Values.apps.global.autoscaling.minReplicas }}
+  maxReplicas: {{ $hpa.maxReplicas | default $.Values.apps.global.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $hpa.targetCPUUtilizationPercentage | default $.Values.apps.global.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}
+{{- end }}
+{{- end }}

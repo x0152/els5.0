@@ -1,0 +1,195 @@
+---
+description: Backend architecture and conventions (clean architecture, layers, use cases, mappers, workers, errors, time, tests, comments)
+globs: backend/**/*.go
+alwaysApply: false
+---
+
+# Backend: architecture and conventions
+
+Mandatory ruleset for all code under `backend/`. Full rationale lives in `backend/docs/architecture/`. If a rule below conflicts with the code, the ruleset wins — bring the code in line.
+
+## 1. Dependency rules (the core — never break these)
+
+```
+cmd             ──► application, infrastructure, utils, domain   (the only place for DI)
+application/**  ──► domain/**, utils/**          (NOT infrastructure, NOT cmd, NOT another application module)
+domain/**       ──► stdlib and domain/shared/** only   (NOT http, NOT pgx, NOT SDKs, NOT application/infrastructure/utils)
+infrastructure  ──► domain/**, utils/**          (implements ports/repositories from domain)
+utils/**        ──► stdlib, general-purpose libraries and domain/shared/errors.go only
+```
+
+- **Domain knows about no one.** Importing `net/http`, `pgx` or an external SDK in `domain/**` is an architecture error — move it behind a port.
+- **Application does not import Infrastructure.** A use case receives an interface in its constructor; the implementation is wired in `cmd/<module>/main.go`.
+- **Infrastructure implements Domain interfaces but knows nothing about Application.**
+- **utils is always "at the bottom".** Everyone uses it; it uses no layer of ours. Narrow exception: `utils/httpx/errors.go` imports `domain/shared/errors.go` (sentinels only) to map them to HTTP codes. Nothing else from `domain` may reach `utils`.
+- `domain/shared/ports/*` may import `domain/shared/vo/*`, but **not** concrete bounded contexts.
+
+## 2. Module structure (`internal/application/<module>/`)
+
+Every module has the same shape:
+
+```
+internal/application/<module>/
+├── api/
+│   ├── endpoints.go   # Huma operation registration: one file for all routes
+│   ├── schema.go      # module Input/Output DTOs
+│   └── mapper.go      # api-mapper: DTO ↔ use-case command/result
+├── use_cases/         # package usecases, one file per scenario
+│   └── <action>.go    # <Action>UseCase with a single Execute method
+├── worker/            # background machinery (ticker/cron/consumer) — its OWN folder next to api
+├── config.go          # module settings (embed config.Global + its own env)
+└── module.go          # Mount/New: DI, use-case assembly, api.Register, middleware
+```
+
+- Packages: the module itself — `<module>`; the `api` subfolder — package `api`; `use_cases` — package `usecases`.
+- **Any new kind of machinery (scheduler, worker, consumer, subscriber) always goes in its own folder next to `api/`**, never inside a use case. The loop itself (ticker/loop, reacting to `ctx.Done()`) lives in `worker/`, and it calls the unit of work through a use case (`Execute`).
+
+## 3. Domain (`internal/domain/<ctx>/`)
+
+The core. One bounded context = one folder = one package. Depends only on stdlib and `domain/shared`.
+
+What lives inside:
+- **Entities** — objects with an ID and behavior. State changes only through verb methods (`UpdateInfo`, `Cancel`). Setters like `SetName` are an anti-pattern (they don't validate the invariant).
+- **Aggregates** — roots that guarantee consistency of the graph. Inner objects change only through the root's methods.
+- **Value Objects** — values without identity (`Money`, `Email`); validation is hidden in the constructor (an invalid value can't be created). Shared VOs — `domain/shared/vo/`, context-specific ones — inside the context.
+- **Policies** — pure functions answering "is this allowed?" (`RequireGlobalAdmin`, `client.RequireWrite`). They don't mutate state.
+- **Pure Functions** — see the dedicated rule below.
+- **Repository interface** — `repository.go` in the same package: the data-access contract for THIS context.
+- **Errors** — `errors.go`: domain errors wrapping a base sentinel via `%w`.
+- **Domain text** — e.g. LLM prompts — is part of describing the domain and lives in `domain`, not in `utils`.
+
+`domain/shared/`: `vo/` (shared VOs), `ports/` (external-system interfaces: `LLMClient`, `ObjectStorage`, `EmailSender`), `errors.go` (base sentinels).
+
+**Repository vs Port:** a repository is data access for a single context and lives in `domain/<ctx>/`. A port is an external system / cross-cutting abstraction, lives in `domain/shared/ports/`, with the implementation in `infrastructure/adapters/`. An interface to an external service (LLM, payment, S3) is always a port, even if only one module uses it.
+
+**Domain vs Use Case rule:** Domain holds what is *always* true for the entity (invariants). A Use Case holds what is true only for a *specific scenario*. Self-check: "if tomorrow the same operation is invoked from an admin panel / import / integration — must the rule still fire there?" Yes → Domain. No → use case.
+
+**Pure functions in domain (prefer these).** Any logic that is `input → output` with no I/O belongs in `domain/<ctx>/` as a pure function, not inside a use case or in `utils`. A pure function:
+- takes domain types (and `time.Time` when it needs "now") and returns domain types / values / a parse error — **no `context.Context`, no repositories, no DB, no network, no reading the clock or env**;
+- is deterministic and trivially unit-testable in isolation;
+- examples here: building an LLM prompt from domain events (`BuildExtractionPrompt`), parsing an LLM response into domain `Extraction`s (`ParseExtractions`), turning raw events + extractions into domain `Event`s (`StructuredEvent`, `EventsFromExtractions`), calculations across entities (`CalcProjectTotalCost`).
+- ID/`now` generation: builders may mint IDs via `vo.NewID()` (domain factory) and accept `now` as a parameter — don't import external SDKs (`google/uuid`) or call `time.Now()` directly in domain.
+
+The use case keeps only orchestration + I/O (load via repo → call port/LLM → hand raw output to the domain pure function → persist). If you catch yourself writing a `for`/`switch` that transforms data inside `Execute`, that's a pure function that should move to domain. Prompts and other domain text live next to these functions in `domain`, never in `utils` (utils may not import `domain/<ctx>`).
+
+## 4. Use case (`use_cases/<action>.go`, package `usecases`)
+
+- **Exactly one public method — `Execute`.** One scenario = one `<Action>UseCase` type = one `Execute`. No `Ingest`/`List`/`Process` exposed. If you want a second public method, that's a second use case in its own file. Supporting machinery (loops, tickers) goes to `worker/`; pure helpers go to domain/utils.
+- **Each scenario step gets a numbered comment** (`// 1. ...`, `// 2. ...`). See section 11.
+- **Input is ONLY domain types.** `Command`/`Query` fields never have `string ID`, `string Status`, `string Email` — only `vo.ID`, `client.ID`, `project.Status`, `time.Time`, `[]expert.ID`. The api-mapper parses raw strings BEFORE `Execute` is called.
+- **All talk with the outside world uses domain types.** Every repository and adapter call takes and returns domain types. Any conversion happens in mappers, never inside the use case.
+- **Returns domain entities/result**, not DTOs — the api-mapper flattens them into DTOs.
+- **Authorization via domain policies** (`iam.RequireGlobalAdmin(actor)`, `client.RequireWrite(actor, id)`), not `if role == ...`. Omit `actor *iam.Actor` only in pre-authorization scenarios (login, forgot-password).
+- **Don't re-check `if actor == nil`.** Routes registered with `authx.Authed` already authenticate the request and guarantee a non-nil `actor` before `Execute` runs — a nil check inside the use case is dead code. Authenticate at the API boundary; inside the use case only apply domain policies for finer-grained authorization.
+- **Scenario validation** via `shared.ErrValidation`. If a check is true for *any* way to create the entity, move it to Domain.
+- **Transactions belong to application:** the use case begins/commits via `utils/database/` (`TxRunner`), without seeing pgx.
+- **Time comes from `timex.Clock`** in the constructor (see section 9).
+- Constructor: `New<Action>UseCase(deps...) *<Action>UseCase`. Dependencies are interfaces (repositories, ports, clock).
+- A background unit of work is also a use case with `Execute(ctx) error`, driven by `worker/`.
+
+## 5. API (`api/`, package `api`) — thin HTTP layer
+
+- **`schema.go`** — DTOs only. Fields carry Huma tags for syntactic validation: `format:"email"`, `minLength`, `maxLength`, `maximum`, `enum`, `default`. DTOs never overlap with domain entities (we don't accept/return `domain.Entity`).
+- **`endpoints.go`** — `type Deps struct{...}` (use cases, config, logger) + `func Register(api huma.API, deps Deps)` + one `register<Action>` function per route. The handler shape is always the same: **mapper → use case → mapper**.
+  - Public routes: `httpx.Handle(api, huma.Operation{...}, func(ctx, in) (Out, error) {...})`.
+  - Authorized routes: `authx.Authed(...)` (pulls `actor *iam.Actor` and passes it into `Execute`) or `authx.Bearer(...)` (token only).
+  - Even if a route has only primitives, call the mapper explicitly (`toLoginCommand`) so the shape stays uniform.
+  - No business rules in the handler (`if role==...` → policy/middleware/use case). Don't parse/encode JSON by hand, don't set statuses by hand (need 201/204 → `huma.Operation{DefaultStatus: ...}`), don't log input/output (`AccessLog` already does).
+- **OpenAPI:** the module registers in the `utils/openapi` registry via `init()` in `register.go`; `cmd/openapi-dump` pulls it in with a side-effect import. Generated specs are the source of truth for the frontend (codegen).
+
+The response is a single envelope (see section 7), assembled by helpers — never built by hand.
+
+## 6. Mappers (there are TWO — don't confuse them)
+
+**api-mapper — `application/<module>/api/mapper.go`:**
+- **Input:** `to<Action>Command(in *XxxInput) (XxxCommand, error)` / `to<Action>Query(...)` — turns the raw DTO (`string`, `int64`) into a typed domain command. String→domain parsing (UUID→`vo.ID`, `"in_progress"`→`Status`, date→`time.Time`), normalization and slice dedup, optional fields (`""` → no value) — all here.
+- **Output:** `to<Action>Output(res XxxResult) XxxOutput` — domain types → flat DTO.
+- Parsing errors are wrapped in `shared.ErrValidation` **with the field name** (`client_id`, `parent_id`) → middleware returns `422 VALIDATION_ERROR`.
+- A mapper is a **pure function**: args → result, no repositories/context/DB. If it starts "loading more", it's already a use case.
+- Don't make domain types Huma-aware (`Schema()`/`UnmarshalText` on a VO).
+
+**infra-mapper — `infrastructure/mappers/`:** pure `Model ↔ Entity` functions. They take only the model and the entity; if they need anything else, that's business logic and belongs in Domain.
+
+## 7. Output and envelope
+
+Every response (success and error) is one shape: `{ok, data?|error?, meta}`. The handler returns a bare `Out`/`error`; `httpx`/`authx` helpers wrap it into the envelope, and middleware sets `meta.request_id`.
+
+Response DTO structures:
+- **Single entity** — `<Entity>Output`: flat, `json:"snake_case"`. IDs and enums as strings (`id.String()`, `string(status)`), dates as `apidate.Date`, optional ones as `*apidate.Date` via `apidate.Optional(...)`, optional fields with `omitempty`.
+- **List** — `<Entity>sOutput{ Items []T; Total int64; Limit int32; Offset int32 }`. `Items` is always `make([]T, 0, n)` (return `[]`, not `null`).
+- **Empty success** — `<Action>Output struct{}` + `DefaultStatus: http.StatusNoContent`.
+
+Error codes are a public contract — never silently rename them. No parallel `Respond*` helpers: there is exactly one response shape.
+
+## 8. Errors
+
+- A use case returns a plain Go error; the HTTP layer decides the code. Base sentinels — `domain/shared/errors.go`; context-specific domain errors — `domain/<ctx>/errors.go`, wrapping a base via `%w` (`fmt.Errorf("...: %w", shared.ErrConflict)`).
+- Mapping — the table in `utils/httpx/errors.go`: `ErrNotFound→404 NOT_FOUND`, `ErrConflict→409 CONFLICT`, `ErrValidation→422 VALIDATION_ERROR`, `ErrUnauthorized→401`, `ErrForbidden→403`, everything else→`500 INTERNAL_ERROR`.
+- Assert and branch via `errors.Is(err, shared.ErrXxx)`, not by text. Stack traces never go to the client (logs only).
+
+## 9. Time
+
+- **The only timezone is `Europe/Moscow` (`timex.MSK`).** No cross-zone conversions in the code.
+- **`time.Now()` directly is forbidden** (the only exception is the `timex.SystemClock` implementation). Use `timex.Now()` or `Clock.Now()` from the constructor.
+- Construct time only via `timex.Date(...)`; no `time.Date(..., time.UTC/Local)` in business code.
+- Use cases that build a timestamp (audit, tokens, `expires_at`) take a `timex.Clock`; `nil` → falls back to `timex.System()`. Inside Domain, `timex.Now()` is fine in `Touch`-style methods.
+- In the DB — `timestamptz`/`date`, not `text`. API format — RFC 3339 / `YYYY-MM-DD` via `timex`.
+
+## 10. Infrastructure and utils
+
+**Infrastructure (`internal/infrastructure/`):**
+- `models/` — DB row structs (sql tags, nullable); never leave infrastructure.
+- `mappers/` — `Model ↔ Entity`, pure functions.
+- `repositories/<ctx>/` — implementation of `domain/<ctx>/repository.go`: SQL, transactions.
+- `adapters/<provider>/` — implementation of ports from `domain/shared/ports/`.
+- The layer boundary works in domain types: domain entities in/out, mapping to infrastructure models and back happens inside the layer.
+
+**utils (`internal/utils/`):** technical plumbing only, independent of `domain` (except `shared/errors`). Put cross-module reusable helpers here (`httpx`, `timex`, `reqctx`, `database`, `pagination`, `probes`, `auth`, `logger`). Domain-specific things (prompts, entity construction) do NOT go in utils — they go in `domain`.
+
+## 11. Comments in code (strict)
+
+**Code is self-documenting. There are no explanatory comments in code.** Clarity comes from type, function and variable names, not from comments. Exactly three exceptions are allowed:
+
+1. **Numbered steps in a use case `Execute`** — `// 1. ...`, `// 2. ...`. This is the only place where comments are *mandatory*: they turn the scenario into a readable story and immediately reveal whether parsing/HTTP/SQL leaked into the use case.
+2. **SQL queries** — inside the query string a comment explaining a non-obvious part is allowed (a tricky `JOIN`, `FOR UPDATE SKIP LOCKED`, a special index).
+3. **`// arrange` / `// act` / `// assert` in tests** — the only comments allowed in test files (see section 12).
+
+Forbidden (remove on sight):
+- Narrating the code: `// increment the counter`, `// import the package`, `// return the result`, `// constructor`.
+- Section-header comments, commented-out code, `// TODO` without a ticket.
+- Doc-comments that just restate an obvious function/field. If it's unclear without a comment, rename it instead of commenting.
+
+```go
+// BAD
+func (uc *X) Execute(ctx context.Context, cmd Cmd) (Res, error) {
+    user, err := uc.repo.Get(ctx, cmd.ID) // get the user
+    if err != nil {
+        return Res{}, err // return the error
+    }
+    user.Activate() // activate
+    ...
+}
+
+// GOOD — numbered steps; the rest speaks for itself
+func (uc *X) Execute(ctx context.Context, cmd Cmd) (Res, error) {
+    // 1. Load the user.
+    user, err := uc.repo.Get(ctx, cmd.ID)
+    if err != nil {
+        return Res{}, err
+    }
+    // 2. Activate — the entity validates its own invariant.
+    if err := user.Activate(); err != nil {
+        return Res{}, err
+    }
+    ...
+}
+```
+
+## 12. Tests (brief; details in docs/development/testing.md)
+
+- Scope: the bulk is `domain/**` and `use_cases/**`. Infrastructure and Huma handlers are not unit-tested (mappers are tested as pure functions).
+- Style: `stdlib testing` only (no testify/mockgen); black-box (`<pkg>_test`); table-driven with meaningful case names; the only comments are `// arrange`/`// act`/`// assert`.
+- Hand-written mocks in `mocks_test.go` (record calls, not expectation chains). If an interface bloats, split the interface instead of adding codegen.
+- `timex.Clock` → `timex.NewFrozen(...)`; `database.TxRunner` → `database.Noop()`; no `time.Now` or network in unit tests.
+- Assert errors via `errors.Is(err, shared.ErrXxx)`.
+- Per-use-case target: ~6 baseline tests by branch (forbidden / parse-error / not-found / domain validation / happy / repository failure).

@@ -1,0 +1,52 @@
+{
+  "name": "@els/main-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "typecheck": "tsc -b"
+  },
+  "dependencies": {
+    "@els/admin-app": "workspace:*",
+    "@els/api-client": "workspace:*",
+    "@els/chat-app": "workspace:*",
+    "@els/films-app": "workspace:*",
+    "@els/journal-app": "workspace:*",
+    "@els/lookup": "workspace:*",
+    "@els/grammarbook-app": "workspace:*",
+    "@els/profile-app": "workspace:*",
+    "@els/quest-app": "workspace:*",
+    "@els/reader-app": "workspace:*",
+    "@els/settings-app": "workspace:*",
+    "@els/ui": "workspace:*",
+    "@els/phrasebook-app": "workspace:*",
+    "@els/vocab-app": "workspace:*",
+    "@els/wordbook-app": "workspace:*",
+    "@els/essentialbook-app": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "lucide-react": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-router-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@eslint/js": "catalog:",
+    "@tailwindcss/vite": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "eslint": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "eslint-plugin-react-refresh": "catalog:",
+    "globals": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
+    "vite": "catalog:"
+  }
+}

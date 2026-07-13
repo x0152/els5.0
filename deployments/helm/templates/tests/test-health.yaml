@@ -1,0 +1,37 @@
+{{- /*
+Smoke test: GET /health on the aggregator. Run via `helm test`.
+Per-service /ready probes own deeper checks (Postgres/Redis).
+*/ -}}
+{{- if .Values.apps.main.enabled }}
+{{- $fullName := include "els-expert.fullname" . -}}
+{{- $svc := printf "%s-main" $fullName -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $fullName }}-test-health
+  labels:
+    {{- include "els-expert.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  {{- with .Values.global.imagePullSecrets }}
+  imagePullSecrets:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  containers:
+    - name: curl
+      image: curlimages/curl:8.10.1
+      command: ["sh", "-c"]
+      args:
+        - |
+          set -e
+          URL="http://{{ $svc }}:{{ .Values.apps.main.port }}/health"
+          echo "GET $URL"
+          curl --fail --silent --show-error --max-time 5 "$URL"
+      env:
+        - name: TZ
+          value: {{ .Values.global.timezone | quote }}
+{{- end }}

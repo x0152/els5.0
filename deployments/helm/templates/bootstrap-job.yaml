@@ -1,0 +1,64 @@
+{{- if .Values.jobs.bootstrap.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "els-expert.fullname" . }}-bootstrap-{{ .Values.apps.global.image.tag | replace "." "-" | replace "+" "-" | trunc 40 }}
+  labels:
+    {{- include "els-expert.labels" . | nindent 4 }}
+    app.kubernetes.io/component: bootstrap
+  {{- if .Values.jobs.bootstrap.hook }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    # Runs after migrations (5) and minio-setup (10).
+    "helm.sh/hook-weight": "50"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  {{- end }}
+spec:
+  backoffLimit: {{ .Values.jobs.bootstrap.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "els-expert.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: bootstrap
+    spec:
+      restartPolicy: OnFailure
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: bootstrap
+          image: "{{ .Values.apps.global.image.repository }}:{{ .Values.apps.global.image.tag }}"
+          imagePullPolicy: {{ .Values.apps.global.image.pullPolicy }}
+          command: ["/app/bin/bootstrap"]
+          args: []
+          env:
+            {{- include "els-expert.commonEnv" . | nindent 12 }}
+            # In prod a static password is forbidden (tools/bootstrap): the admin is created
+            # via an invite link (set-password). On stage/dev — a normal password.
+            - name: BOOTSTRAP_ADMIN_USE_INVITE
+              value: {{ ternary "true" "false" (eq .Values.config.app.env "prod") | quote }}
+            - name: BOOTSTRAP_ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "els-expert.secretName" . }}
+                  key: BOOTSTRAP_ADMIN_EMAIL
+            - name: BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "els-expert.secretName" . }}
+                  key: BOOTSTRAP_ADMIN_PASSWORD
+            - name: BOOTSTRAP_ADMIN_FIRST_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "els-expert.secretName" . }}
+                  key: BOOTSTRAP_ADMIN_FIRST_NAME
+            - name: BOOTSTRAP_ADMIN_LAST_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "els-expert.secretName" . }}
+                  key: BOOTSTRAP_ADMIN_LAST_NAME
+          resources:
+            {{- toYaml .Values.jobs.bootstrap.resources | nindent 12 }}
+{{- end }}

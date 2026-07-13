@@ -1,0 +1,4 @@
+ALTER TABLE films DROP COLUMN kind;
+ALTER TABLE films DROP COLUMN series_title;
+ALTER TABLE films DROP COLUMN season;
+ALTER TABLE films DROP COLUMN episode;

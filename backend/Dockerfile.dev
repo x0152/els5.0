@@ -1,0 +1,16 @@
+FROM golang:1.25.11
+
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg pandoc && rm -rf /var/lib/apt/lists/*
+
+RUN go install github.com/air-verse/air@latest
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+EXPOSE 8080
+
+CMD ["air", "-c", ".air.toml"]

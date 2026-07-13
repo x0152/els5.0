@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>ELS — English Learning Studio</title>
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <style>
+      :root {
+        --brand-50:  #ecfdf5;
+        --brand-100: #d1fae5;
+        --brand-500: #10b981;
+        --brand-600: #059669;
+        --brand-700: #047857;
+      }
+      html, body { margin: 0; padding: 0; height: 100%; background: #ffffff; }
+
+      #app-loader {
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(1200px 800px at 50% 120%, #d1fae5 0%, transparent 60%),
+          linear-gradient(to bottom, #ffffff 0%, #ecfdf5 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        transition: opacity 0.8s ease-out;
+        overflow: hidden;
+      }
+
+      .els-mark {
+        display: flex;
+        gap: 2px;
+        font-weight: 800;
+        font-size: 84px;
+        line-height: 1;
+        letter-spacing: -0.02em;
+      }
+      .els-mark span {
+        display: inline-block;
+        background-image: linear-gradient(110deg, #047857 25%, #10b981 45%, #6ee7b7 50%, #10b981 55%, #047857 75%);
+        background-size: 200% 100%;
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        animation: els-shimmer 2.4s linear infinite, els-float 2.8s ease-in-out infinite;
+      }
+      .els-mark span:nth-child(2) { animation-delay: 0.2s, 0.15s; }
+      .els-mark span:nth-child(3) { animation-delay: 0.4s, 0.3s; }
+
+      .els-sub {
+        margin-top: 14px;
+        color: var(--brand-700);
+        opacity: 0.7;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+      }
+
+      .els-bar {
+        position: relative;
+        margin-top: 34px;
+        width: 168px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--brand-100);
+        overflow: hidden;
+      }
+      .els-bar span {
+        position: absolute;
+        top: 0;
+        left: -45%;
+        height: 100%;
+        width: 40%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, transparent, #10b981, transparent);
+        animation: els-bar 1.3s ease-in-out infinite;
+      }
+
+      .loader-subtext {
+        color: #6b7280;
+        font-size: 15px;
+        margin-top: 20px;
+      }
+
+      .loader-error {
+        display: none;
+        margin-top: 28px;
+        max-width: 360px;
+        text-align: center;
+        color: var(--brand-600);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .loader-error button {
+        margin-top: 12px;
+        padding: 8px 18px;
+        border: 1px solid var(--brand-500);
+        background: #ffffff;
+        color: var(--brand-600);
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      .loader-error button:hover { background: var(--brand-100); }
+
+      @keyframes els-shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+      @keyframes els-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+      @keyframes els-bar { 0% { left: -45%; } 100% { left: 100%; } }
+
+      #app-loader.hang .els-mark span { animation-play-state: paused; opacity: 0.5; }
+      #app-loader.hang .els-bar { display: none; }
+      #app-loader.hang .loader-subtext { display: none; }
+      #app-loader.hang .loader-error { display: block; }
+
+      #app-loader.fade-out { opacity: 0; pointer-events: none; }
+      #app-loader.fade-out .els-mark { transform: scale(1.08); transition: transform 0.8s ease-out; }
+
+      html.no-splash #app-loader { display: none !important; }
+    </style>
+    <script>
+      (function () {
+        var p = window.location.pathname;
+        if (
+          p === '/login' ||
+          p === '/set-password' ||
+          p.indexOf('/set-password/') === 0
+        ) {
+          document.documentElement.classList.add('no-splash');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app-loader">
+      <div class="els-mark">
+        <span>E</span>
+        <span>L</span>
+        <span>S</span>
+      </div>
+      <div class="els-sub">English Learning Studio</div>
+      <div class="els-bar"><span></span></div>
+      <div class="loader-subtext">Loading the application…</div>
+      <div class="loader-error">
+        The application is not responding. Check your internet connection.
+        <br />
+        <button type="button" onclick="window.location.reload()">Reload</button>
+      </div>
+    </div>
+    <div id="root"></div>
+    <script>
+      (function () {
+        if (document.documentElement.classList.contains('no-splash')) {
+          var l = document.getElementById('app-loader');
+          if (l) l.remove();
+          return;
+        }
+        var HANG_MS = 10000;
+        var KILL_MS = 20000;
+        window.__elsSplashStart = Date.now();
+        window.__elsHangTimer = setTimeout(function () {
+          var l = document.getElementById('app-loader');
+          if (l && !l.classList.contains('fade-out')) l.classList.add('hang');
+        }, HANG_MS);
+        window.__elsKillTimer = setTimeout(function () {
+          var l = document.getElementById('app-loader');
+          if (l) l.remove();
+        }, KILL_MS);
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+    <div id="portal"></div>
+  </body>
+</html>

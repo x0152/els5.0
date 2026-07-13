@@ -1,0 +1,29 @@
+{{- range $appName, $appCfg := .Values.apps }}
+{{- if and (ne $appName "global") $appCfg.enabled $appCfg.port }}
+{{- $fullAppName := include "els-expert.appName" (dict "ctx" $ "app" $appName) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $fullAppName }}
+  labels:
+    {{- include "els-expert.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $appName }}
+  {{- if $.Values.metrics.prometheusScrape }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ $appCfg.port }}"
+    prometheus.io/path: {{ $.Values.metrics.path | quote }}
+  {{- end }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ $appCfg.port }}
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "els-expert.selectorLabels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $appName }}
+{{- end }}
+{{- end }}

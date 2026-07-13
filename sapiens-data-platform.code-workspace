@@ -1,0 +1,23 @@
+{
+    "folders": [
+        {
+            "name": "🌐 Root",
+            "path": "."
+        },
+        {
+            "name": "📦 Backend",
+            "path": "./backend"
+        },
+        {
+            "name": "🖥️ Frontend",
+            "path": "./frontend"
+        },
+        {
+            "name": "📚 Docs",
+            "path": "./docs"
+        }
+    ],
+    "settings": {
+        "go.useLanguageServer": true
+    }
+}

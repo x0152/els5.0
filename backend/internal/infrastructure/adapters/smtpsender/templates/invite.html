@@ -1,0 +1,12 @@
+{{ define "content" -}}
+<h1>Invitation to ELS</h1>
+<p>An account has been created for you. To get started — set a password using the button below.</p>
+<div class="button-wrap">
+  <a href="{{ .ActionURL }}" class="button">Set password</a>
+</div>
+<p class="footnote">The link is time-limited. If it expired — ask an administrator to send a new one.</p>
+<div class="fallback">
+  If the button does not work, copy the link into your browser address bar:<br>
+  <a href="{{ .ActionURL }}">{{ .ActionURL }}</a>
+</div>
+{{- end }}

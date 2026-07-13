@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")"
+git fetch --tags --quiet
+
+echo "Окружение:"
+echo "  1) prod  (тег vX.Y.Z, ветка main)"
+echo "  2) stage (тег stage-X.Y.Z, ветка develop)"
+read -rp "> " env
+case "$env" in
+  1) prefix="v";      branch="main"    ;;
+  2) prefix="stage-"; branch="develop" ;;
+  *) echo "отмена"; exit 1 ;;
+esac
+
+last=$(git tag --list "${prefix}*" --sort=-v:refname | head -1)
+ver=${last#"$prefix"}; ver=${ver:-0.0.0}
+IFS=. read -r MA MI PA <<<"$ver"
+MA=${MA:-0}; MI=${MI:-0}; PA=${PA:-0}
+
+echo "Последний тег: ${last:-нет}"
+echo "Инкремент:"
+echo "  1) patch -> ${prefix}${MA}.${MI}.$((PA+1))"
+echo "  2) minor -> ${prefix}${MA}.$((MI+1)).0"
+echo "  3) major -> ${prefix}$((MA+1)).0.0"
+echo "  4) вручную"
+read -rp "> " bump
+case "$bump" in
+  1) tag="${prefix}${MA}.${MI}.$((PA+1))" ;;
+  2) tag="${prefix}${MA}.$((MI+1)).0" ;;
+  3) tag="${prefix}$((MA+1)).0.0" ;;
+  4) read -rp "Версия без префикса ${prefix}: " v; tag="${prefix}${v}" ;;
+  *) echo "отмена"; exit 1 ;;
+esac
+
+cur=$(git rev-parse --abbrev-ref HEAD)
+[ "$cur" != "$branch" ] && echo "ВНИМАНИЕ: ветка '$cur', а $prefix-деплой идёт только с '$branch'."
+
+read -rp "Запушить тег '$tag' и запустить пайплайн? [y/N] " ok
+[ "$ok" = "y" ] || { echo "отмена"; exit 1; }
+
+git tag "$tag"
+git push origin "$tag"
+echo "Готово: $tag запушен."

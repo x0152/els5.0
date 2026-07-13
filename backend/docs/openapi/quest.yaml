@@ -1,0 +1,1244 @@
+components:
+  schemas:
+    Character:
+      additionalProperties: false
+      properties:
+        age:
+          type: string
+        appearance:
+          type: string
+        arc:
+          type: string
+        gender:
+          type: string
+        initialTrust:
+          format: int64
+          type: integer
+        motivation:
+          type: string
+        name:
+          type: string
+        personality:
+          type: string
+        role:
+          type: string
+        speechStyle:
+          type: string
+        voice:
+          type: string
+      required:
+        - name
+        - role
+        - personality
+        - speechStyle
+        - appearance
+        - motivation
+        - arc
+      type: object
+    CharacterLine:
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        text:
+          type: string
+        voice:
+          type: string
+      required:
+        - name
+        - text
+      type: object
+    CheckResult:
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        name:
+          examples:
+            - postgres
+          type: string
+        ok:
+          type: boolean
+      required:
+        - name
+        - ok
+      type: object
+    CreateMissionInputBody:
+      additionalProperties: false
+      properties:
+        genre:
+          type: string
+        language:
+          type: string
+        practiceGoals:
+          type: string
+        prompt:
+          type: string
+      type: object
+    CreateMissionOutput:
+      additionalProperties: false
+      properties:
+        missionId:
+          type: string
+      required:
+        - missionId
+      type: object
+    CustomMission:
+      additionalProperties: false
+      properties:
+        characterAvatarErrors:
+          additionalProperties:
+            type: string
+          type: object
+        characterAvatarGenStartedAt:
+          additionalProperties:
+            type: string
+          type: object
+        characterAvatarStatus:
+          additionalProperties:
+            type: string
+          type: object
+        characterAvatars:
+          additionalProperties:
+            type: string
+          type: object
+        characters:
+          items:
+            $ref: "#/components/schemas/Character"
+          type:
+            - array
+            - "null"
+        coverImage:
+          type: string
+        coverImageError:
+          type: string
+        coverImageGenStartedAt:
+          type: string
+        coverImageStatus:
+          type: string
+        createdAt:
+          type: string
+        currentScene:
+          $ref: "#/components/schemas/DynamicScene"
+        currentStage:
+          format: int64
+          type: integer
+        description:
+          type: string
+        estimatedScenes:
+          format: int64
+          type: integer
+        generationError:
+          type: string
+        generationStatus:
+          type: string
+        generationStep:
+          type: string
+        genre:
+          type: string
+        history:
+          items:
+            $ref: "#/components/schemas/DialogueTurn"
+          type:
+            - array
+            - "null"
+        historySummary:
+          type: string
+        id:
+          type: string
+        isComplete:
+          type: boolean
+        language:
+          type: string
+        narratorVoice:
+          type: string
+        npcStates:
+          additionalProperties:
+            $ref: "#/components/schemas/NPCState"
+          type: object
+        outcome:
+          type: string
+        playerAvatarImage:
+          type: string
+        plotPoints:
+          items:
+            $ref: "#/components/schemas/PlotPoint"
+          type:
+            - array
+            - "null"
+        practiceGoals:
+          type: string
+        resolution:
+          $ref: "#/components/schemas/Resolution"
+        sceneImageErrors:
+          additionalProperties:
+            type: string
+          type: object
+        sceneImageGenStartedAt:
+          additionalProperties:
+            type: string
+          type: object
+        sceneImageStatus:
+          additionalProperties:
+            type: string
+          type: object
+        sceneImages:
+          additionalProperties:
+            type: string
+          type: object
+        scenes:
+          items:
+            $ref: "#/components/schemas/DynamicScene"
+          type:
+            - array
+            - "null"
+        secretEnding:
+          type: string
+        skillCategories:
+          additionalProperties:
+            type: string
+          type: object
+        skillSignals:
+          additionalProperties:
+            format: int64
+            type: integer
+          type: object
+        skillsEarned:
+          items:
+            $ref: "#/components/schemas/SkillReward"
+          type:
+            - array
+            - "null"
+        summarizedUpToTurn:
+          format: int64
+          type: integer
+        title:
+          type: string
+        totalStages:
+          format: int64
+          type: integer
+        totalXp:
+          format: int64
+          type: integer
+        userPrompt:
+          type: string
+      required:
+        - id
+        - title
+        - description
+        - userPrompt
+        - genre
+        - language
+        - practiceGoals
+        - secretEnding
+        - characters
+        - currentStage
+        - totalStages
+        - isComplete
+        - currentScene
+        - scenes
+        - history
+        - skillsEarned
+        - createdAt
+      type: object
+    DeleteMissionOutput:
+      additionalProperties: false
+      properties:
+        ok:
+          type: boolean
+      required:
+        - ok
+      type: object
+    DialogueTurn:
+      additionalProperties: false
+      properties:
+        scene:
+          format: int64
+          type: integer
+        speaker:
+          type: string
+        text:
+          type: string
+        voice:
+          type: string
+      required:
+        - scene
+        - speaker
+        - text
+      type: object
+    DynamicScene:
+      additionalProperties: false
+      properties:
+        flavor:
+          type: string
+        isFinal:
+          type: boolean
+        narration:
+          type: string
+        narrationVoice:
+          type: string
+        objects:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        present:
+          items:
+            $ref: "#/components/schemas/SceneCharacter"
+          type:
+            - array
+            - "null"
+        scenePurpose:
+          type: string
+        stage:
+          format: int64
+          type: integer
+        summary:
+          type: string
+        tips:
+          items:
+            $ref: "#/components/schemas/LanguageTip"
+          type:
+            - array
+            - "null"
+        trigger:
+          type: string
+      required:
+        - narration
+        - present
+        - objects
+        - tips
+        - stage
+        - isFinal
+      type: object
+    ErrorBody:
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        details:
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+          type:
+            - array
+            - "null"
+        message:
+          type: string
+      required:
+        - code
+        - message
+      type: object
+    ErrorDetail:
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+      required:
+        - message
+      type: object
+    ErrorResponse:
+      additionalProperties: false
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorBody"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - error
+      type: object
+    GetMissionOutput:
+      additionalProperties: false
+      properties:
+        activeReply:
+          $ref: "#/components/schemas/RespondJobStatusResponse"
+        mission:
+          $ref: "#/components/schemas/CustomMission"
+      required:
+        - mission
+      type: object
+    GrammarCheck:
+      additionalProperties: false
+      properties:
+        errors:
+          items:
+            $ref: "#/components/schemas/GrammarError"
+          type:
+            - array
+            - "null"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - errors
+      type: object
+    GrammarError:
+      additionalProperties: false
+      properties:
+        correction:
+          type: string
+        explanation:
+          type: string
+        original:
+          type: string
+        type:
+          type: string
+      required:
+        - original
+        - correction
+        - explanation
+        - type
+      type: object
+    HealthOutput:
+      additionalProperties: false
+      properties:
+        module:
+          examples:
+            - auth
+          type: string
+        status:
+          examples:
+            - ok
+          type: string
+        time:
+          format: date-time
+          type: string
+      required:
+        - status
+        - time
+      type: object
+    LanguageTip:
+      additionalProperties: false
+      properties:
+        category:
+          type: string
+        construction:
+          type: string
+        example:
+          type: string
+        explanation:
+          type: string
+        tip:
+          type: string
+      required:
+        - construction
+        - tip
+        - example
+        - explanation
+        - category
+      type: object
+    ListMissionsOutput:
+      additionalProperties: false
+      properties:
+        missions:
+          items:
+            $ref: "#/components/schemas/MissionSummary"
+          type:
+            - array
+            - "null"
+      required:
+        - missions
+      type: object
+    Meta:
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        request_id:
+          type: string
+      type: object
+    MissionSummary:
+      additionalProperties: false
+      properties:
+        coverImage:
+          type: string
+        coverImageStatus:
+          type: string
+        createdAt:
+          type: string
+        currentStage:
+          format: int64
+          type: integer
+        description:
+          type: string
+        generationError:
+          type: string
+        generationStatus:
+          type: string
+        generationStep:
+          type: string
+        genre:
+          type: string
+        id:
+          type: string
+        isComplete:
+          type: boolean
+        language:
+          type: string
+        started:
+          type: boolean
+        title:
+          type: string
+        totalStages:
+          format: int64
+          type: integer
+      required:
+        - id
+        - started
+        - title
+        - description
+        - createdAt
+        - isComplete
+        - currentStage
+        - totalStages
+        - generationStatus
+      type: object
+    NPCState:
+      additionalProperties: false
+      properties:
+        knowsAboutPlayer:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        playerKnowsAbout:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        trust:
+          format: int64
+          type: integer
+      required:
+        - trust
+      type: object
+    Pagination:
+      additionalProperties: false
+      properties:
+        has_more:
+          type: boolean
+        limit:
+          format: int64
+          type: integer
+        offset:
+          format: int64
+          type: integer
+        total:
+          format: int64
+          type: integer
+      required:
+        - limit
+        - offset
+        - total
+        - has_more
+      type: object
+    PartialLine:
+      additionalProperties: false
+      properties:
+        done:
+          type: boolean
+        name:
+          type: string
+        text:
+          type: string
+      required:
+        - name
+      type: object
+    PartialWorld:
+      additionalProperties: false
+      properties:
+        narration:
+          type: string
+        narrationDone:
+          type: boolean
+        responses:
+          items:
+            $ref: "#/components/schemas/PartialLine"
+          type:
+            - array
+            - "null"
+      type: object
+    PlotPoint:
+      additionalProperties: false
+      properties:
+        delivered:
+          type: boolean
+        deliveredAt:
+          format: int64
+          type: integer
+        description:
+          type: string
+        fact:
+          type: string
+        id:
+          type: string
+        required:
+          type: boolean
+      required:
+        - id
+        - fact
+        - required
+        - delivered
+      type: object
+    ReadyOutput:
+      additionalProperties: false
+      properties:
+        checks:
+          items:
+            $ref: "#/components/schemas/CheckResult"
+          type:
+            - array
+            - "null"
+        module:
+          examples:
+            - auth
+          type: string
+        ready:
+          type: boolean
+        time:
+          format: date-time
+          type: string
+      required:
+        - ready
+        - time
+      type: object
+    RegenerateImagesInputBody:
+      additionalProperties: false
+      properties:
+        key:
+          type: string
+        kind:
+          enum:
+            - ""
+            - cover
+            - scene
+            - avatar
+          type: string
+      type: object
+    RegenerateImagesOutput:
+      additionalProperties: false
+      properties:
+        mission:
+          $ref: "#/components/schemas/CustomMission"
+      required:
+        - mission
+      type: object
+    ResetMissionOutput:
+      additionalProperties: false
+      properties:
+        mission:
+          $ref: "#/components/schemas/CustomMission"
+      required:
+        - mission
+      type: object
+    Resolution:
+      additionalProperties: false
+      properties:
+        goal:
+          type: string
+        outcomes:
+          items:
+            $ref: "#/components/schemas/ResolutionOutcome"
+          type:
+            - array
+            - "null"
+        type:
+          type: string
+      required:
+        - type
+        - goal
+        - outcomes
+      type: object
+    ResolutionOutcome:
+      additionalProperties: false
+      properties:
+        description:
+          type: string
+        label:
+          type: string
+      required:
+        - label
+        - description
+      type: object
+    RespondInputBody:
+      additionalProperties: false
+      properties:
+        strict:
+          type: boolean
+        text:
+          type: string
+      required:
+        - text
+      type: object
+    RespondJobResult:
+      additionalProperties: false
+      properties:
+        currentStage:
+          format: int64
+          type: integer
+        epilogue:
+          type: string
+        errors:
+          items:
+            $ref: "#/components/schemas/GrammarError"
+          type:
+            - array
+            - "null"
+        grammarOk:
+          type: boolean
+        isComplete:
+          type: boolean
+        narration:
+          type: string
+        narrationVoice:
+          type: string
+        nextScene:
+          $ref: "#/components/schemas/DynamicScene"
+        outcome:
+          type: string
+        playerIntent:
+          type: string
+        responses:
+          items:
+            $ref: "#/components/schemas/CharacterLine"
+          type:
+            - array
+            - "null"
+        sceneAdvanced:
+          type: boolean
+        sceneState:
+          type: string
+        totalStages:
+          format: int64
+          type: integer
+      required:
+        - grammarOk
+        - errors
+        - narration
+        - responses
+        - sceneAdvanced
+        - isComplete
+        - currentStage
+        - totalStages
+      type: object
+    RespondJobStatusResponse:
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        grammar:
+          $ref: "#/components/schemas/GrammarCheck"
+        inputText:
+          type: string
+        jobId:
+          type: string
+        partial:
+          $ref: "#/components/schemas/PartialWorld"
+        result:
+          $ref: "#/components/schemas/RespondJobResult"
+        status:
+          type: string
+        step:
+          type: string
+      required:
+        - jobId
+        - status
+        - step
+      type: object
+    RespondOutput:
+      additionalProperties: false
+      properties:
+        jobId:
+          type: string
+      required:
+        - jobId
+      type: object
+    SceneCharacter:
+      additionalProperties: false
+      properties:
+        dialogue:
+          type: string
+        name:
+          type: string
+        voice:
+          type: string
+      required:
+        - name
+        - dialogue
+      type: object
+    SkillReward:
+      additionalProperties: false
+      properties:
+        category:
+          type: string
+        isNew:
+          type: boolean
+        name:
+          type: string
+      required:
+        - name
+        - category
+        - isNew
+      type: object
+    SuccessBodyCreateMissionOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/CreateMissionOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyDeleteMissionOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/DeleteMissionOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyGetMissionOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/GetMissionOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyHealthOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/HealthOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyListMissionsOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ListMissionsOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyReadyOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ReadyOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyRegenerateImagesOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/RegenerateImagesOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyResetMissionOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ResetMissionOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyRespondOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/RespondOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodySuggestNativeReplyOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/SuggestNativeReplyOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuggestNativeReplyInputBody:
+      additionalProperties: false
+      properties:
+        text:
+          type: string
+      required:
+        - text
+      type: object
+    SuggestNativeReplyOutput:
+      additionalProperties: false
+      properties:
+        variants:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - variants
+      type: object
+info:
+  title: quest
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /api/v1/quest/missions:
+    get:
+      operationId: listQuestMissions
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyListMissionsOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: List quest missions with generation status
+      tags:
+        - quest
+    post:
+      operationId: createQuestMission
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMissionInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyCreateMissionOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Create a quest mission
+      tags:
+        - quest
+  /api/v1/quest/missions/{id}:
+    delete:
+      operationId: deleteQuestMission
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyDeleteMissionOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Delete a quest mission
+      tags:
+        - quest
+    get:
+      operationId: getQuestMission
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyGetMissionOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: "Get a quest mission (polling: generation, images, active reply)"
+      tags:
+        - quest
+  /api/v1/quest/missions/{id}/native-reply:
+    post:
+      operationId: suggestQuestNativeReply
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuggestNativeReplyInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodySuggestNativeReplyOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Suggest native-like variants for the player reply
+      tags:
+        - quest
+  /api/v1/quest/missions/{id}/regenerate-images:
+    post:
+      operationId: regenerateQuestMissionImages
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegenerateImagesInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyRegenerateImagesOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Regenerate failed mission images (cover, scenes, avatars)
+      tags:
+        - quest
+  /api/v1/quest/missions/{id}/reset:
+    post:
+      operationId: resetQuestMission
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyResetMissionOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Reset a quest mission to its first scene
+      tags:
+        - quest
+  /api/v1/quest/missions/{id}/respond:
+    post:
+      operationId: respondQuestMission
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RespondInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyRespondOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Submit a player response (async)
+      tags:
+        - quest
+  /health:
+    get:
+      description: Returns 200 if the process is alive. Does not depend on external services.
+      operationId: health
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyHealthOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Liveness probe
+      tags:
+        - probes
+  /ready:
+    get:
+      description: Returns 200 if the module is ready to accept traffic (all dependencies alive). 503 if any check failed.
+      operationId: ready
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyReadyOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Readiness probe
+      tags:
+        - probes

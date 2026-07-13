@@ -1,0 +1,39 @@
+# Deps / build artifacts — rebuilt inside the image
+node_modules/
+**/node_modules/
+.pnpm-store/
+**/.pnpm-store/
+dist/
+**/dist/
+build/
+**/build/
+*.tsbuildinfo
+**/*.tsbuildinfo
+.vite/
+**/.vite/
+.turbo/
+**/.turbo/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# VCS / IDE / OS
+.git/
+.github/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Docs — not needed at build time
+docs/
+README.md
+**/README.md
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*

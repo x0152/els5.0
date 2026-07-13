@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@source "../../../packages/ui/src/**/*.{ts,tsx}";
+@source "../../../packages/dev-harness/src/**/*.{ts,tsx}";
+@source "../../../packages/data-table/src/**/*.{ts,tsx}";
+@source "../../../packages/blocks/src/**/*.{ts,tsx}";
+@source "../../../packages/lookup/src/**/*.{ts,tsx}";
+@source "../../profile-app/src/**/*.{ts,tsx}";
+@source "../../admin-app/src/**/*.{ts,tsx}";
+@source "../../journal-app/src/**/*.{ts,tsx}";
+@source "../../quest-app/src/**/*.{ts,tsx}";
+@source "../../grammarbook-app/src/**/*.{ts,tsx}";
+@source "../../essentialbook-app/src/**/*.{ts,tsx}";
+@source "../../wordbook-app/src/**/*.{ts,tsx}";
+@source "../../phrasebook-app/src/**/*.{ts,tsx}";
+@source "../../films-app/src/**/*.{ts,tsx}";
+@source "../../vocab-app/src/**/*.{ts,tsx}";
+@source "../../reader-app/src/**/*.{ts,tsx}";
+@source "../../settings-app/src/**/*.{ts,tsx}";
+@source "../../chat-app/src/**/*.{ts,tsx}";
+
+@utility scrollbar-hide {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@theme {
+  --color-brand-50:  #ecfdf5;
+  --color-brand-100: #d1fae5;
+  --color-brand-200: #a7f3d0;
+  --color-brand-300: #6ee7b7;
+  --color-brand-400: #34d399;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  --color-brand-700: #047857;
+  --color-brand-800: #065f46;
+  --color-brand-900: #064e3b;
+
+  --animate-scan: scan 1.4s ease-in-out infinite;
+  --animate-word-in: word-in 0.35s ease-out both;
+  --animate-pop-in: pop-in 0.3s ease-out both;
+  --animate-rise-in: rise-in 0.5s ease-out both;
+
+  @keyframes scan {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(300%); }
+  }
+  @keyframes word-in {
+    from { opacity: 0; transform: translateY(3px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: scale(0.5); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+}

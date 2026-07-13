@@ -1,0 +1,60 @@
+# syntax=docker/dockerfile:1.7
+#
+# Production image for els-data-platform-backend.
+# One image, many entrypoints: each Helm Deployment runs /app/bin/<svc>.
+# Helm overrides command: in app-deployment.yaml — CMD here is just a default.
+
+ARG GO_VERSION=1.25.11
+ARG ALPINE_VERSION=3.22
+ARG DISTROLESS_TAG=nonroot
+
+# ---- builder ---------------------------------------------------------------
+FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} AS builder
+
+RUN apk add --no-cache git ca-certificates tzdata
+
+WORKDIR /src
+
+COPY go.mod go.sum ./
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
+
+COPY . .
+
+ARG VERSION=dev
+ARG GIT_COMMIT=unknown
+ENV CGO_ENABLED=0 GOOS=linux
+
+# Build every entrypoint into /out/bin/<name>. Keep the list in sync with
+# values.yaml `apps.*.command` and jobs.*.command.
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    set -eux; \
+    mkdir -p /out/bin; \
+    LDFLAGS="-s -w -X main.version=${VERSION} -X main.gitCommit=${GIT_COMMIT}"; \
+    for svc in auth account admin migrator; do \
+        go build -trimpath -ldflags "${LDFLAGS}" -o /out/bin/${svc} ./cmd/${svc}; \
+    done; \
+    go build -trimpath -ldflags "${LDFLAGS}" -o /out/bin/main      ./cmd; \
+    go build -trimpath -ldflags "${LDFLAGS}" -o /out/bin/bootstrap ./tools/bootstrap
+
+# ---- final -----------------------------------------------------------------
+# Debian slim base so media processing tooling (ffmpeg for film transcoding,
+# pandoc for book conversion) is available at runtime. Runs as UID/GID 65532
+# to match runAsUser in deployments/helm/values.yaml apps.global.podSecurityContext.
+FROM debian:12-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ffmpeg pandoc ca-certificates tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /out/bin /app/bin
+
+WORKDIR /app
+ENV TZ=Europe/Moscow HOME=/tmp
+
+USER 65532:65532
+
+# Empty ENTRYPOINT keeps `command:` from Helm as the full argv.
+ENTRYPOINT []
+CMD ["/app/bin/main"]

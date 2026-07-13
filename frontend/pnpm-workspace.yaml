@@ -1,0 +1,72 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Centralized versions of external npm dependencies.
+# In package.json of packages write "<name>": "catalog:" instead of a concrete version.
+# To update a version — edit one place and run `pnpm install`.
+catalog:
+  # --- React runtime (singletons) ---
+  react: ^19.2.5
+  react-dom: ^19.2.5
+
+  # --- TypeScript typings for React ---
+  '@types/react': ^19.2.14
+  '@types/react-dom': ^19.2.3
+  '@types/node': ^25.6.0
+
+  # --- Build / transpilation ---
+  typescript: ~6.0.3
+  vite: ^8.0.9
+  '@vitejs/plugin-react': ^6.0.1
+
+  # --- Styles (Tailwind v4, CSS-first) ---
+  tailwindcss: ^4.2.2
+  '@tailwindcss/vite': ^4.2.2
+
+  # --- Lint ---
+  eslint: ^10.2.1
+  '@eslint/js': ^10.0.1
+  typescript-eslint: ^8.58.2
+  eslint-plugin-react-hooks: ^7.1.1
+  eslint-plugin-react-refresh: ^0.5.2
+  globals: ^17.5.0
+
+  # --- Routing / Data / OpenAPI codegen ---
+  react-router-dom: ^7.15.1
+  '@tanstack/react-query': ^5.100.5
+  '@tanstack/react-query-devtools': ^5.100.5
+  openapi-fetch: ^0.17.0
+  openapi-typescript: ^7.13.0
+  yaml: ^2.8.3
+
+  # --- UI primitives (for packages/ui) ---
+  clsx: ^2.1.1
+  tailwind-merge: ^3.5.0
+  class-variance-authority: ^0.7.1
+  lucide-react: ^1.8.0
+
+  # --- DataTable (ported from platform3.0-frontend/react-ui as-is) ---
+  '@glideapps/glide-data-grid': ^6.0.3
+  '@glideapps/glide-data-grid-cells': ^6.0.3
+  antd: ^5.27.4
+  dayjs: ^1.11.13
+
+# pnpm-10: explicit allow-list of packages allowed to run postinstall scripts
+# (comes with esbuild inside vite). Otherwise pnpm prints a warning.
+onlyBuiltDependencies:
+  - esbuild
+
+# openapi-typescript@7 declares peer typescript "^5.x", but works on TS 6
+# (uses stable compiler APIs). Suppress the false peer-warning.
+peerDependencyRules:
+  allowedVersions:
+    'openapi-typescript>typescript': '^5 || ^6'
+    # glide-data-grid still declares peer react 16–18, but actually works on 19
+    # (platform3.0-frontend runs it on React 19 without patches)
+    '@glideapps/glide-data-grid>react': '^16 || ^17 || ^18 || ^19'
+    '@glideapps/glide-data-grid>react-dom': '^16 || ^17 || ^18 || ^19'
+    '@glideapps/glide-data-grid-cells>react': '^16 || ^17 || ^18 || ^19'
+    '@glideapps/glide-data-grid-cells>react-dom': '^16 || ^17 || ^18 || ^19'
+    '@toast-ui/react-editor>react': '^16 || ^17 || ^18 || ^19'
+    '@toast-ui/react-editor>react-dom': '^16 || ^17 || ^18 || ^19'

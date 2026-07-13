@@ -1,0 +1,510 @@
+components:
+  schemas:
+    CheckResult:
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        name:
+          examples:
+            - postgres
+          type: string
+        ok:
+          type: boolean
+      required:
+        - name
+        - ok
+      type: object
+    ErrorBody:
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        details:
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+          type:
+            - array
+            - "null"
+        message:
+          type: string
+      required:
+        - code
+        - message
+      type: object
+    ErrorDetail:
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+      required:
+        - message
+      type: object
+    ErrorResponse:
+      additionalProperties: false
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorBody"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - error
+      type: object
+    EventProcessingOutput:
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+      required:
+        - enabled
+      type: object
+    HealthOutput:
+      additionalProperties: false
+      properties:
+        module:
+          examples:
+            - auth
+          type: string
+        status:
+          examples:
+            - ok
+          type: string
+        time:
+          format: date-time
+          type: string
+      required:
+        - status
+        - time
+      type: object
+    Meta:
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        request_id:
+          type: string
+      type: object
+    Pagination:
+      additionalProperties: false
+      properties:
+        has_more:
+          type: boolean
+        limit:
+          format: int64
+          type: integer
+        offset:
+          format: int64
+          type: integer
+        total:
+          format: int64
+          type: integer
+      required:
+        - limit
+        - offset
+        - total
+        - has_more
+      type: object
+    ProviderModelsOutput:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - items
+      type: object
+    ProviderOutput:
+      additionalProperties: false
+      properties:
+        base_url:
+          type: string
+        feature:
+          type: string
+        has_key:
+          type: boolean
+        model:
+          type: string
+      required:
+        - feature
+        - base_url
+        - model
+        - has_key
+      type: object
+    ProviderResponse:
+      additionalProperties: false
+      properties:
+        provider:
+          $ref: "#/components/schemas/ProviderOutput"
+      required:
+        - provider
+      type: object
+    ProvidersOutput:
+      additionalProperties: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/ProviderOutput"
+          type:
+            - array
+            - "null"
+      required:
+        - items
+      type: object
+    ReadyOutput:
+      additionalProperties: false
+      properties:
+        checks:
+          items:
+            $ref: "#/components/schemas/CheckResult"
+          type:
+            - array
+            - "null"
+        module:
+          examples:
+            - auth
+          type: string
+        ready:
+          type: boolean
+        time:
+          format: date-time
+          type: string
+      required:
+        - ready
+        - time
+      type: object
+    SetEventProcessingInputBody:
+      additionalProperties: false
+      properties:
+        enabled:
+          description: Process pending events when true; keep them pending when false
+          type: boolean
+      required:
+        - enabled
+      type: object
+    SuccessBodyEventProcessingOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/EventProcessingOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyHealthOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/HealthOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyProviderModelsOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ProviderModelsOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyProviderResponse:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ProviderResponse"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyProvidersOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ProvidersOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyReadyOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ReadyOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    UpdateProviderInputBody:
+      additionalProperties: false
+      properties:
+        api_key:
+          description: API token; omit to keep the current one
+          maxLength: 500
+          type: string
+        base_url:
+          description: Provider base URL (OpenAI-compatible)
+          maxLength: 500
+          type: string
+        model:
+          description: Model id from the provider /models list
+          maxLength: 200
+          type: string
+      required:
+        - base_url
+        - model
+      type: object
+info:
+  title: settings
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /api/v1/settings/ai/providers:
+    get:
+      operationId: listAIProviders
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyProvidersOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: List AI provider settings for every platform feature
+      tags:
+        - settings
+  /api/v1/settings/ai/providers/{feature}:
+    put:
+      operationId: updateAIProvider
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: feature
+          required: true
+          schema:
+            enum:
+              - main
+              - analysis
+              - vision
+              - image
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProviderInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyProviderResponse"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Update base URL, token and model for an AI provider
+      tags:
+        - settings
+  /api/v1/settings/ai/providers/{feature}/models:
+    get:
+      operationId: listAIProviderModels
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: feature
+          required: true
+          schema:
+            enum:
+              - main
+              - analysis
+              - vision
+              - image
+            type: string
+        - description: Override base URL to query instead of the saved one
+          explode: false
+          in: query
+          name: base_url
+          schema:
+            description: Override base URL to query instead of the saved one
+            maxLength: 500
+            type: string
+        - description: Override API token; omit to reuse the saved one
+          explode: false
+          in: query
+          name: api_key
+          schema:
+            description: Override API token; omit to reuse the saved one
+            maxLength: 500
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyProviderModelsOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: List models offered by an AI provider endpoint
+      tags:
+        - settings
+  /api/v1/settings/event-processing:
+    get:
+      operationId: getEventProcessing
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyEventProcessingOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Whether pending events are processed by workers
+      tags:
+        - settings
+    put:
+      operationId: setEventProcessing
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetEventProcessingInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyEventProcessingOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Enable or disable processing of pending events
+      tags:
+        - settings
+  /health:
+    get:
+      description: Returns 200 if the process is alive. Does not depend on external services.
+      operationId: health
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyHealthOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Liveness probe
+      tags:
+        - probes
+  /ready:
+    get:
+      description: Returns 200 if the module is ready to accept traffic (all dependencies alive). 503 if any check failed.
+      operationId: ready
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyReadyOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Readiness probe
+      tags:
+        - probes

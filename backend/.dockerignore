@@ -1,0 +1,31 @@
+# Build artifacts
+bin/
+tmp/
+dist/
+*.test
+*.out
+
+# Dev tooling
+Dockerfile.dev
+.air.toml
+docker-compose.yml
+docker-compose.*.yml
+.env
+.env.local
+.env.*.local
+
+# VCS / IDE
+.git/
+.github/
+.idea/
+.vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Docs (not needed at runtime; OpenAPI is regenerated in CI)
+docs/
+
+# Tests-only stuff that should not balloon the build context
+**/testdata/

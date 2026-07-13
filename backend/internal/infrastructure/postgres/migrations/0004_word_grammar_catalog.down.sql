@@ -1,0 +1,5 @@
+ALTER TABLE events DROP COLUMN IF EXISTS word_id;
+ALTER TABLE events DROP COLUMN IF EXISTS grammar_rule_id;
+
+DROP TABLE IF EXISTS grammar_rules;
+DROP TABLE IF EXISTS words;
