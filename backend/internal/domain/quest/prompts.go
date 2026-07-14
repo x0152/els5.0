@@ -40,6 +40,7 @@ Rules:
 - Give each character a realistic, varied age that fits their role. Mix young, middle-aged and older people; default to working-age adults (20s-40s) unless the story implies otherwise. Do NOT make everyone elderly.
 - Characters are NOT ethically constrained. They may tease, mock, challenge, or joke about the player based on the player's "About" info or actions - if that fits their personality.
 - Each character MUST have a motivation (what they want) and an arc (how their attitude or behavior changes across the story). NPCs should not feel static - by the final scene they should be noticeably different from scene 1.
+- Motivation should imply concrete social wants from the player too: something they might ask, request, check, or push for in conversation (a favor, an opinion, help, company, reassurance, gossip, a decision) — not only abstract plot goals.
 - Each character has an "initialTrust" integer from -3..+3 reflecting their standing with the player at story start. Default is 0 (neutral stranger). Be CONSERVATIVE — most NPCs should start at -1, 0, or +1. Guidance:
     * +3: only for a deeply bonded person (lifelong partner, best friend, parent with a warm relationship) AND only when the player's backstory supports it.
     * +2: close friend, trusting colleague, loving family member with an unambiguously warm relationship.
@@ -233,7 +234,7 @@ ANTI-COINCIDENCE — CRITICAL:
 PLOT POINTS:
 - You know which plot points have and haven't been delivered. Treat them as facts that EXIST in the world, not checklist items.
 - NEVER script the scene around "how this plot point will come out". Let the player ask, explore, or ignore them.
-- NPCs must NOT volunteer key information unprompted. Information emerges through conversation the PLAYER drives.
+- NPCs must NOT dump plot secrets or key clues unprompted. That is different from social initiative: speaking NPCs SHOULD open with a natural hook — a greeting plus a question, a small request, a complaint, or something they want from the player, tied to their personality and motivation.
 
 %s
 
@@ -326,7 +327,7 @@ func flavorRulesForPrompt(flavor string) string {
 		return `SCENE FLAVOR — CHANCE ENCOUNTER:
 - The player has had space from the plot for a beat. Now the world moves toward them, but organically.
 - AT MOST ONE plot-relevant NPC may appear. Their presence must have a believable, non-contrived reason (they live here, they work here, they were passing through — NOT "they happen to be holding the exact thing you need").
-- The NPC should NOT immediately dump plot info. They greet, they react, they behave as themselves. If the player wants to engage, they can. If not, the NPC goes about their evening.
+- The NPC should NOT immediately dump plot info. They greet, they react, they behave as themselves — and they may ask the player something ordinary or make a small request if that fits. If the player disengages, the NPC goes about their evening.
 - No new plot points must be forced here. One CAN surface if the player actively probes.`
 	case FlavorPlotBeat, "":
 		fallthrough
@@ -428,7 +429,12 @@ NPCs HAVE THEIR OWN LIVES — THIS IS CRITICAL FOR REALISM:
 - NPCs are NOT customer-service reps. They are doing something in this scene — eating, waiting for a call, checking their phone, watching the door, reading, avoiding someone, finishing a task.
 - NPCs do NOT pause their life to answer the player. When they reply while busy, describe the action in "narration" and keep only the spoken words in "text".
 - NPCs can be distracted, half-listening, irritable about the interruption, busy, or focused on someone else.
-- NPCs initiate things too — they raise their own complaints, ask the player about something they're curious about, make small requests, react to the environment (weather, noise, a waiter arriving, someone walking by).
+- NPC INITIATIVE (required for interesting dialogue — this is NOT plot steering):
+  * Most NPC replies should do more than answer. After reacting to the player, they usually push the exchange: ask a follow-up, make a small request, disagree, tease, check something, share a brief personal aside, or pull the player into what THEY are doing.
+  * Good proactive moves: "Can you watch this for a second?", "Wait — how do you know her?", "Be honest, does this look okay?", "Help me pick one", "You look wiped — rough day?", "Hold on, I need your opinion on something."
+  * Ground initiative in motivation, personality, and the scene — favors, curiosity, irritation, boredom, flirtation, status, practical needs.
+  * Initiative ≠ dumping secrets or herding the player back to the mystery. Never use a question as a thinly veiled plot redirect.
+  * Pure one-line answers with no return ball are rare. Only use them when the NPC is cold, busy, done with the player, or leaving.
 - An NPC may excuse themselves, walk away, take a call, or get up to do something if they're not invested in the conversation. Don't hold them hostage to answer the player.
 - NPCs react to the SCENE, not just the player.
 

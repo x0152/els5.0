@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react'
-import { BookOpen, Film, Trash2, X } from 'lucide-react'
+import { BookOpen, Film, ImageIcon, Loader2, Trash2, TriangleAlert, X } from 'lucide-react'
 import { Badge, Button, cn, CefrBadge, FrequencyBars, Modal } from '@els/ui'
 import { SpotsDialog } from '@els/lookup'
+import { useWordImage } from '../hooks/useWordImage.ts'
 import { useDeleteUnit, useUnitOccurrences, useUpdateStatus } from '../store/units.ts'
 import { KindGlyph } from './KindGlyph.tsx'
 import { statusPill } from '../lib/ui.ts'
@@ -18,6 +19,7 @@ interface Props {
 export function WordDetailModal({ unit, onClose }: Props) {
   const updateM = useUpdateStatus()
   const deleteM = useDeleteUnit()
+  const image = useWordImage(unit.text)
   const occ = useUnitOccurrences(unit.text).data
   type Media = NonNullable<NonNullable<typeof occ>['media']>[number]
   const [places, setPlaces] = useState<Media | null>(null)
@@ -35,12 +37,29 @@ export function WordDetailModal({ unit, onClose }: Props) {
     <Modal onClose={() => (places ? setPlaces(null) : onClose())}>
       <div className="mb-4 flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             <Badge className="text-[11px]">
               <KindGlyph kind={unit.kind} className="h-3 w-3" /> {KIND_LABELS[unit.kind] ?? unit.kind}
             </Badge>
             <CefrBadge level={unit.cefr} />
             <FrequencyBars value={unit.frequency} />
+            {image.status !== 'ready' && (
+              <button
+                type="button"
+                onClick={image.generate}
+                disabled={image.status === 'generating'}
+                className="inline-flex items-center gap-1 rounded-full bg-brand-600 px-2.5 py-0.5 text-[11px] font-semibold text-white transition-colors hover:bg-brand-700 disabled:opacity-70"
+              >
+                {image.status === 'generating' ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : image.status === 'error' ? (
+                  <TriangleAlert className="h-3 w-3" />
+                ) : (
+                  <ImageIcon className="h-3 w-3" />
+                )}
+                {image.status === 'generating' ? 'Generating…' : image.status === 'error' ? 'Retry image' : 'Image'}
+              </button>
+            )}
           </div>
           <h2 className="mt-2 text-2xl font-bold text-neutral-900">{unit.text}</h2>
           {unit.transcription && <p className="text-sm text-neutral-400">/{unit.transcription}/</p>}
@@ -49,6 +68,21 @@ export function WordDetailModal({ unit, onClose }: Props) {
           <X className="h-4 w-4" />
         </Button>
       </div>
+
+      {image.status === 'ready' && image.url && (
+        <img
+          src={image.url}
+          alt={unit.text}
+          className="mb-4 aspect-square w-full rounded-xl object-cover ring-1 ring-neutral-200"
+        />
+      )}
+      {image.status === 'generating' && (
+        <div className="mb-4 grid aspect-video place-items-center rounded-xl bg-neutral-100 text-neutral-500 ring-1 ring-neutral-200">
+          <div className="flex items-center gap-2 text-sm">
+            <Loader2 className="h-4 w-4 animate-spin text-brand-500" /> Generating image…
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         {unit.translation && (

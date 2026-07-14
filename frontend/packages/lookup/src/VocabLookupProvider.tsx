@@ -64,7 +64,7 @@ function toRow(it: AnalyzeStreamItem): Row {
     description: it.description,
     frequency: it.frequency,
     cefr: it.cefr,
-    checked: !it.existing,
+    checked: false,
     state: it.existing ? 'dup' : 'idle',
     common: it.common,
     total: it.total,
@@ -183,6 +183,12 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab'> }) {
   const [places, setPlaces] = useState<Occurrence | null>(null)
   const [fsEl, setFsEl] = useState<Element | null>(null)
   const abortRef = useRef<AbortController | null>(null)
+  const pickedOpenRef = useRef(false)
+  const touchUi = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+
+  useEffect(() => {
+    pickedOpenRef.current = !!picked
+  }, [picked])
 
   useEffect(() => {
     const onFs = () => setFsEl(document.fullscreenElement)
@@ -191,18 +197,42 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab'> }) {
   }, [])
 
   useEffect(() => {
-    const onSelect = (e: Event) => {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const refresh = (immediate = false) => {
+      clearTimeout(timer)
+      const run = () => {
+        if (pickedOpenRef.current) return
+        const sel = window.getSelection()
+        if (sel?.anchorNode && rootRef.current?.contains(sel.anchorNode)) return
+        setPill(readSelection())
+      }
+      if (immediate) run()
+      else timer = setTimeout(run, 150)
+    }
+    const onMouseUp = (e: Event) => {
       const target = e.target as Node | null
       if (rootRef.current && target && rootRef.current.contains(target)) return
-      setPill(readSelection())
+      refresh(true)
     }
+    const onKeyUp = (e: Event) => {
+      const target = e.target as Node | null
+      if (rootRef.current && target && rootRef.current.contains(target)) return
+      refresh(true)
+    }
+    const onSelectionChange = () => refresh(false)
+    const onTouchEnd = () => refresh(false)
     const onScroll = () => setPill(null)
-    document.addEventListener('mouseup', onSelect)
-    document.addEventListener('keyup', onSelect)
+    document.addEventListener('mouseup', onMouseUp)
+    document.addEventListener('keyup', onKeyUp)
+    document.addEventListener('selectionchange', onSelectionChange)
+    document.addEventListener('touchend', onTouchEnd)
     window.addEventListener('scroll', onScroll, true)
     return () => {
-      document.removeEventListener('mouseup', onSelect)
-      document.removeEventListener('keyup', onSelect)
+      clearTimeout(timer)
+      document.removeEventListener('mouseup', onMouseUp)
+      document.removeEventListener('keyup', onKeyUp)
+      document.removeEventListener('selectionchange', onSelectionChange)
+      document.removeEventListener('touchend', onTouchEnd)
       window.removeEventListener('scroll', onScroll, true)
     }
   }, [])
@@ -236,7 +266,7 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab'> }) {
           setLoading(false)
           setStreaming(false)
           if (count === 0) {
-            setRows([{ text: p.text, kind: '', description: '', frequency: 0, cefr: '', checked: true, state: 'idle', common: false, total: 0, media: [] }])
+            setRows([{ text: p.text, kind: '', description: '', frequency: 0, cefr: '', checked: false, state: 'idle', common: false, total: 0, media: [] }])
           }
         },
       },
@@ -272,29 +302,33 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab'> }) {
     const targets = rows
       .map((r, i) => ({ text: r.text, checked: r.checked, state: r.state, i }))
       .filter((t) => t.checked && (t.state === 'idle' || t.state === 'error'))
+    if (targets.length === 0) return
+    let failed = false
     for (const { text, i } of targets) {
       setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, state: 'adding' } : r)))
       try {
         const res = await api.vocab.addVocabUnit({ body: { text } })
-        setRows((prev) =>
-          prev.map((r, idx) =>
-            idx === i
-              ? res?.correct && res.unit
-                ? { ...r, state: 'added' }
-                : { ...r, state: 'error', note: res?.correction || res?.explanation }
-              : r,
-          ),
-        )
+        if (res?.correct && res.unit) {
+          setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, state: 'added' } : r)))
+        } else {
+          failed = true
+          setRows((prev) =>
+            prev.map((r, idx) => (idx === i ? { ...r, state: 'error', note: res?.correction || res?.explanation } : r)),
+          )
+        }
       } catch (err) {
         const dup = isApiError(err) && err.status === 409
+        if (!dup) failed = true
         setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, state: dup ? 'dup' : 'error' } : r)))
       }
     }
-  }, [api, rows])
+    if (!failed) close()
+  }, [api, close, rows])
 
   const pendingCount = rows.filter((r) => r.checked && (r.state === 'idle' || r.state === 'error')).length
 
-  const pillBelow = pill ? pill.rect.top < 56 : false
+  const pillBelow = pill ? touchUi || pill.rect.top < 56 : false
+  const pillGap = touchUi ? 36 : 8
   const pillLeft = pill ? Math.min(Math.max(pill.rect.left + pill.rect.width / 2, 64), window.innerWidth - 64) : 0
 
   return createPortal(
@@ -302,11 +336,14 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab'> }) {
       {pill && (
         <button
           type="button"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => void open(pill)}
+          onPointerDown={(e) => e.preventDefault()}
+          onPointerUp={(e) => {
+            e.preventDefault()
+            void open(pill)
+          }}
           style={{
             position: 'fixed',
-            top: pillBelow ? pill.rect.bottom + 8 : pill.rect.top - 8,
+            top: pillBelow ? pill.rect.bottom + pillGap : pill.rect.top - pillGap,
             left: pillLeft,
             transform: `translate(-50%, ${pillBelow ? '0' : '-100%'})`,
             zIndex: 2147483646,
