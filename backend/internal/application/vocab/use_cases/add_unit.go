@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/els/backend/internal/domain/iam"
+	"github.com/els/backend/internal/domain/illustration"
+	"github.com/els/backend/internal/domain/settings"
 	"github.com/els/backend/internal/domain/shared"
 	"github.com/els/backend/internal/domain/vocab"
 )
@@ -17,13 +19,19 @@ type LLMClient interface {
 	Chat(ctx context.Context, system, user string) (string, error)
 }
 
-type AddUnitUseCase struct {
-	units vocab.Repository
-	llm   LLMClient
+type ImageEnsurer interface {
+	Ensure(ctx context.Context, prompt, aspect string, trigger bool) illustration.Status
 }
 
-func NewAddUnitUseCase(units vocab.Repository, llm LLMClient) *AddUnitUseCase {
-	return &AddUnitUseCase{units: units, llm: llm}
+type AddUnitUseCase struct {
+	units  vocab.Repository
+	llm    LLMClient
+	flags  settings.FlagRepository
+	images ImageEnsurer
+}
+
+func NewAddUnitUseCase(units vocab.Repository, llm LLMClient, flags settings.FlagRepository, images ImageEnsurer) *AddUnitUseCase {
+	return &AddUnitUseCase{units: units, llm: llm, flags: flags, images: images}
 }
 
 type AddUnitResult struct {
@@ -81,6 +89,13 @@ func (uc *AddUnitUseCase) Execute(ctx context.Context, actor *iam.Actor, input s
 	stored, err := uc.units.Create(ctx, unit)
 	if err != nil {
 		return AddUnitResult{}, err
+	}
+
+	// 6. Kick off illustration generation when the platform flag is on.
+	if uc.images != nil && uc.flags != nil {
+		if on, err := uc.flags.GetFlag(ctx, settings.FlagAutoWordImages); err == nil && on {
+			uc.images.Ensure(ctx, vocab.ImagePrompt(stored.Text), "square", true)
+		}
 	}
 	return AddUnitResult{Correct: true, Unit: &stored}, nil
 }

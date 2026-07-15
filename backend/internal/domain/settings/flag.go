@@ -2,7 +2,10 @@ package settings
 
 import "context"
 
-const FlagEventProcessing = "event_processing"
+const (
+	FlagEventProcessing = "event_processing"
+	FlagAutoWordImages  = "auto_word_images"
+)
 
 type FlagRepository interface {
 	GetFlag(ctx context.Context, key string) (bool, error)

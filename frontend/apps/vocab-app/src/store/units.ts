@@ -1,7 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../lib/api.ts'
-import { imageApi, wordImagePrompt } from '../lib/images.ts'
-import { useMe } from './me.ts'
 import type { AddUnitResult, UnitStatus } from '../lib/types.ts'
 
 const PAGE_SIZE = 60
@@ -35,18 +33,13 @@ export function useUnitOccurrences(text: string) {
 
 export function useAddUnit() {
   const qc = useQueryClient()
-  const me = useMe()
   return useMutation({
     mutationFn: async (text: string): Promise<AddUnitResult> => {
       const res = await api.vocab.addVocabUnit({ body: { text } })
       return res as AddUnitResult
     },
     onSuccess: (res) => {
-      if (!res?.correct) return
-      qc.invalidateQueries({ queryKey: listRoot })
-      if (me.data?.auto_word_images && res.unit) {
-        void imageApi(wordImagePrompt(res.unit.text), true, 'square').catch(() => {})
-      }
+      if (res?.correct) qc.invalidateQueries({ queryKey: listRoot })
     },
   })
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/els/backend/internal/application/ai/api"
 	"github.com/els/backend/internal/application/ai/tools"
 	usecases "github.com/els/backend/internal/application/ai/use_cases"
+	learnworker "github.com/els/backend/internal/application/learn/worker"
 	"github.com/els/backend/internal/domain/agent"
 	"github.com/els/backend/internal/domain/media"
 	domainsettings "github.com/els/backend/internal/domain/settings"
@@ -85,8 +86,10 @@ func Mount(humaAPI huma.API, mux *http.ServeMux, cfg Config, pool *pgxpool.Pool,
 		}
 	}
 
+	images := learnworker.NewImages(imageGen, storage, urls, cfg.Bucket, logger)
+
 	toolPlugins := []agent.ToolPlugin{
-		tools.NewPlugin(corerepo.NewStore(pool), vocabrepo.NewStore(pool)),
+		tools.NewPlugin(corerepo.NewStore(pool), vocabrepo.NewStore(pool), provRepo, images),
 		tools.NewContentPlugin(tools.ContentDeps{
 			Books:    bookrepo.NewStore(pool),
 			Films:    filmsStore,

@@ -9,12 +9,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
+	learnworker "github.com/els/backend/internal/application/learn/worker"
 	"github.com/els/backend/internal/application/vocab/api"
 	usecases "github.com/els/backend/internal/application/vocab/use_cases"
 	"github.com/els/backend/internal/application/vocab/worker"
 	"github.com/els/backend/internal/domain/media"
 	domainsettings "github.com/els/backend/internal/domain/settings"
 	"github.com/els/backend/internal/domain/shared/ports"
+	"github.com/els/backend/internal/infrastructure/adapters/bothub"
 	"github.com/els/backend/internal/infrastructure/adapters/llm"
 	"github.com/els/backend/internal/infrastructure/adapters/providercfg"
 	"github.com/els/backend/internal/infrastructure/adapters/redissession"
@@ -48,9 +50,15 @@ func Mount(humaAPI huma.API, mux *http.ServeMux, cfg Config, pool *pgxpool.Pool,
 	sessions := redissession.NewStore(rdb, cfg.Session.KeyPrefix)
 	authn := authx.New(sessions, accounts)
 
-	analysisResolver := providercfg.NewResolver(settingsrepo.NewStore(pool), domainsettings.FeatureAnalysis,
+	settingsStore := settingsrepo.NewStore(pool)
+	analysisResolver := providercfg.NewResolver(settingsStore, domainsettings.FeatureAnalysis,
 		ports.AIProviderConfig{BaseURL: cfg.LLM.BaseURL, APIKey: cfg.LLM.APIKey, Model: cfg.LLM.Model})
 	llmClient := llm.NewWithResolver(cfg.LLM.BaseURL, cfg.LLM.APIKey, cfg.LLM.Model, time.Duration(cfg.LLM.Timeout)*time.Second, analysisResolver)
+
+	imageResolver := providercfg.NewResolver(settingsStore, domainsettings.FeatureImage,
+		ports.AIProviderConfig{BaseURL: cfg.Image.URL, APIKey: cfg.Image.APIKey, Model: cfg.Image.Model})
+	imageProvider := bothub.NewWithResolver(cfg.Image.URL, cfg.Image.APIKey, cfg.Image.Model, time.Duration(cfg.Image.Timeout)*time.Second, imageResolver)
+	images := learnworker.NewImages(imageProvider, storage, urls, cfg.Bucket, logger)
 
 	practiceSessions := vocabrepo.NewPracticeSessionStore(rdb)
 	practiceWorker := worker.NewPractice(practiceSessions, llmClient, logger)
@@ -58,7 +66,7 @@ func Mount(humaAPI huma.API, mux *http.ServeMux, cfg Config, pool *pgxpool.Pool,
 	analyze := usecases.NewAnalyzeUseCase(llmClient, lex, store)
 	api.Register(humaAPI, api.Deps{
 		Authenticator:    authn,
-		AddUnit:          usecases.NewAddUnitUseCase(store, llmClient),
+		AddUnit:          usecases.NewAddUnitUseCase(store, llmClient, settingsStore, images),
 		Analyze:          analyze,
 		Occurrences:      usecases.NewOccurrencesUseCase(lex),
 		ListUnits:        usecases.NewListUnitsUseCase(store),

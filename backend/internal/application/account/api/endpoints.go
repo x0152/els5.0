@@ -49,7 +49,6 @@ func Register(api huma.API, deps Deps) {
 			AboutMe:          in.Body.AboutMe,
 			NativeLanguage:   in.Body.NativeLanguage,
 			ShowTranslations: in.Body.ShowTranslations,
-			AutoWordImages:   in.Body.AutoWordImages,
 		})
 		if err != nil {
 			return MeOutput{}, err

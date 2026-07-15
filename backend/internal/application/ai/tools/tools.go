@@ -9,6 +9,7 @@ import (
 
 	"github.com/els/backend/internal/domain/agent"
 	"github.com/els/backend/internal/domain/core"
+	"github.com/els/backend/internal/domain/settings"
 	"github.com/els/backend/internal/domain/vocab"
 )
 
@@ -20,9 +21,9 @@ type Plugin struct {
 	tools []agent.Tool
 }
 
-func NewPlugin(reader EventsReader, words vocab.Repository) *Plugin {
+func NewPlugin(reader EventsReader, words vocab.Repository, flags settings.FlagRepository, images ImageEnsurer) *Plugin {
 	t := []agent.Tool{readRecentErrors(reader), currentTime()}
-	t = append(t, vocabTools(words)...)
+	t = append(t, vocabTools(words, flags, images)...)
 	return &Plugin{tools: t}
 }
 

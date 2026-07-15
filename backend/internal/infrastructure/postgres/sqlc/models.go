@@ -21,7 +21,6 @@ type Account struct {
 	AboutMe          string
 	NativeLanguage   string
 	ShowTranslations bool
-	AutoWordImages   bool
 }
 
 type Administrator struct {

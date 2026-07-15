@@ -10,7 +10,15 @@ type Config struct {
 
 	Session SessionConfig `envPrefix:"VOCAB_SESSION_"`
 	LLM     LLMConfig     `envPrefix:"LLM_"`
-	Bucket  string        `env:"ILLUSTRATE_S3_BUCKET" envDefault:"illustrations"`
+	Image   ImageConfig
+	Bucket  string `env:"ILLUSTRATE_S3_BUCKET" envDefault:"illustrations"`
+}
+
+type ImageConfig struct {
+	URL     string `env:"IMAGE_API_URL"`
+	APIKey  string `env:"IMAGE_API_KEY" secret:"true"`
+	Model   string `env:"IMAGE_MODEL"`
+	Timeout int    `env:"IMAGE_TIMEOUT_SECONDS" envDefault:"180"`
 }
 
 type SessionConfig struct {

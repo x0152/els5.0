@@ -7,17 +7,18 @@ import (
 	"github.com/els/backend/internal/domain/settings"
 )
 
-type GetEventProcessingUseCase struct {
+type GetFlagUseCase struct {
 	repo settings.FlagRepository
+	key  string
 }
 
-func NewGetEventProcessingUseCase(repo settings.FlagRepository) *GetEventProcessingUseCase {
-	return &GetEventProcessingUseCase{repo: repo}
+func NewGetFlagUseCase(repo settings.FlagRepository, key string) *GetFlagUseCase {
+	return &GetFlagUseCase{repo: repo, key: key}
 }
 
-func (uc *GetEventProcessingUseCase) Execute(ctx context.Context, actor *iam.Actor) (bool, error) {
+func (uc *GetFlagUseCase) Execute(ctx context.Context, actor *iam.Actor) (bool, error) {
 	if err := iam.RequireGlobalAdmin(actor); err != nil {
 		return false, err
 	}
-	return uc.repo.GetFlag(ctx, settings.FlagEventProcessing)
+	return uc.repo.GetFlag(ctx, uc.key)
 }

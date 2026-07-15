@@ -411,6 +411,63 @@ paths:
       summary: List models offered by an AI provider endpoint
       tags:
         - settings
+  /api/v1/settings/auto-word-images:
+    get:
+      operationId: getAutoWordImages
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyEventProcessingOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Whether illustrations are generated automatically for new vocabulary words
+      tags:
+        - settings
+    put:
+      operationId: setAutoWordImages
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetEventProcessingInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyEventProcessingOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Enable or disable automatic illustration generation for new vocabulary words
+      tags:
+        - settings
   /api/v1/settings/event-processing:
     get:
       operationId: getEventProcessing

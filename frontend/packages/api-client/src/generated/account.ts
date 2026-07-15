@@ -131,7 +131,6 @@ export interface components {
         MeOutput: {
             about_me: string;
             account_id: string;
-            auto_word_images: boolean;
             email: string;
             english_level: string;
             entity_id: string;
@@ -193,8 +192,6 @@ export interface components {
         };
         UpdateProfileBody: {
             about_me: string;
-            /** @description Generate an illustration automatically for every word added to the vocabulary */
-            auto_word_images: boolean;
             english_level: string;
             first_name: string;
             last_name: string;

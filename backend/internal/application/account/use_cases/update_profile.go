@@ -23,7 +23,6 @@ type UpdateProfileCommand struct {
 	AboutMe          string
 	NativeLanguage   string
 	ShowTranslations bool
-	AutoWordImages   bool
 }
 
 type UpdateProfileResult struct {
@@ -39,7 +38,7 @@ func (uc *UpdateProfileUseCase) Execute(ctx context.Context, actor *iam.Actor, c
 	if err != nil {
 		return UpdateProfileResult{}, shared.Validation(err)
 	}
-	if err := account.UpdateProfile(name, cmd.EnglishLevel, cmd.AboutMe, cmd.NativeLanguage, cmd.ShowTranslations, cmd.AutoWordImages); err != nil {
+	if err := account.UpdateProfile(name, cmd.EnglishLevel, cmd.AboutMe, cmd.NativeLanguage, cmd.ShowTranslations); err != nil {
 		return UpdateProfileResult{}, err
 	}
 	if err := uc.accounts.Update(ctx, account); err != nil {

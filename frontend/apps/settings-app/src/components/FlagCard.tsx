@@ -1,20 +1,26 @@
 import { useEffect, useState } from 'react'
-import { api } from '../lib/api'
 
-export function EventProcessingCard() {
+interface FlagCardProps {
+  title: string
+  description: string
+  load: () => Promise<{ enabled: boolean } | undefined>
+  save: (enabled: boolean) => Promise<unknown>
+}
+
+export function FlagCard({ title, description, load, save }: FlagCardProps) {
   const [enabled, setEnabled] = useState<boolean | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let alive = true
-    api.settings
-      .getEventProcessing()
+    load()
       .then((res) => alive && setEnabled(!!res?.enabled))
       .catch((e) => alive && setError(e instanceof Error ? e.message : 'Failed to load'))
     return () => {
       alive = false
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const toggle = async () => {
@@ -23,7 +29,7 @@ export function EventProcessingCard() {
     setSaving(true)
     setError(null)
     try {
-      await api.settings.setEventProcessing({ body: { enabled: next } })
+      await save(next)
       setEnabled(next)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save')
@@ -36,10 +42,8 @@ export function EventProcessingCard() {
     <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-neutral-900">Event processing</h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            When disabled, incoming events stay pending and are not processed by workers.
-          </p>
+          <h2 className="text-base font-semibold text-neutral-900">{title}</h2>
+          <p className="mt-1 text-sm text-neutral-500">{description}</p>
         </div>
         <button
           type="button"

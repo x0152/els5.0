@@ -109,6 +109,8 @@ export function createApi(options: ApiClientOptions) {
       listAIProviders: (init?: MaybeOptionalInit<SettingsPaths['/api/v1/settings/ai/providers'], 'get'>) => unwrap(clients.settings.GET('/api/v1/settings/ai/providers', init)),
       updateAIProvider: (init: MaybeOptionalInit<SettingsPaths['/api/v1/settings/ai/providers/{feature}'], 'put'>) => unwrap(clients.settings.PUT('/api/v1/settings/ai/providers/{feature}', init)),
       listAIProviderModels: (init: MaybeOptionalInit<SettingsPaths['/api/v1/settings/ai/providers/{feature}/models'], 'get'>) => unwrap(clients.settings.GET('/api/v1/settings/ai/providers/{feature}/models', init)),
+      getAutoWordImages: (init?: MaybeOptionalInit<SettingsPaths['/api/v1/settings/auto-word-images'], 'get'>) => unwrap(clients.settings.GET('/api/v1/settings/auto-word-images', init)),
+      setAutoWordImages: (init: MaybeOptionalInit<SettingsPaths['/api/v1/settings/auto-word-images'], 'put'>) => unwrap(clients.settings.PUT('/api/v1/settings/auto-word-images', init)),
       getEventProcessing: (init?: MaybeOptionalInit<SettingsPaths['/api/v1/settings/event-processing'], 'get'>) => unwrap(clients.settings.GET('/api/v1/settings/event-processing', init)),
       setEventProcessing: (init: MaybeOptionalInit<SettingsPaths['/api/v1/settings/event-processing'], 'put'>) => unwrap(clients.settings.PUT('/api/v1/settings/event-processing', init)),
     },

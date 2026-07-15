@@ -4,7 +4,7 @@ import { LoadingState } from '@els/ui'
 import { api } from './lib/api'
 import { FEATURES, type Provider } from './lib/types'
 import { ProviderCard } from './components/ProviderCard'
-import { EventProcessingCard } from './components/EventProcessingCard'
+import { FlagCard } from './components/FlagCard'
 
 export function SettingsAppPage() {
   const [providers, setProviders] = useState<Provider[] | null>(null)
@@ -34,7 +34,19 @@ export function SettingsAppPage() {
           </div>
         </header>
 
-        <EventProcessingCard />
+        <FlagCard
+          title="Event processing"
+          description="When disabled, incoming events stay pending and are not processed by workers."
+          load={() => api.settings.getEventProcessing()}
+          save={(enabled) => api.settings.setEventProcessing({ body: { enabled } })}
+        />
+
+        <FlagCard
+          title="Auto word illustrations"
+          description="When enabled, an illustration is generated automatically for every new vocabulary word; otherwise images are generated on demand."
+          load={() => api.settings.getAutoWordImages()}
+          save={(enabled) => api.settings.setAutoWordImages({ body: { enabled } })}
+        />
 
         <section className="space-y-4">
           <div>

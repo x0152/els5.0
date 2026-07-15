@@ -18,8 +18,10 @@ type Deps struct {
 	ListProviders      *usecases.ListProvidersUseCase
 	UpdateProvider     *usecases.UpdateProviderUseCase
 	ListModels         *usecases.ListModelsUseCase
-	GetEventProcessing *usecases.GetEventProcessingUseCase
-	SetEventProcessing *usecases.SetEventProcessingUseCase
+	GetEventProcessing *usecases.GetFlagUseCase
+	SetEventProcessing *usecases.SetFlagUseCase
+	GetAutoWordImages  *usecases.GetFlagUseCase
+	SetAutoWordImages  *usecases.SetFlagUseCase
 }
 
 func Register(api huma.API, deps Deps) {
@@ -96,6 +98,33 @@ func Register(api huma.API, deps Deps) {
 		Tags:        []string{"settings"},
 	}, func(ctx context.Context, actor *iam.Actor, in *SetEventProcessingInput) (EventProcessingOutput, error) {
 		if err := deps.SetEventProcessing.Execute(ctx, actor, in.Body.Enabled); err != nil {
+			return EventProcessingOutput{}, err
+		}
+		return EventProcessingOutput{Enabled: in.Body.Enabled}, nil
+	})
+
+	authx.Authed(api, deps.Authenticator, huma.Operation{
+		OperationID: "getAutoWordImages",
+		Method:      http.MethodGet,
+		Path:        "/api/v1/settings/auto-word-images",
+		Summary:     "Whether illustrations are generated automatically for new vocabulary words",
+		Tags:        []string{"settings"},
+	}, func(ctx context.Context, actor *iam.Actor, _ *EventProcessingInput) (EventProcessingOutput, error) {
+		enabled, err := deps.GetAutoWordImages.Execute(ctx, actor)
+		if err != nil {
+			return EventProcessingOutput{}, err
+		}
+		return EventProcessingOutput{Enabled: enabled}, nil
+	})
+
+	authx.Authed(api, deps.Authenticator, huma.Operation{
+		OperationID: "setAutoWordImages",
+		Method:      http.MethodPut,
+		Path:        "/api/v1/settings/auto-word-images",
+		Summary:     "Enable or disable automatic illustration generation for new vocabulary words",
+		Tags:        []string{"settings"},
+	}, func(ctx context.Context, actor *iam.Actor, in *SetEventProcessingInput) (EventProcessingOutput, error) {
+		if err := deps.SetAutoWordImages.Execute(ctx, actor, in.Body.Enabled); err != nil {
 			return EventProcessingOutput{}, err
 		}
 		return EventProcessingOutput{Enabled: in.Body.Enabled}, nil

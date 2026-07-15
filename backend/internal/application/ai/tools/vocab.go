@@ -9,14 +9,20 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/els/backend/internal/domain/agent"
+	"github.com/els/backend/internal/domain/illustration"
+	"github.com/els/backend/internal/domain/settings"
 	"github.com/els/backend/internal/domain/vocab"
 )
 
-func vocabTools(repo vocab.Repository) []agent.Tool {
-	return []agent.Tool{addVocabWord(repo), listVocabWords(repo), deleteVocabWord(repo)}
+type ImageEnsurer interface {
+	Ensure(ctx context.Context, prompt, aspect string, trigger bool) illustration.Status
 }
 
-func addVocabWord(repo vocab.Repository) agent.Tool {
+func vocabTools(repo vocab.Repository, flags settings.FlagRepository, images ImageEnsurer) []agent.Tool {
+	return []agent.Tool{addVocabWord(repo, flags, images), listVocabWords(repo), deleteVocabWord(repo)}
+}
+
+func addVocabWord(repo vocab.Repository, flags settings.FlagRepository, images ImageEnsurer) agent.Tool {
 	return agent.Tool{
 		Name:        "add_vocab_word",
 		Description: "Adds a word, phrase, phrasal verb, or idiom to the user's vocabulary collection for memorization. Fill in the translation, definition, and example yourself.",
@@ -76,6 +82,11 @@ func addVocabWord(repo vocab.Repository) agent.Tool {
 			}
 			if _, err := repo.Create(ctx, unit); err != nil {
 				return fmt.Sprintf("Failed to add «%s»: %v", a.Text, err), nil
+			}
+			if images != nil && flags != nil {
+				if on, err := flags.GetFlag(ctx, settings.FlagAutoWordImages); err == nil && on {
+					images.Ensure(ctx, vocab.ImagePrompt(unit.Text), "square", true)
+				}
 			}
 			return fmt.Sprintf("Added to collection: «%s».", unit.Text), nil
 		},
