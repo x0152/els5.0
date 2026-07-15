@@ -32,6 +32,7 @@ func AccountFromSQLC(r sqlc.Account) (*iam.Account, error) {
 		AboutMe:          r.AboutMe,
 		NativeLanguage:   r.NativeLanguage,
 		ShowTranslations: r.ShowTranslations,
+		AutoWordImages:   r.AutoWordImages,
 		Status:           status,
 		Timestamps:       timestamps,
 	})
@@ -48,6 +49,7 @@ func AccountCreateParams(a *iam.Account) sqlc.CreateAccountParams {
 		AboutMe:          a.AboutMe(),
 		NativeLanguage:   a.NativeLanguage(),
 		ShowTranslations: a.ShowTranslations(),
+		AutoWordImages:   a.AutoWordImages(),
 		Status:           a.Status().String(),
 		CreatedAt:        postgres.TimestamptzFromTime(a.CreatedAt()),
 		UpdatedAt:        postgres.TimestamptzFromTime(a.UpdatedAt()),
@@ -65,6 +67,7 @@ func AccountUpdateParams(a *iam.Account) sqlc.UpdateAccountParams {
 		AboutMe:          a.AboutMe(),
 		NativeLanguage:   a.NativeLanguage(),
 		ShowTranslations: a.ShowTranslations(),
+		AutoWordImages:   a.AutoWordImages(),
 		UpdatedAt:        postgres.TimestamptzFromTime(a.UpdatedAt()),
 	}
 }

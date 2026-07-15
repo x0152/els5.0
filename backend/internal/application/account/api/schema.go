@@ -24,6 +24,7 @@ type MeOutput struct {
 	AboutMe              string `json:"about_me"`
 	NativeLanguage       string `json:"native_language"`
 	ShowTranslations     bool   `json:"show_translations"`
+	AutoWordImages       bool   `json:"auto_word_images"`
 	Status               string `json:"status"`
 	Role                 string `json:"role"`
 	EntityID             string `json:"entity_id"`
@@ -38,6 +39,7 @@ type UpdateProfileBody struct {
 	AboutMe          string `json:"about_me" maxLength:"2000"`
 	NativeLanguage   string `json:"native_language" maxLength:"100" doc:"The learner's native language name in English, e.g. Russian, Spanish"`
 	ShowTranslations bool   `json:"show_translations" doc:"Show translations into the native language across the platform"`
+	AutoWordImages   bool   `json:"auto_word_images" doc:"Generate an illustration automatically for every word added to the vocabulary"`
 }
 
 type UpdateProfileInput struct {

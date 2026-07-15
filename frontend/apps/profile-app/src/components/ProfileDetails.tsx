@@ -38,6 +38,7 @@ function DetailsForm({ me }: { me: MeProfile }) {
   const [aboutMe, setAboutMe] = useState(me.aboutMe)
   const [nativeLanguage, setNativeLanguage] = useState(me.nativeLanguage)
   const [showTranslations, setShowTranslations] = useState(me.showTranslations)
+  const [autoWordImages, setAutoWordImages] = useState(me.autoWordImages)
   const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
@@ -48,6 +49,7 @@ function DetailsForm({ me }: { me: MeProfile }) {
       setAboutMe(me.aboutMe)
       setNativeLanguage(me.nativeLanguage)
       setShowTranslations(me.showTranslations)
+      setAutoWordImages(me.autoWordImages)
     }
   }, [me, editing])
 
@@ -58,7 +60,7 @@ function DetailsForm({ me }: { me: MeProfile }) {
       return
     }
     try {
-      await update.mutateAsync({ firstName, lastName, englishLevel, aboutMe, nativeLanguage, showTranslations })
+      await update.mutateAsync({ firstName, lastName, englishLevel, aboutMe, nativeLanguage, showTranslations, autoWordImages })
       setEditing(false)
     } catch (x) {
       setErr(x instanceof Error ? x.message : 'Failed to save')
@@ -137,6 +139,16 @@ function DetailsForm({ me }: { me: MeProfile }) {
             className="h-4 w-4 accent-brand-600"
           />
           <span className="text-sm text-neutral-700">Show translations into my native language across the platform</span>
+        </label>
+        <label className="flex items-center gap-2 sm:col-span-2">
+          <input
+            type="checkbox"
+            checked={autoWordImages}
+            onChange={(e) => setAutoWordImages(e.target.checked)}
+            disabled={!editing}
+            className="h-4 w-4 accent-brand-600"
+          />
+          <span className="text-sm text-neutral-700">Generate illustrations automatically for new vocabulary words (otherwise on demand)</span>
         </label>
         <Field label="About me" className="sm:col-span-2">
           <Textarea

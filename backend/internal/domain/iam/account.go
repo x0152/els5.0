@@ -25,6 +25,7 @@ type Account struct {
 	aboutMe          string
 	nativeLanguage   string
 	showTranslations bool
+	autoWordImages   bool
 	status           AccountStatus
 	timestamps       vo.Timestamps
 }
@@ -39,6 +40,7 @@ type NewAccountParams struct {
 	AboutMe          string
 	NativeLanguage   string
 	ShowTranslations bool
+	AutoWordImages   bool
 	Status           AccountStatus
 	Timestamps       vo.Timestamps
 }
@@ -81,6 +83,7 @@ func NewAccount(p NewAccountParams) (*Account, error) {
 		aboutMe:          strings.TrimSpace(p.AboutMe),
 		nativeLanguage:   nativeLanguage,
 		showTranslations: p.ShowTranslations,
+		autoWordImages:   p.AutoWordImages,
 		status:           p.Status,
 		timestamps:       p.Timestamps,
 	}, nil
@@ -110,6 +113,7 @@ func (a *Account) EnglishLevel() string   { return a.englishLevel }
 func (a *Account) AboutMe() string        { return a.aboutMe }
 func (a *Account) NativeLanguage() string { return a.nativeLanguage }
 func (a *Account) ShowTranslations() bool { return a.showTranslations }
+func (a *Account) AutoWordImages() bool   { return a.autoWordImages }
 func (a *Account) Status() AccountStatus  { return a.status }
 func (a *Account) IsActive() bool         { return a.status == AccountStatusActive }
 func (a *Account) CreatedAt() time.Time   { return a.timestamps.CreatedAt() }
@@ -166,7 +170,7 @@ func (a *Account) Rename(name vo.PersonName) error {
 	return nil
 }
 
-func (a *Account) UpdateProfile(name vo.PersonName, englishLevel, aboutMe, nativeLanguage string, showTranslations bool) error {
+func (a *Account) UpdateProfile(name vo.PersonName, englishLevel, aboutMe, nativeLanguage string, showTranslations, autoWordImages bool) error {
 	if name.IsZero() {
 		return shared.Validation(fmt.Errorf("account.name: must not be empty"))
 	}
@@ -194,6 +198,7 @@ func (a *Account) UpdateProfile(name vo.PersonName, englishLevel, aboutMe, nativ
 	a.aboutMe = aboutMe
 	a.nativeLanguage = nativeLanguage
 	a.showTranslations = showTranslations
+	a.autoWordImages = autoWordImages
 	a.timestamps = timestamps
 	return nil
 }

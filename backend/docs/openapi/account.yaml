@@ -158,6 +158,8 @@ components:
           type: string
         account_id:
           type: string
+        auto_word_images:
+          type: boolean
         email:
           type: string
         english_level:
@@ -192,6 +194,7 @@ components:
         - about_me
         - native_language
         - show_translations
+        - auto_word_images
         - status
         - role
         - entity_id
@@ -319,6 +322,9 @@ components:
         about_me:
           maxLength: 2000
           type: string
+        auto_word_images:
+          description: Generate an illustration automatically for every word added to the vocabulary
+          type: boolean
         english_level:
           maxLength: 100
           type: string
@@ -344,6 +350,7 @@ components:
         - about_me
         - native_language
         - show_translations
+        - auto_word_images
       type: object
 info:
   title: account

@@ -174,9 +174,10 @@ function readSelection(): Picked | null {
   return { text, context, rect: { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width } }
 }
 
-export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account'> }) {
+export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account' | 'learn'> }) {
   const rootRef = useRef<HTMLDivElement>(null)
   const [showTranslations, setShowTranslations] = useState(true)
+  const [autoWordImages, setAutoWordImages] = useState(false)
   const [pill, setPill] = useState<Picked | null>(null)
   const [picked, setPicked] = useState<Picked | null>(null)
   const [loading, setLoading] = useState(false)
@@ -197,7 +198,10 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
     if (!picked) return
     api.account
       .accountMe()
-      .then((me) => setShowTranslations(me?.show_translations ?? true))
+      .then((me) => {
+        setShowTranslations(me?.show_translations ?? true)
+        setAutoWordImages(me?.auto_word_images ?? false)
+      })
       .catch(() => {})
   }, [api, picked])
 
@@ -321,6 +325,10 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
         const res = await api.vocab.addVocabUnit({ body: { text } })
         if (res?.correct && res.unit) {
           setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, state: 'added' } : r)))
+          if (autoWordImages) {
+            const prompt = `A clear educational illustration of "${res.unit.text.trim()}": a simple memorable scene that shows the meaning.`
+            void api.learn.ensureIllustration({ body: { prompt, trigger: true, aspect: 'square' } }).catch(() => {})
+          }
         } else {
           failed = true
           setRows((prev) =>
@@ -334,7 +342,7 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
       }
     }
     if (!failed) close()
-  }, [api, close, rows])
+  }, [api, close, rows, autoWordImages])
 
   const pendingCount = rows.filter((r) => r.checked && (r.state === 'idle' || r.state === 'error')).length
 
