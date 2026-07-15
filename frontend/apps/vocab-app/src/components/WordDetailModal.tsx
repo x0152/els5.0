@@ -86,7 +86,7 @@ export function WordDetailModal({ unit, onClose }: Props) {
         <img
           src={image.url}
           alt={unit.text}
-          className="mb-4 aspect-square w-full rounded-xl object-cover ring-1 ring-neutral-200"
+          className="mx-auto mb-4 max-h-[40dvh] rounded-xl ring-1 ring-neutral-200"
         />
       )}
       {image.status === 'generating' && (
