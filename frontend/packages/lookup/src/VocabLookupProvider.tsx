@@ -40,6 +40,7 @@ interface Row {
   text: string
   kind: string
   description: string
+  translation: string
   frequency: number
   cefr: string
   checked: boolean
@@ -62,6 +63,7 @@ function toRow(it: AnalyzeStreamItem): Row {
     text: it.text,
     kind: it.kind,
     description: it.description,
+    translation: it.translation ?? '',
     frequency: it.frequency,
     cefr: it.cefr,
     checked: false,
@@ -172,8 +174,9 @@ function readSelection(): Picked | null {
   return { text, context, rect: { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width } }
 }
 
-export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab'> }) {
+export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account'> }) {
   const rootRef = useRef<HTMLDivElement>(null)
+  const [showTranslations, setShowTranslations] = useState(true)
   const [pill, setPill] = useState<Picked | null>(null)
   const [picked, setPicked] = useState<Picked | null>(null)
   const [loading, setLoading] = useState(false)
@@ -189,6 +192,14 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab'> }) {
   useEffect(() => {
     pickedOpenRef.current = !!picked
   }, [picked])
+
+  useEffect(() => {
+    if (!picked) return
+    api.account
+      .accountMe()
+      .then((me) => setShowTranslations(me?.show_translations ?? true))
+      .catch(() => {})
+  }, [api, picked])
 
   useEffect(() => {
     const onFs = () => setFsEl(document.fullscreenElement)
@@ -266,7 +277,7 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab'> }) {
           setLoading(false)
           setStreaming(false)
           if (count === 0) {
-            setRows([{ text: p.text, kind: '', description: '', frequency: 0, cefr: '', checked: false, state: 'idle', common: false, total: 0, media: [] }])
+            setRows([{ text: p.text, kind: '', description: '', translation: '', frequency: 0, cefr: '', checked: false, state: 'idle', common: false, total: 0, media: [] }])
           }
         },
       },
@@ -386,7 +397,8 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab'> }) {
                   <label
                     key={`${row.text}-${i}`}
                     className={cn(
-                      'flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 transition-colors',
+                      'flex cursor-pointer items-center gap-3 rounded-xl px-2 py-3 transition-colors',
+                      i > 0 && 'border-t border-neutral-100',
                       row.state === 'added' || row.state === 'dup' ? 'opacity-60' : 'hover:bg-neutral-50',
                     )}
                   >
@@ -408,8 +420,11 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab'> }) {
                         <CefrBadge level={row.cefr} className="shrink-0" />
                         <FrequencyBars value={row.frequency} className="shrink-0" />
                       </div>
-                      {row.description && <p className="truncate text-xs text-neutral-500">{row.description}</p>}
-                      {row.note && <p className="truncate text-xs text-amber-600">{row.note}</p>}
+                      {row.description && <p className="text-sm text-neutral-700">{row.description}</p>}
+                      {showTranslations && row.translation && (
+                        <p className="text-xs text-neutral-500">{row.translation}</p>
+                      )}
+                      {row.note && <p className="text-xs text-amber-600">{row.note}</p>}
                       {row.common && row.total > 0 && (
                         <p className="text-[11px] text-neutral-400">common word · seen {row.total}×</p>
                       )}

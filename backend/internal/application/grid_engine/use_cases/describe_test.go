@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	usecases "github.com/els/backend/internal/application/grid_engine/use_cases"
 	"github.com/els/backend/internal/application/grid_engine/lookups"
+	usecases "github.com/els/backend/internal/application/grid_engine/use_cases"
 	"github.com/els/backend/internal/domain/grid"
 	"github.com/els/backend/internal/domain/iam"
 	"github.com/els/backend/internal/domain/shared"
@@ -49,7 +49,7 @@ func TestDescribeGrid_HydratesRefs(t *testing.T) {
 	cfg := cfgFor(store, nil)
 
 	resolver := lookups.NewResolver(lookups.Source{
-		ID: "accounts",
+		ID:      "accounts",
 		Adapter: &stubAdapter{hydrate: map[string]string{"o1": "Owner #1"}},
 	})
 	uc := usecases.NewDescribeGridUseCase(cfg, resolver)

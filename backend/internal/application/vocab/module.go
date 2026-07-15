@@ -12,6 +12,7 @@ import (
 	"github.com/els/backend/internal/application/vocab/api"
 	usecases "github.com/els/backend/internal/application/vocab/use_cases"
 	"github.com/els/backend/internal/application/vocab/worker"
+	"github.com/els/backend/internal/domain/media"
 	domainsettings "github.com/els/backend/internal/domain/settings"
 	"github.com/els/backend/internal/domain/shared/ports"
 	"github.com/els/backend/internal/infrastructure/adapters/llm"
@@ -40,7 +41,7 @@ func init() {
 	})
 }
 
-func Mount(humaAPI huma.API, mux *http.ServeMux, cfg Config, pool *pgxpool.Pool, rdb *redis.Client, logger *slog.Logger) {
+func Mount(humaAPI huma.API, mux *http.ServeMux, cfg Config, pool *pgxpool.Pool, rdb *redis.Client, logger *slog.Logger, storage media.Storage, urls media.PublicURL) {
 	store := vocabrepo.NewStore(pool)
 	lex := lexiconrepo.NewStore(pool)
 	accounts := iamrepo.NewAccountRepo(pool)
@@ -67,6 +68,9 @@ func Mount(humaAPI huma.API, mux *http.ServeMux, cfg Config, pool *pgxpool.Pool,
 		GetPractice:      usecases.NewGetPracticeUseCase(practiceSessions),
 		SaveProgress:     usecases.NewSavePracticeProgressUseCase(practiceSessions),
 		CheckPractice:    usecases.NewCheckPracticeUseCase(llmClient),
+		GenerateCards:    usecases.NewGenerateCardsUseCase(store, storage, urls, cfg.Bucket),
+		AnswerCard:       usecases.NewAnswerCardUseCase(store, nil),
+		DueCards:         usecases.NewDueCardsUseCase(store, nil),
 	})
 	api.RegisterStream(mux, authn, analyze, logger)
 }

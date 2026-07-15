@@ -17,10 +17,12 @@ func NewUpdateProfileUseCase(accounts iam.AccountRepository) *UpdateProfileUseCa
 }
 
 type UpdateProfileCommand struct {
-	FirstName    string
-	LastName     string
-	EnglishLevel string
-	AboutMe      string
+	FirstName        string
+	LastName         string
+	EnglishLevel     string
+	AboutMe          string
+	NativeLanguage   string
+	ShowTranslations bool
 }
 
 type UpdateProfileResult struct {
@@ -36,7 +38,7 @@ func (uc *UpdateProfileUseCase) Execute(ctx context.Context, actor *iam.Actor, c
 	if err != nil {
 		return UpdateProfileResult{}, shared.Validation(err)
 	}
-	if err := account.UpdateProfile(name, cmd.EnglishLevel, cmd.AboutMe); err != nil {
+	if err := account.UpdateProfile(name, cmd.EnglishLevel, cmd.AboutMe, cmd.NativeLanguage, cmd.ShowTranslations); err != nil {
 		return UpdateProfileResult{}, err
 	}
 	if err := uc.accounts.Update(ctx, account); err != nil {

@@ -9,6 +9,8 @@ export interface MeProfile {
   lastName: string
   englishLevel: string
   aboutMe: string
+  nativeLanguage: string
+  showTranslations: boolean
   role: 'admin' | 'expert' | 'customer' | string
   status: string
   isGlobalAdmin: boolean
@@ -41,6 +43,8 @@ export function useMe() {
         lastName: res.last_name,
         englishLevel: res.english_level ?? '',
         aboutMe: res.about_me ?? '',
+        nativeLanguage: res.native_language ?? '',
+        showTranslations: res.show_translations ?? true,
         role: res.role,
         status: res.status,
         isGlobalAdmin: res.is_global_admin,
@@ -59,6 +63,8 @@ export interface UpdateProfileInput {
   lastName: string
   englishLevel: string
   aboutMe: string
+  nativeLanguage: string
+  showTranslations: boolean
 }
 
 export function useUpdateProfile() {
@@ -71,6 +77,8 @@ export function useUpdateProfile() {
           last_name: input.lastName,
           english_level: input.englishLevel,
           about_me: input.aboutMe,
+          native_language: input.nativeLanguage,
+          show_translations: input.showTranslations,
         },
       }),
     onSuccess: () => {

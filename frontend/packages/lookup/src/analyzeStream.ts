@@ -12,6 +12,7 @@ export interface AnalyzeStreamItem {
   text: string
   kind: string
   description: string
+  translation?: string
   frequency: number
   cefr: string
   common: boolean

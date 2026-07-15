@@ -139,10 +139,10 @@ func (s *rolesStub) GetByAccountID(_ context.Context, id iam.AccountID) (iam.Acc
 }
 
 type invitesStub struct {
-	issued    []ports.InviteToken
-	issueErr  error
-	consumed  []string
-	consumeOK ports.InviteToken
+	issued     []ports.InviteToken
+	issueErr   error
+	consumed   []string
+	consumeOK  ports.InviteToken
 	consumeErr error
 }
 
@@ -200,9 +200,9 @@ func (s *sessionsStub) RevokeByAccountID(_ context.Context, accountID string) er
 }
 
 type hasherStub struct {
-	hashReply  vo.PasswordHash
-	hashErr    error
-	verifyErr  error
+	hashReply vo.PasswordHash
+	hashErr   error
+	verifyErr error
 }
 
 func (h *hasherStub) Hash(_ string) (vo.PasswordHash, error) {
@@ -249,12 +249,12 @@ func (m *mailStub) SendPasswordReset(_ context.Context, to, name, link string) e
 var errNotFound = fmt.Errorf("stub: %w", shared.ErrNotFound)
 
 type loginAttemptsStub struct {
-	locked    map[string]bool
-	failCount map[string]int
-	failCalls int
+	locked     map[string]bool
+	failCount  map[string]int
+	failCalls  int
 	resetCalls int
-	failErr   error
-	lockErr   error
+	failErr    error
+	lockErr    error
 }
 
 func newLoginAttemptsStub() *loginAttemptsStub {

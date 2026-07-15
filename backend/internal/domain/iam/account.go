@@ -14,27 +14,33 @@ type AccountID struct{ vo.ID }
 
 func NewAccountID() AccountID { return AccountID{ID: vo.NewID()} }
 
+const DefaultNativeLanguage = "Russian"
+
 type Account struct {
-	id           AccountID
-	email        vo.Email
-	name         vo.PersonName
-	pictureURL   string
-	englishLevel string
-	aboutMe      string
-	status       AccountStatus
-	timestamps   vo.Timestamps
+	id               AccountID
+	email            vo.Email
+	name             vo.PersonName
+	pictureURL       string
+	englishLevel     string
+	aboutMe          string
+	nativeLanguage   string
+	showTranslations bool
+	status           AccountStatus
+	timestamps       vo.Timestamps
 }
 
 type NewAccountParams struct {
-	ID           AccountID
-	Email        string
-	FirstName    string
-	LastName     string
-	PictureURL   string
-	EnglishLevel string
-	AboutMe      string
-	Status       AccountStatus
-	Timestamps   vo.Timestamps
+	ID               AccountID
+	Email            string
+	FirstName        string
+	LastName         string
+	PictureURL       string
+	EnglishLevel     string
+	AboutMe          string
+	NativeLanguage   string
+	ShowTranslations bool
+	Status           AccountStatus
+	Timestamps       vo.Timestamps
 }
 
 func NewAccount(p NewAccountParams) (*Account, error) {
@@ -61,15 +67,22 @@ func NewAccount(p NewAccountParams) (*Account, error) {
 		return nil, err
 	}
 
+	nativeLanguage := strings.TrimSpace(p.NativeLanguage)
+	if nativeLanguage == "" {
+		nativeLanguage = DefaultNativeLanguage
+	}
+
 	return &Account{
-		id:           p.ID,
-		email:        email,
-		name:         name,
-		pictureURL:   strings.TrimSpace(p.PictureURL),
-		englishLevel: strings.TrimSpace(p.EnglishLevel),
-		aboutMe:      strings.TrimSpace(p.AboutMe),
-		status:       p.Status,
-		timestamps:   p.Timestamps,
+		id:               p.ID,
+		email:            email,
+		name:             name,
+		pictureURL:       strings.TrimSpace(p.PictureURL),
+		englishLevel:     strings.TrimSpace(p.EnglishLevel),
+		aboutMe:          strings.TrimSpace(p.AboutMe),
+		nativeLanguage:   nativeLanguage,
+		showTranslations: p.ShowTranslations,
+		status:           p.Status,
+		timestamps:       p.Timestamps,
 	}, nil
 }
 
@@ -79,25 +92,28 @@ func NewPendingAccountNow(id AccountID, email, firstName, lastName string) (*Acc
 		return nil, shared.Validation(fmt.Errorf("account.timestamps: %w", err))
 	}
 	return NewAccount(NewAccountParams{
-		ID:         id,
-		Email:      email,
-		FirstName:  firstName,
-		LastName:   lastName,
-		Status:     AccountStatusPendingPassword,
-		Timestamps: timestamps,
+		ID:               id,
+		Email:            email,
+		FirstName:        firstName,
+		LastName:         lastName,
+		ShowTranslations: true,
+		Status:           AccountStatusPendingPassword,
+		Timestamps:       timestamps,
 	})
 }
 
-func (a *Account) ID() AccountID         { return a.id }
-func (a *Account) Email() vo.Email       { return a.email }
-func (a *Account) Name() vo.PersonName   { return a.name }
-func (a *Account) PictureURL() string    { return a.pictureURL }
-func (a *Account) EnglishLevel() string  { return a.englishLevel }
-func (a *Account) AboutMe() string       { return a.aboutMe }
-func (a *Account) Status() AccountStatus { return a.status }
-func (a *Account) IsActive() bool        { return a.status == AccountStatusActive }
-func (a *Account) CreatedAt() time.Time  { return a.timestamps.CreatedAt() }
-func (a *Account) UpdatedAt() time.Time  { return a.timestamps.UpdatedAt() }
+func (a *Account) ID() AccountID          { return a.id }
+func (a *Account) Email() vo.Email        { return a.email }
+func (a *Account) Name() vo.PersonName    { return a.name }
+func (a *Account) PictureURL() string     { return a.pictureURL }
+func (a *Account) EnglishLevel() string   { return a.englishLevel }
+func (a *Account) AboutMe() string        { return a.aboutMe }
+func (a *Account) NativeLanguage() string { return a.nativeLanguage }
+func (a *Account) ShowTranslations() bool { return a.showTranslations }
+func (a *Account) Status() AccountStatus  { return a.status }
+func (a *Account) IsActive() bool         { return a.status == AccountStatusActive }
+func (a *Account) CreatedAt() time.Time   { return a.timestamps.CreatedAt() }
+func (a *Account) UpdatedAt() time.Time   { return a.timestamps.UpdatedAt() }
 
 func (a *Account) EnsureCanLogin() error {
 	switch a.status {
@@ -150,17 +166,24 @@ func (a *Account) Rename(name vo.PersonName) error {
 	return nil
 }
 
-func (a *Account) UpdateProfile(name vo.PersonName, englishLevel, aboutMe string) error {
+func (a *Account) UpdateProfile(name vo.PersonName, englishLevel, aboutMe, nativeLanguage string, showTranslations bool) error {
 	if name.IsZero() {
 		return shared.Validation(fmt.Errorf("account.name: must not be empty"))
 	}
 	englishLevel = strings.TrimSpace(englishLevel)
 	aboutMe = strings.TrimSpace(aboutMe)
+	nativeLanguage = strings.TrimSpace(nativeLanguage)
 	if len(englishLevel) > 100 {
 		return shared.Validation(fmt.Errorf("account.english_level: too long"))
 	}
 	if len(aboutMe) > 2000 {
 		return shared.Validation(fmt.Errorf("account.about_me: too long"))
+	}
+	if len(nativeLanguage) > 100 {
+		return shared.Validation(fmt.Errorf("account.native_language: too long"))
+	}
+	if nativeLanguage == "" {
+		nativeLanguage = DefaultNativeLanguage
 	}
 	timestamps, err := a.timestamps.Touch(timex.Now())
 	if err != nil {
@@ -169,6 +192,8 @@ func (a *Account) UpdateProfile(name vo.PersonName, englishLevel, aboutMe string
 	a.name = name
 	a.englishLevel = englishLevel
 	a.aboutMe = aboutMe
+	a.nativeLanguage = nativeLanguage
+	a.showTranslations = showTranslations
 	a.timestamps = timestamps
 	return nil
 }

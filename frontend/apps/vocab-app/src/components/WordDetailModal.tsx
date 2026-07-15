@@ -1,11 +1,13 @@
 import { useState, type ReactNode } from 'react'
-import { BookOpen, Film, ImageIcon, Loader2, Trash2, TriangleAlert, X } from 'lucide-react'
+import { BookOpen, Film, ImageIcon, Loader2, Trash2, TriangleAlert, Volume2, X } from 'lucide-react'
 import { Badge, Button, cn, CefrBadge, FrequencyBars, Modal } from '@els/ui'
 import { SpotsDialog } from '@els/lookup'
 import { useWordImage } from '../hooks/useWordImage.ts'
 import { useDeleteUnit, useUnitOccurrences, useUpdateStatus } from '../store/units.ts'
+import { useShowTranslations } from '../store/me.ts'
 import { KindGlyph } from './KindGlyph.tsx'
 import { statusPill } from '../lib/ui.ts'
+import { speak } from '../lib/speech.ts'
 import { KIND_LABELS, STATUS_LABELS } from '../lib/types.ts'
 import type { Unit, UnitStatus } from '../lib/types.ts'
 
@@ -19,6 +21,7 @@ interface Props {
 export function WordDetailModal({ unit, onClose }: Props) {
   const updateM = useUpdateStatus()
   const deleteM = useDeleteUnit()
+  const showTranslations = useShowTranslations()
   const image = useWordImage(unit.text)
   const occ = useUnitOccurrences(unit.text).data
   type Media = NonNullable<NonNullable<typeof occ>['media']>[number]
@@ -61,7 +64,17 @@ export function WordDetailModal({ unit, onClose }: Props) {
               </button>
             )}
           </div>
-          <h2 className="mt-2 text-2xl font-bold text-neutral-900">{unit.text}</h2>
+          <h2 className="mt-2 flex items-center gap-2 text-2xl font-bold text-neutral-900">
+            {unit.text}
+            <button
+              type="button"
+              onClick={() => speak(unit.text)}
+              title="Pronounce"
+              className="rounded-full p-1.5 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
+            >
+              <Volume2 className="h-5 w-5" />
+            </button>
+          </h2>
           {unit.transcription && <p className="text-sm text-neutral-400">/{unit.transcription}/</p>}
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
@@ -85,14 +98,14 @@ export function WordDetailModal({ unit, onClose }: Props) {
       )}
 
       <div className="space-y-3">
-        {unit.translation && (
-          <Field label="Translation">
-            <p className="text-base text-neutral-800">{unit.translation}</p>
-          </Field>
-        )}
         {unit.definition && (
           <Field label="Definition">
             <p className="text-sm text-neutral-700">{unit.definition}</p>
+          </Field>
+        )}
+        {showTranslations && unit.translation && (
+          <Field label="Translation">
+            <p className="text-base text-neutral-800">{unit.translation}</p>
           </Field>
         )}
         {unit.example && (

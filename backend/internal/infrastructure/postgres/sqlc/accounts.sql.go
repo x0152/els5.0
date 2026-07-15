@@ -12,21 +12,23 @@ import (
 )
 
 const createAccount = `-- name: CreateAccount :exec
-INSERT INTO accounts (id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+INSERT INTO accounts (id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 `
 
 type CreateAccountParams struct {
-	ID           pgtype.UUID
-	Email        string
-	CreatedAt    pgtype.Timestamptz
-	UpdatedAt    pgtype.Timestamptz
-	FirstName    string
-	LastName     string
-	Status       string
-	PictureUrl   string
-	EnglishLevel string
-	AboutMe      string
+	ID               pgtype.UUID
+	Email            string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+	FirstName        string
+	LastName         string
+	Status           string
+	PictureUrl       string
+	EnglishLevel     string
+	AboutMe          string
+	NativeLanguage   string
+	ShowTranslations bool
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) error {
@@ -41,6 +43,8 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) er
 		arg.PictureUrl,
 		arg.EnglishLevel,
 		arg.AboutMe,
+		arg.NativeLanguage,
+		arg.ShowTranslations,
 	)
 	return err
 }
@@ -71,7 +75,7 @@ func (q *Queries) ExistsAccountEmail(ctx context.Context, lower string) (bool, e
 }
 
 const getAccountByEmail = `-- name: GetAccountByEmail :one
-SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me
+SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations
 FROM accounts
 WHERE lower(email) = lower($1)
 `
@@ -90,12 +94,14 @@ func (q *Queries) GetAccountByEmail(ctx context.Context, lower string) (Account,
 		&i.PictureUrl,
 		&i.EnglishLevel,
 		&i.AboutMe,
+		&i.NativeLanguage,
+		&i.ShowTranslations,
 	)
 	return i, err
 }
 
 const getAccountByID = `-- name: GetAccountByID :one
-SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me
+SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations
 FROM accounts
 WHERE id = $1
 `
@@ -114,12 +120,14 @@ func (q *Queries) GetAccountByID(ctx context.Context, id pgtype.UUID) (Account, 
 		&i.PictureUrl,
 		&i.EnglishLevel,
 		&i.AboutMe,
+		&i.NativeLanguage,
+		&i.ShowTranslations,
 	)
 	return i, err
 }
 
 const getAccountsByIDs = `-- name: GetAccountsByIDs :many
-SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me
+SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations
 FROM accounts
 WHERE id = ANY($1::uuid[])
 `
@@ -144,6 +152,8 @@ func (q *Queries) GetAccountsByIDs(ctx context.Context, ids []pgtype.UUID) ([]Ac
 			&i.PictureUrl,
 			&i.EnglishLevel,
 			&i.AboutMe,
+			&i.NativeLanguage,
+			&i.ShowTranslations,
 		); err != nil {
 			return nil, err
 		}
@@ -156,7 +166,7 @@ func (q *Queries) GetAccountsByIDs(ctx context.Context, ids []pgtype.UUID) ([]Ac
 }
 
 const searchAccountsByEmail = `-- name: SearchAccountsByEmail :many
-SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me
+SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations
 FROM accounts
 WHERE email ILIKE $1
 ORDER BY email ASC
@@ -188,6 +198,8 @@ func (q *Queries) SearchAccountsByEmail(ctx context.Context, arg SearchAccountsB
 			&i.PictureUrl,
 			&i.EnglishLevel,
 			&i.AboutMe,
+			&i.NativeLanguage,
+			&i.ShowTranslations,
 		); err != nil {
 			return nil, err
 		}
@@ -201,25 +213,29 @@ func (q *Queries) SearchAccountsByEmail(ctx context.Context, arg SearchAccountsB
 
 const updateAccount = `-- name: UpdateAccount :execrows
 UPDATE accounts
-SET email         = $2,
-    updated_at    = $3,
-    first_name    = $4,
-    last_name     = $5,
-    status        = $6,
-    english_level = $7,
-    about_me      = $8
+SET email             = $2,
+    updated_at        = $3,
+    first_name        = $4,
+    last_name         = $5,
+    status            = $6,
+    english_level     = $7,
+    about_me          = $8,
+    native_language   = $9,
+    show_translations = $10
 WHERE id = $1
 `
 
 type UpdateAccountParams struct {
-	ID           pgtype.UUID
-	Email        string
-	UpdatedAt    pgtype.Timestamptz
-	FirstName    string
-	LastName     string
-	Status       string
-	EnglishLevel string
-	AboutMe      string
+	ID               pgtype.UUID
+	Email            string
+	UpdatedAt        pgtype.Timestamptz
+	FirstName        string
+	LastName         string
+	Status           string
+	EnglishLevel     string
+	AboutMe          string
+	NativeLanguage   string
+	ShowTranslations bool
 }
 
 // Basic profile update: picture_url is NOT changed here — only via UpdateAccountPicture.
@@ -233,6 +249,8 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (i
 		arg.Status,
 		arg.EnglishLevel,
 		arg.AboutMe,
+		arg.NativeLanguage,
+		arg.ShowTranslations,
 	)
 	if err != nil {
 		return 0, err

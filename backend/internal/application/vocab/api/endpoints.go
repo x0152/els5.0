@@ -24,6 +24,9 @@ type Deps struct {
 	GetPractice      *usecases.GetPracticeUseCase
 	SaveProgress     *usecases.SavePracticeProgressUseCase
 	CheckPractice    *usecases.CheckPracticeUseCase
+	GenerateCards    *usecases.GenerateCardsUseCase
+	AnswerCard       *usecases.AnswerCardUseCase
+	DueCards         *usecases.DueCardsUseCase
 }
 
 func Register(api huma.API, deps Deps) {
@@ -136,6 +139,48 @@ func Register(api huma.API, deps Deps) {
 			return CheckPracticeOutput{}, err
 		}
 		return toCheckPracticeOutput(res), nil
+	})
+
+	authx.Authed(api, deps.Authenticator, huma.Operation{
+		OperationID: "generateVocabCards",
+		Method:      http.MethodPost,
+		Path:        "/api/v1/vocab/cards",
+		Summary:     "Build a flashcard deck: guess the word by its image and definition",
+		Tags:        []string{"vocab"},
+	}, func(ctx context.Context, actor *iam.Actor, in *GenerateCardsInput) (CardsOutput, error) {
+		cards, err := deps.GenerateCards.Execute(ctx, actor, in.Body.ImagesOnly)
+		if err != nil {
+			return CardsOutput{}, err
+		}
+		return toCardsOutput(cards), nil
+	})
+
+	authx.Authed(api, deps.Authenticator, huma.Operation{
+		OperationID: "dueVocabCards",
+		Method:      http.MethodGet,
+		Path:        "/api/v1/vocab/cards/due",
+		Summary:     "Count words that can still advance their memorization progress today",
+		Tags:        []string{"vocab"},
+	}, func(ctx context.Context, actor *iam.Actor, in *DueCardsInput) (DueCardsOutput, error) {
+		count, err := deps.DueCards.Execute(ctx, actor)
+		if err != nil {
+			return DueCardsOutput{}, err
+		}
+		return DueCardsOutput{Count: count}, nil
+	})
+
+	authx.Authed(api, deps.Authenticator, huma.Operation{
+		OperationID: "answerVocabCard",
+		Method:      http.MethodPost,
+		Path:        "/api/v1/vocab/cards/answer",
+		Summary:     "Check a flashcard answer and advance the word's memorization progress",
+		Tags:        []string{"vocab"},
+	}, func(ctx context.Context, actor *iam.Actor, in *AnswerCardInput) (AnswerCardOutput, error) {
+		res, err := deps.AnswerCard.Execute(ctx, actor, in.Body.UnitID, in.Body.Answer)
+		if err != nil {
+			return AnswerCardOutput{}, err
+		}
+		return toAnswerCardOutput(res), nil
 	})
 
 	authx.Authed(api, deps.Authenticator, huma.Operation{

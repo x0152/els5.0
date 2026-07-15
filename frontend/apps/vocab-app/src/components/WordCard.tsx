@@ -1,6 +1,7 @@
 import { Trash2 } from 'lucide-react'
 import { Badge, cn, CefrBadge, FrequencyBars } from '@els/ui'
 import { useWordImage } from '../hooks/useWordImage.ts'
+import { useShowTranslations } from '../store/me.ts'
 import { KindGlyph } from './KindGlyph.tsx'
 import { statusDot } from '../lib/ui.ts'
 import { KIND_LABELS } from '../lib/types.ts'
@@ -15,6 +16,7 @@ interface Props {
 export function WordCard({ unit, onOpen, onDelete }: Props) {
   const status = unit.status as UnitStatus
   const image = useWordImage(unit.text)
+  const showTranslations = useShowTranslations()
   const hasImage = image.status === 'ready' && !!image.url
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white text-left ring-1 ring-neutral-200 transition hover:-translate-y-0.5 hover:shadow-md">
@@ -35,12 +37,22 @@ export function WordCard({ unit, onOpen, onDelete }: Props) {
             <CefrBadge level={unit.cefr} />
             <FrequencyBars value={unit.frequency} />
           </div>
-          <span className={cn('h-2 w-2 rounded-full', statusDot[status] ?? 'bg-neutral-300')} title={status} />
+          <div className="flex items-center gap-1.5">
+            {status !== 'learned' && (
+              <span className="flex items-center gap-0.5" title={`Progress ${unit.correct_streak}/3`}>
+                {[0, 1, 2].map((i) => (
+                  <span key={i} className={cn('h-1.5 w-1.5 rounded-full', i < unit.correct_streak ? 'bg-brand-500' : 'bg-neutral-200')} />
+                ))}
+              </span>
+            )}
+            <span className={cn('h-2 w-2 rounded-full', statusDot[status] ?? 'bg-neutral-300')} title={status} />
+          </div>
         </div>
 
         <h3 className="truncate text-base font-semibold text-neutral-900">{unit.text}</h3>
         {unit.transcription && <p className="mt-0.5 truncate text-xs text-neutral-400">/{unit.transcription}/</p>}
-        {unit.translation && <p className="mt-1 line-clamp-2 text-sm text-neutral-600">{unit.translation}</p>}
+        {unit.definition && <p className="mt-1 line-clamp-2 text-sm text-neutral-600">{unit.definition}</p>}
+        {showTranslations && unit.translation && <p className="mt-0.5 line-clamp-1 text-sm text-neutral-500">{unit.translation}</p>}
       </div>
 
       <button

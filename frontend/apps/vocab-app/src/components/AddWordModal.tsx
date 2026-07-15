@@ -3,6 +3,7 @@ import { ArrowRight, Check, Loader2, Sparkles, TriangleAlert } from 'lucide-reac
 import { Button, cn, Input, Modal } from '@els/ui'
 import { isApiError } from '@els/api-client'
 import { useAddUnit } from '../store/units.ts'
+import { useShowTranslations } from '../store/me.ts'
 import { KindGlyph } from './KindGlyph.tsx'
 import type { AddUnitResult } from '../lib/types.ts'
 
@@ -12,6 +13,7 @@ interface Props {
 
 export function AddWordModal({ onClose }: Props) {
   const addM = useAddUnit()
+  const showTranslations = useShowTranslations()
   const [text, setText] = useState('')
   const [result, setResult] = useState<AddUnitResult | null>(null)
   const [error, setError] = useState('')
@@ -58,8 +60,8 @@ export function AddWordModal({ onClose }: Props) {
               <KindGlyph kind={added.kind} className="h-4 w-4 text-brand-600" />
               {added.text}
             </p>
-            {added.translation && <p className="text-sm text-neutral-600">{added.translation}</p>}
-            {added.definition && <p className="mt-1 text-sm text-neutral-500">{added.definition}</p>}
+            {added.definition && <p className="text-sm text-neutral-500">{added.definition}</p>}
+            {showTranslations && added.translation && <p className="mt-1 text-sm text-neutral-600">{added.translation}</p>}
           </div>
           <div className="flex gap-3">
             <Button variant="secondary" className="flex-1" onClick={addAnother}>

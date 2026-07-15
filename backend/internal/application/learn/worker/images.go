@@ -101,7 +101,11 @@ func (g *Images) generate(ctx context.Context, id string, path media.Path, promp
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
-	data, err := g.provider.GenerateImageBytes(ctx, illustration.StyledPrompt(prompt), &ports.ImageOptions{Aspect: toAspect(aspect)})
+	opts := &ports.ImageOptions{Aspect: toAspect(aspect)}
+	if opts.Aspect == ports.ImageAspectSquare {
+		opts.Size = "512x512"
+	}
+	data, err := g.provider.GenerateImageBytes(ctx, illustration.StyledPrompt(prompt), opts)
 	if err != nil {
 		g.errs.Store(id, truncate(err.Error()))
 		return

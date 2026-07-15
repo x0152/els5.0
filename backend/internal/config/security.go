@@ -8,20 +8,20 @@ import (
 )
 
 type Security struct {
-	BodyMaxBytes      int64    `env:"BODY_MAX_BYTES" envDefault:"1048576"`
-	UploadMaxBytes    int64    `env:"UPLOAD_MAX_BYTES" envDefault:"5368709120"`
-	UploadPathPrefix  []string `env:"UPLOAD_PATH_PREFIX" envSeparator:"," envDefault:"/api/v1/account,/api/v1/films,/api/v1/reader"`
-	CORSAllowedOrigin []string `env:"CORS_ALLOWED_ORIGINS" envSeparator:"," envDefault:""`
-	CORSAllowedMethod []string `env:"CORS_ALLOWED_METHODS" envSeparator:"," envDefault:"GET,POST,PUT,PATCH,DELETE,OPTIONS"`
-	CORSAllowedHeader []string `env:"CORS_ALLOWED_HEADERS" envSeparator:"," envDefault:"Authorization,Content-Type,X-Request-ID,Idempotency-Key"`
-	CORSExposedHeader []string `env:"CORS_EXPOSED_HEADERS" envSeparator:"," envDefault:"X-Request-ID"`
+	BodyMaxBytes      int64         `env:"BODY_MAX_BYTES" envDefault:"1048576"`
+	UploadMaxBytes    int64         `env:"UPLOAD_MAX_BYTES" envDefault:"5368709120"`
+	UploadPathPrefix  []string      `env:"UPLOAD_PATH_PREFIX" envSeparator:"," envDefault:"/api/v1/account,/api/v1/films,/api/v1/reader"`
+	CORSAllowedOrigin []string      `env:"CORS_ALLOWED_ORIGINS" envSeparator:"," envDefault:""`
+	CORSAllowedMethod []string      `env:"CORS_ALLOWED_METHODS" envSeparator:"," envDefault:"GET,POST,PUT,PATCH,DELETE,OPTIONS"`
+	CORSAllowedHeader []string      `env:"CORS_ALLOWED_HEADERS" envSeparator:"," envDefault:"Authorization,Content-Type,X-Request-ID,Idempotency-Key"`
+	CORSExposedHeader []string      `env:"CORS_EXPOSED_HEADERS" envSeparator:"," envDefault:"X-Request-ID"`
 	CORSMaxAge        time.Duration `env:"CORS_MAX_AGE" envDefault:"600s"`
 
-	HSTSMaxAge        time.Duration `env:"HSTS_MAX_AGE" envDefault:"31536000s"`
-	HSTSIncludeSub    bool          `env:"HSTS_INCLUDE_SUBDOMAINS" envDefault:"true"`
-	HSTSPreload       bool          `env:"HSTS_PRELOAD" envDefault:"false"`
-	ContentSecurityPolicy string    `env:"CONTENT_SECURITY_POLICY" envDefault:"default-src 'none'; frame-ancestors 'none'"`
-	ReferrerPolicy    string        `env:"REFERRER_POLICY" envDefault:"no-referrer"`
+	HSTSMaxAge            time.Duration `env:"HSTS_MAX_AGE" envDefault:"31536000s"`
+	HSTSIncludeSub        bool          `env:"HSTS_INCLUDE_SUBDOMAINS" envDefault:"true"`
+	HSTSPreload           bool          `env:"HSTS_PRELOAD" envDefault:"false"`
+	ContentSecurityPolicy string        `env:"CONTENT_SECURITY_POLICY" envDefault:"default-src 'none'; frame-ancestors 'none'"`
+	ReferrerPolicy        string        `env:"REFERRER_POLICY" envDefault:"no-referrer"`
 
 	DocsEnabled bool `env:"DOCS_ENABLED" envDefault:"true"`
 

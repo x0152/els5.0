@@ -16,6 +16,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/vocab/cards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Build a flashcard deck: guess the word by its image and definition */
+        post: operations["generateVocabCards"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vocab/cards/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check a flashcard answer and advance the word's memorization progress */
+        post: operations["answerVocabCard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vocab/cards/due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Count words that can still advance their memorization progress today */
+        get: operations["dueVocabCards"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/vocab/occurrences": {
         parameters: {
             query?: never;
@@ -171,9 +222,35 @@ export interface components {
             text: string;
             /** Format: int64 */
             total: number;
+            translation?: string;
         };
         AnalyzeOutput: {
             items: components["schemas"]["AnalyzeItemOutput"][] | null;
+        };
+        AnswerCardInputBody: {
+            answer: string;
+            unit_id: string;
+        };
+        AnswerCardOutput: {
+            correct: boolean;
+            unit: components["schemas"]["UnitOutput"];
+        };
+        CardOutput: {
+            definition?: string;
+            /** @enum {string} */
+            direction: "word" | "translation";
+            image_url?: string;
+            kind: string;
+            /** @enum {string} */
+            mode: "choice" | "input";
+            options?: string[] | null;
+            status: string;
+            transcription?: string;
+            unit_id: string;
+            word?: string;
+        };
+        CardsOutput: {
+            cards: components["schemas"]["CardOutput"][] | null;
         };
         CheckPracticeInputBody: {
             /** @description The learner's free-form sentence */
@@ -195,6 +272,10 @@ export interface components {
         DeleteUnitOutput: {
             ok: boolean;
         };
+        DueCardsOutput: {
+            /** Format: int64 */
+            count: number;
+        };
         ErrorBody: {
             code: string;
             details?: components["schemas"]["ErrorDetail"][] | null;
@@ -208,6 +289,10 @@ export interface components {
             error: components["schemas"]["ErrorBody"];
             meta?: components["schemas"]["Meta"];
             ok: boolean;
+        };
+        GenerateCardsInputBody: {
+            /** @description Build the deck only from words with a generated illustration */
+            images_only?: boolean;
         };
         HealthOutput: {
             /** @example auth */
@@ -303,6 +388,16 @@ export interface components {
             meta?: components["schemas"]["Meta"];
             ok: boolean;
         };
+        SuccessBodyAnswerCardOutput: {
+            data: components["schemas"]["AnswerCardOutput"];
+            meta?: components["schemas"]["Meta"];
+            ok: boolean;
+        };
+        SuccessBodyCardsOutput: {
+            data: components["schemas"]["CardsOutput"];
+            meta?: components["schemas"]["Meta"];
+            ok: boolean;
+        };
         SuccessBodyCheckPracticeOutput: {
             data: components["schemas"]["CheckPracticeOutput"];
             meta?: components["schemas"]["Meta"];
@@ -310,6 +405,11 @@ export interface components {
         };
         SuccessBodyDeleteUnitOutput: {
             data: components["schemas"]["DeleteUnitOutput"];
+            meta?: components["schemas"]["Meta"];
+            ok: boolean;
+        };
+        SuccessBodyDueCardsOutput: {
+            data: components["schemas"]["DueCardsOutput"];
             meta?: components["schemas"]["Meta"];
             ok: boolean;
         };
@@ -350,6 +450,8 @@ export interface components {
         };
         UnitOutput: {
             cefr: string;
+            /** Format: int64 */
+            correct_streak: number;
             created_at: string;
             definition?: string;
             example?: string;
@@ -387,13 +489,19 @@ export type SchemaAddUnitOutput = components['schemas']['AddUnitOutput'];
 export type SchemaAnalyzeInputBody = components['schemas']['AnalyzeInputBody'];
 export type SchemaAnalyzeItemOutput = components['schemas']['AnalyzeItemOutput'];
 export type SchemaAnalyzeOutput = components['schemas']['AnalyzeOutput'];
+export type SchemaAnswerCardInputBody = components['schemas']['AnswerCardInputBody'];
+export type SchemaAnswerCardOutput = components['schemas']['AnswerCardOutput'];
+export type SchemaCardOutput = components['schemas']['CardOutput'];
+export type SchemaCardsOutput = components['schemas']['CardsOutput'];
 export type SchemaCheckPracticeInputBody = components['schemas']['CheckPracticeInputBody'];
 export type SchemaCheckPracticeOutput = components['schemas']['CheckPracticeOutput'];
 export type SchemaCheckResult = components['schemas']['CheckResult'];
 export type SchemaDeleteUnitOutput = components['schemas']['DeleteUnitOutput'];
+export type SchemaDueCardsOutput = components['schemas']['DueCardsOutput'];
 export type SchemaErrorBody = components['schemas']['ErrorBody'];
 export type SchemaErrorDetail = components['schemas']['ErrorDetail'];
 export type SchemaErrorResponse = components['schemas']['ErrorResponse'];
+export type SchemaGenerateCardsInputBody = components['schemas']['GenerateCardsInputBody'];
 export type SchemaHealthOutput = components['schemas']['HealthOutput'];
 export type SchemaMeta = components['schemas']['Meta'];
 export type SchemaOccurrenceOutput = components['schemas']['OccurrenceOutput'];
@@ -407,8 +515,11 @@ export type SchemaSavePracticeProgressOutput = components['schemas']['SavePracti
 export type SchemaSpotOutput = components['schemas']['SpotOutput'];
 export type SchemaSuccessBodyAddUnitOutput = components['schemas']['SuccessBodyAddUnitOutput'];
 export type SchemaSuccessBodyAnalyzeOutput = components['schemas']['SuccessBodyAnalyzeOutput'];
+export type SchemaSuccessBodyAnswerCardOutput = components['schemas']['SuccessBodyAnswerCardOutput'];
+export type SchemaSuccessBodyCardsOutput = components['schemas']['SuccessBodyCardsOutput'];
 export type SchemaSuccessBodyCheckPracticeOutput = components['schemas']['SuccessBodyCheckPracticeOutput'];
 export type SchemaSuccessBodyDeleteUnitOutput = components['schemas']['SuccessBodyDeleteUnitOutput'];
+export type SchemaSuccessBodyDueCardsOutput = components['schemas']['SuccessBodyDueCardsOutput'];
 export type SchemaSuccessBodyHealthOutput = components['schemas']['SuccessBodyHealthOutput'];
 export type SchemaSuccessBodyOccurrencesOutput = components['schemas']['SuccessBodyOccurrencesOutput'];
 export type SchemaSuccessBodyPracticeOutput = components['schemas']['SuccessBodyPracticeOutput'];
@@ -441,6 +552,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SuccessBodyAnalyzeOutput"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    generateVocabCards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateCardsInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessBodyCardsOutput"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    answerVocabCard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerCardInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessBodyAnswerCardOutput"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    dueVocabCards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessBodyDueCardsOutput"];
                 };
             };
             /** @description Error */

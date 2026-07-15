@@ -9,16 +9,18 @@ import (
 )
 
 type Account struct {
-	ID           pgtype.UUID
-	Email        string
-	CreatedAt    pgtype.Timestamptz
-	UpdatedAt    pgtype.Timestamptz
-	FirstName    string
-	LastName     string
-	Status       string
-	PictureUrl   string
-	EnglishLevel string
-	AboutMe      string
+	ID               pgtype.UUID
+	Email            string
+	CreatedAt        pgtype.Timestamptz
+	UpdatedAt        pgtype.Timestamptz
+	FirstName        string
+	LastName         string
+	Status           string
+	PictureUrl       string
+	EnglishLevel     string
+	AboutMe          string
+	NativeLanguage   string
+	ShowTranslations bool
 }
 
 type Administrator struct {
@@ -46,6 +48,14 @@ type AiMessage struct {
 	CreatedAt        pgtype.Timestamptz
 }
 
+type AiProvider struct {
+	Feature   string
+	BaseUrl   string
+	ApiKey    string
+	Model     string
+	UpdatedAt pgtype.Timestamptz
+}
+
 type AiSession struct {
 	ID               pgtype.UUID
 	AccountID        pgtype.UUID
@@ -55,11 +65,22 @@ type AiSession struct {
 	UpdatedAt        pgtype.Timestamptz
 }
 
+type BaseForm struct {
+	Text     string
+	Pos      *string
+	IsStop   bool
+	Language string
+	Meaning  *string
+}
+
 type Book struct {
-	Slug      string
-	Title     string
-	CreatedAt pgtype.Timestamptz
-	UpdatedAt pgtype.Timestamptz
+	Slug        string
+	Title       string
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	Series      string
+	Level       string
+	Description string
 }
 
 type BookChapter struct {
@@ -116,6 +137,23 @@ type Film struct {
 	Subtitles     []byte
 	CreatedAt     pgtype.Timestamptz
 	Description   string
+	Kind          string
+	SeriesTitle   string
+	Season        int32
+	Episode       int32
+}
+
+type FilmProgress struct {
+	OwnerID    pgtype.UUID
+	FilmID     pgtype.UUID
+	PositionMs int32
+	UpdatedAt  pgtype.Timestamptz
+}
+
+type FilmSeries struct {
+	Title       string
+	Description string
+	PosterPath  string
 }
 
 type GrammarRule struct {
@@ -127,6 +165,23 @@ type GrammarRule struct {
 	Enriched  bool
 	Metadata  []byte
 	CreatedAt pgtype.Timestamptz
+	UpdatedAt pgtype.Timestamptz
+}
+
+type MediaSegment struct {
+	ID         pgtype.UUID
+	MediaID    pgtype.UUID
+	Kind       string
+	SegmentIdx int32
+	StartPos   int32
+	EndPos     int32
+	Text       string
+	Metadata   []byte
+}
+
+type PlatformFlag struct {
+	Key       string
+	Enabled   bool
 	UpdatedAt pgtype.Timestamptz
 }
 
@@ -160,6 +215,7 @@ type QuestMission struct {
 	Payload   []byte
 	CreatedAt pgtype.Timestamptz
 	UpdatedAt pgtype.Timestamptz
+	AuthorID  string
 }
 
 type QuestProfile struct {
@@ -173,25 +229,92 @@ type RawEvent struct {
 	ID          pgtype.UUID
 	UserID      pgtype.UUID
 	Status      string
-	Version     int32
-	Type        string
 	Text        string
 	Context     string
-	Note        string
 	Source      []byte
 	Meta        []byte
 	OccurredAt  pgtype.Timestamptz
 	CreatedAt   pgtype.Timestamptz
 	ProcessedAt pgtype.Timestamptz
 	Error       string
-	Session     string
 	ClientID    string
+	Skill       string
+	Target      string
+	Outcome     string
+	ClaimedAt   pgtype.Timestamptz
+}
+
+type ReaderBook struct {
+	ID          pgtype.UUID
+	OwnerID     string
+	Title       string
+	Author      string
+	ContentPath string
+	TextLength  int32
+	Status      string
+	Error       string
+	CreatedAt   pgtype.Timestamptz
+	Description string
+	CoverPath   string
+	Kind        string
+	GroupTitle  string
+}
+
+type ReaderCollection struct {
+	Title       string
+	Description string
+	CoverPath   string
+}
+
+type ReaderProgress struct {
+	OwnerID  string
+	BookID   pgtype.UUID
+	Position int32
+}
+
+type Unit struct {
+	ID           pgtype.UUID
+	MediaID      pgtype.UUID
+	SegmentID    pgtype.UUID
+	UnitType     string
+	BaseForm     string
+	Pos          *string
+	SentenceIdx  int32
+	UnitMetadata []byte
+	Language     string
+}
+
+type UnitSpan struct {
+	ID       pgtype.UUID
+	UnitID   pgtype.UUID
+	Position int32
+	SpanType string
+	Start    int32
+	End      int32
+	Text     string
 }
 
 type VAccountRole struct {
 	AccountID pgtype.UUID
 	Role      string
 	EntityID  pgtype.UUID
+}
+
+type VocabUnit struct {
+	ID             pgtype.UUID
+	AccountID      string
+	Text           string
+	Kind           string
+	Transcription  string
+	Translation    string
+	Definition     string
+	Example        string
+	Status         string
+	CreatedAt      pgtype.Timestamptz
+	Frequency      int32
+	Cefr           string
+	CorrectStreak  int32
+	LastAnsweredAt pgtype.Timestamptz
 }
 
 type Word struct {

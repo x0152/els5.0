@@ -20,6 +20,7 @@ func toUnitOutput(u vocab.Unit) UnitOutput {
 		Frequency:     u.Frequency,
 		CEFR:          u.CEFR,
 		Status:        string(u.Status),
+		CorrectStreak: u.CorrectStreak,
 		CreatedAt:     u.CreatedAt.Format(time.RFC3339),
 	}
 }
@@ -65,6 +66,7 @@ func toAnalyzeItemOutput(it usecases.AnalyzeItem) AnalyzeItemOutput {
 		Text:        it.Text,
 		Kind:        it.Kind,
 		Description: it.Description,
+		Translation: it.Translation,
 		Frequency:   it.Frequency,
 		CEFR:        it.Cefr,
 		Common:      it.Common,
@@ -126,6 +128,33 @@ func toPracticeAnswers(in map[string]PracticeAnswerDTO) map[string]vocab.Practic
 		out[k] = vocab.PracticeAnswer(a)
 	}
 	return out
+}
+
+func toCardsOutput(cards []vocab.Card) CardsOutput {
+	out := make([]CardOutput, 0, len(cards))
+	for _, c := range cards {
+		card := CardOutput{
+			UnitID:    c.Unit.ID,
+			Mode:      string(c.Mode),
+			Direction: string(c.Direction),
+			Kind:      string(c.Unit.Kind),
+			Status:    string(c.Unit.Status),
+			ImageURL:  c.ImageURL,
+			Options:   c.Options,
+		}
+		if c.Direction == vocab.CardDirectionTranslation {
+			card.Word = c.Unit.Text
+			card.Transcription = c.Unit.Transcription
+		} else {
+			card.Definition = vocab.MaskedDefinition(c.Unit)
+		}
+		out = append(out, card)
+	}
+	return CardsOutput{Cards: out}
+}
+
+func toAnswerCardOutput(res usecases.AnswerCardResult) AnswerCardOutput {
+	return AnswerCardOutput{Correct: res.Correct, Unit: toUnitOutput(res.Unit)}
 }
 
 func toCheckPracticeOutput(res vocab.PracticeCheckResult) CheckPracticeOutput {

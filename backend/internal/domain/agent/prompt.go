@@ -91,6 +91,7 @@ func (p IdentityContext) Context(_ context.Context, rc RunContext) ([]LLMMessage
 		acc := rc.Actor.Account()
 		fmt.Fprintf(&sb, "- User: %s <%s>\n", acc.Name().Full(), acc.Email().String())
 		fmt.Fprintf(&sb, "- account_id: %s\n", rc.Actor.AccountID().String())
+		fmt.Fprintf(&sb, "- Native language: %s\n", acc.NativeLanguage())
 	}
 	return []LLMMessage{{Role: LLMRoleSystem, Content: sb.String()}}, nil
 }

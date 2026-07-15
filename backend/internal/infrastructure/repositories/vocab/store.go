@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -20,7 +21,7 @@ type Store struct {
 
 func NewStore(pool *pgxpool.Pool) *Store { return &Store{pool: pool} }
 
-const columns = `id, account_id, text, kind, transcription, translation, definition, example, frequency, cefr, status, created_at`
+const columns = `id, account_id, text, kind, transcription, translation, definition, example, frequency, cefr, status, correct_streak, last_answered_at, created_at`
 
 func (s *Store) Create(ctx context.Context, u vocab.Unit) (vocab.Unit, error) {
 	err := s.pool.QueryRow(ctx, `INSERT INTO vocab_units (id, account_id, text, kind, transcription, translation, definition, example, frequency, cefr, status, created_at)
@@ -73,6 +74,40 @@ func (s *Store) List(ctx context.Context, accountID string, f vocab.ListFilter) 
 	return out, total, rows.Err()
 }
 
+func (s *Store) Get(ctx context.Context, accountID, id string) (vocab.Unit, error) {
+	unit, err := scanUnit(s.pool.QueryRow(ctx, `SELECT `+columns+` FROM vocab_units WHERE id = $1 AND account_id = $2`, id, accountID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return vocab.Unit{}, shared.ErrNotFound
+	}
+	if err != nil {
+		return vocab.Unit{}, fmt.Errorf("get unit: %w", err)
+	}
+	return unit, nil
+}
+
+func (s *Store) UpdateProgress(ctx context.Context, u vocab.Unit) (vocab.Unit, error) {
+	unit, err := scanUnit(s.pool.QueryRow(ctx, `UPDATE vocab_units SET status = $1, correct_streak = $2, last_answered_at = $3 WHERE id = $4 AND account_id = $5
+		RETURNING `+columns, string(u.Status), u.CorrectStreak, u.LastAnsweredAt, u.ID, u.AccountID))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return vocab.Unit{}, shared.ErrNotFound
+	}
+	if err != nil {
+		return vocab.Unit{}, fmt.Errorf("update unit progress: %w", err)
+	}
+	return unit, nil
+}
+
+func (s *Store) CountDue(ctx context.Context, accountID string, since time.Time) (int, error) {
+	var count int
+	err := s.pool.QueryRow(ctx, `SELECT count(*) FROM vocab_units
+		WHERE account_id = $1 AND status IN ('new','learning') AND (last_answered_at IS NULL OR last_answered_at < $2)`,
+		accountID, since).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("count due units: %w", err)
+	}
+	return count, nil
+}
+
 func (s *Store) ExistsText(ctx context.Context, accountID, text string) (bool, error) {
 	var exists bool
 	err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM vocab_units WHERE account_id = $1 AND lower(text) = lower($2))`,
@@ -113,7 +148,7 @@ type scannable interface {
 func scanUnit(row scannable) (vocab.Unit, error) {
 	var u vocab.Unit
 	var kind, status string
-	if err := row.Scan(&u.ID, &u.AccountID, &u.Text, &kind, &u.Transcription, &u.Translation, &u.Definition, &u.Example, &u.Frequency, &u.CEFR, &status, &u.CreatedAt); err != nil {
+	if err := row.Scan(&u.ID, &u.AccountID, &u.Text, &kind, &u.Transcription, &u.Translation, &u.Definition, &u.Example, &u.Frequency, &u.CEFR, &status, &u.CorrectStreak, &u.LastAnsweredAt, &u.CreatedAt); err != nil {
 		return vocab.Unit{}, err
 	}
 	u.Kind = vocab.Kind(kind)

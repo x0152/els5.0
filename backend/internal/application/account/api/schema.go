@@ -22,6 +22,8 @@ type MeOutput struct {
 	PictureURL           string `json:"picture_url"`
 	EnglishLevel         string `json:"english_level"`
 	AboutMe              string `json:"about_me"`
+	NativeLanguage       string `json:"native_language"`
+	ShowTranslations     bool   `json:"show_translations"`
 	Status               string `json:"status"`
 	Role                 string `json:"role"`
 	EntityID             string `json:"entity_id"`
@@ -30,10 +32,12 @@ type MeOutput struct {
 }
 
 type UpdateProfileBody struct {
-	FirstName    string `json:"first_name" minLength:"1" maxLength:"100"`
-	LastName     string `json:"last_name" minLength:"1" maxLength:"100"`
-	EnglishLevel string `json:"english_level" maxLength:"100"`
-	AboutMe      string `json:"about_me" maxLength:"2000"`
+	FirstName        string `json:"first_name" minLength:"1" maxLength:"100"`
+	LastName         string `json:"last_name" minLength:"1" maxLength:"100"`
+	EnglishLevel     string `json:"english_level" maxLength:"100"`
+	AboutMe          string `json:"about_me" maxLength:"2000"`
+	NativeLanguage   string `json:"native_language" maxLength:"100" doc:"The learner's native language name in English, e.g. Russian, Spanish"`
+	ShowTranslations bool   `json:"show_translations" doc:"Show translations into the native language across the platform"`
 }
 
 type UpdateProfileInput struct {

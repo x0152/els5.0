@@ -20,8 +20,8 @@ type CheckResult struct {
 	Cefr          string
 }
 
-func BuildCheckPrompt(input string) (system, user string) {
-	return checkSystem, fmt.Sprintf("ITEM:\n%s", input)
+func BuildCheckPrompt(input, nativeLanguage string) (system, user string) {
+	return fmt.Sprintf(checkSystem, nativeLanguage, nativeLanguage, nativeLanguage), fmt.Sprintf("ITEM:\n%s", input)
 }
 
 func ParseCheckResult(raw string) (CheckResult, error) {
@@ -61,7 +61,7 @@ func wordsList(units []Unit) string {
 			line += fmt.Sprintf(" (%s)", u.Kind)
 		}
 		if u.Translation != "" {
-			line += fmt.Sprintf(" — RU: %s", u.Translation)
+			line += fmt.Sprintf(" — translation: %s", u.Translation)
 		}
 		if u.Definition != "" {
 			line += fmt.Sprintf("; EN: %s", u.Definition)
@@ -130,12 +130,13 @@ type AnalyzeItem struct {
 	Kind        string   `json:"kind"`
 	Lemmas      []string `json:"lemmas"`
 	Description string   `json:"description"`
+	Translation string   `json:"translation"`
 	Frequency   int      `json:"frequency"`
 	Cefr        string   `json:"cefr"`
 }
 
-func BuildAnalyzePrompt(selection, context, level string) (system, user string) {
-	system = analyzeSystem
+func BuildAnalyzePrompt(selection, context, level, nativeLanguage string) (system, user string) {
+	system = fmt.Sprintf(analyzeSystem, nativeLanguage)
 	if strings.TrimSpace(level) != "" {
 		system += fmt.Sprintf("\n\nThe learner's English level is %s — match the wording of the description to that level.", strings.TrimSpace(level))
 	}
@@ -187,15 +188,16 @@ For each item fill:
 - "text": the normalized English item (lowercase unless a proper noun), in dictionary form.
 - "kind": one of "word", "phrase", "phrasal_verb", "idiom".
 - "lemmas": the dictionary base forms to look the item up by. For a single word give its lemma; for a phrasal verb give the verb and particle as one entry like "look up"; for a phrase or idiom give the lemmatized whole phrase. Lowercase, no punctuation.
-- "description": a short, simple English explanation of the meaning in this context (one short phrase, plain words). NEVER translate to another language.
+- "description": a short, simple English explanation of the meaning in this context (one short phrase, plain words). The description itself must stay in English.
+- "translation": a concise %s translation of the item as used in this context.
 - "frequency": an integer 1–5 for how common the item is in everyday English overall (5 = extremely common core word everyone knows, 3 = average, 1 = rare, literary or specialized).
 - "cefr": the CEFR level at which a learner usually meets this item — exactly one of "A1", "A2", "B1", "B2", "C1", "C2".
 
-Respond in English only as JSON Lines: output ONE item per line as a compact JSON object, nothing else — no surrounding array, no wrapping object, no code fences, no commentary.
-Each line must be exactly: {"text": "", "kind": "", "lemmas": [""], "description": "", "frequency": 0, "cefr": ""}`
+Respond as JSON Lines: output ONE item per line as a compact JSON object, nothing else — no surrounding array, no wrapping object, no code fences, no commentary.
+Each line must be exactly: {"text": "", "kind": "", "lemmas": [""], "description": "", "translation": "", "frequency": 0, "cefr": ""}`
 
-const checkSystem = `You help a Russian-speaking student build a personal English vocabulary collection for memorization.
-The student submits ONE item to add: a word, a phrase, a phrasal verb, or an idiom. The input may contain typos or be written partly in Russian as a request.
+const checkSystem = `You help a %s-speaking student build a personal English vocabulary collection for memorization.
+The student submits ONE item to add: a word, a phrase, a phrasal verb, or an idiom. The input may contain typos or be written partly in %s as a request.
 
 First decide whether it is a valid, correctly spelled English vocabulary item.
 - If it is misspelled, invalid, or not English, set "correct" to false, put the corrected English form in "correction" and a short English explanation of what is wrong in "explanation". Leave the remaining fields empty.
@@ -203,7 +205,7 @@ First decide whether it is a valid, correctly spelled English vocabulary item.
   - "kind": one of "word", "phrase", "phrasal_verb", "idiom".
   - "text": the normalized item (lowercase unless it is a proper noun).
   - "transcription": IPA transcription for a single word, empty for multi-word items.
-  - "translation": a concise Russian translation.
+  - "translation": a concise %s translation.
   - "definition": a clear English definition.
   - "example": one natural English example sentence using the item.
   - "frequency": an integer 1–5 for how common the item is in everyday English overall (5 = extremely common core word everyone knows, 3 = average, 1 = rare, literary or specialized).

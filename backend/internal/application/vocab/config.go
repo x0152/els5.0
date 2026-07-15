@@ -10,6 +10,7 @@ type Config struct {
 
 	Session SessionConfig `envPrefix:"VOCAB_SESSION_"`
 	LLM     LLMConfig     `envPrefix:"LLM_"`
+	Bucket  string        `env:"ILLUSTRATE_S3_BUCKET" envDefault:"illustrations"`
 }
 
 type SessionConfig struct {

@@ -138,8 +138,10 @@ export interface components {
             impersonation_enabled: boolean;
             is_global_admin: boolean;
             last_name: string;
+            native_language: string;
             picture_url: string;
             role: string;
+            show_translations: boolean;
             status: string;
         };
         Meta: {
@@ -193,6 +195,10 @@ export interface components {
             english_level: string;
             first_name: string;
             last_name: string;
+            /** @description The learner's native language name in English, e.g. Russian, Spanish */
+            native_language: string;
+            /** @description Show translations into the native language across the platform */
+            show_translations: boolean;
         };
     };
     responses: never;

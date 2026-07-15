@@ -25,6 +25,7 @@ type AnalyzeItem struct {
 	Text        string
 	Kind        string
 	Description string
+	Translation string
 	Frequency   int
 	Cefr        string
 	Common      bool
@@ -65,7 +66,7 @@ func (uc *AnalyzeUseCase) Execute(ctx context.Context, actor *iam.Actor, selecti
 	}
 
 	// 1. Ask the LLM to parse the selection into units with lemmas.
-	system, user := vocab.BuildAnalyzePrompt(selection, strings.TrimSpace(surrounding), actor.Account().EnglishLevel())
+	system, user := vocab.BuildAnalyzePrompt(selection, strings.TrimSpace(surrounding), actor.Account().EnglishLevel(), actor.Account().NativeLanguage())
 	raw, err := uc.llm.Chat(ctx, system, user)
 	if err != nil {
 		return nil, err
@@ -113,7 +114,7 @@ func (uc *AnalyzeUseCase) Stream(ctx context.Context, actor *iam.Actor, selectio
 		return nil
 	}
 
-	system, user := vocab.BuildAnalyzePrompt(selection, strings.TrimSpace(surrounding), actor.Account().EnglishLevel())
+	system, user := vocab.BuildAnalyzePrompt(selection, strings.TrimSpace(surrounding), actor.Account().EnglishLevel(), actor.Account().NativeLanguage())
 	accountID := actor.AccountID().String()
 	flush := func(line string) {
 		if it, ok := vocab.ParseAnalyzeLine(line); ok {
@@ -145,7 +146,7 @@ func (uc *AnalyzeUseCase) Stream(ctx context.Context, actor *iam.Actor, selectio
 func (uc *AnalyzeUseCase) enrich(ctx context.Context, accountID string, it vocab.AnalyzeItem) AnalyzeItem {
 	occ := uc.lookupOccurrences(ctx, []vocab.AnalyzeItem{it})
 	out := buildAnalyzeItems([]vocab.AnalyzeItem{it}, occ)
-	item := AnalyzeItem{Text: it.Text, Kind: it.Kind, Description: it.Description, Frequency: vocab.ClampFrequency(it.Frequency), Cefr: vocab.NormalizeCEFR(it.Cefr)}
+	item := AnalyzeItem{Text: it.Text, Kind: it.Kind, Description: it.Description, Translation: it.Translation, Frequency: vocab.ClampFrequency(it.Frequency), Cefr: vocab.NormalizeCEFR(it.Cefr)}
 	if len(out) > 0 {
 		item = out[0]
 	}
@@ -205,6 +206,7 @@ func buildAnalyzeItems(items []vocab.AnalyzeItem, occurrences map[string]lexicon
 			Text:        it.Text,
 			Kind:        it.Kind,
 			Description: it.Description,
+			Translation: it.Translation,
 			Frequency:   vocab.ClampFrequency(it.Frequency),
 			Cefr:        vocab.NormalizeCEFR(it.Cefr),
 			Total:       total,

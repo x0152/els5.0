@@ -42,18 +42,20 @@ func (s Status) IsValid() bool {
 }
 
 type Unit struct {
-	ID            string
-	AccountID     string
-	Text          string
-	Kind          Kind
-	Transcription string
-	Translation   string
-	Definition    string
-	Example       string
-	Frequency     int
-	CEFR          string
-	Status        Status
-	CreatedAt     time.Time
+	ID             string
+	AccountID      string
+	Text           string
+	Kind           Kind
+	Transcription  string
+	Translation    string
+	Definition     string
+	Example        string
+	Frequency      int
+	CEFR           string
+	Status         Status
+	CorrectStreak  int
+	LastAnsweredAt *time.Time
+	CreatedAt      time.Time
 }
 
 func NewUnit(id, accountID string, c CheckResult) (Unit, error) {

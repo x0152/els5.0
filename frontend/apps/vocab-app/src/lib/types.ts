@@ -5,6 +5,8 @@ type Schemas = VocabComponents['schemas']
 export type Unit = Schemas['UnitOutput']
 export type AddUnitResult = Schemas['AddUnitOutput']
 export type Occurrences = Schemas['OccurrencesOutput']
+export type Card = Schemas['CardOutput']
+export type CardAnswer = Schemas['AnswerCardOutput']
 
 export type UnitStatus = 'new' | 'learning' | 'learned'
 export type UnitKind = 'word' | 'phrase' | 'phrasal_verb' | 'idiom'

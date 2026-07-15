@@ -15,6 +15,7 @@ type UnitOutput struct {
 	Frequency     int    `json:"frequency"`
 	CEFR          string `json:"cefr"`
 	Status        string `json:"status"`
+	CorrectStreak int    `json:"correct_streak"`
 	CreatedAt     string `json:"created_at"`
 }
 
@@ -62,6 +63,7 @@ type AnalyzeItemOutput struct {
 	Text        string             `json:"text"`
 	Kind        string             `json:"kind"`
 	Description string             `json:"description"`
+	Translation string             `json:"translation,omitempty"`
 	Frequency   int                `json:"frequency"`
 	CEFR        string             `json:"cefr"`
 	Common      bool               `json:"common"`
@@ -146,6 +148,51 @@ type SavePracticeProgressInput struct {
 
 type SavePracticeProgressOutput struct {
 	OK bool `json:"ok"`
+}
+
+type GenerateCardsInput struct {
+	authx.BearerInput
+	Body struct {
+		ImagesOnly bool `json:"images_only,omitempty" doc:"Build the deck only from words with a generated illustration"`
+	}
+}
+
+type CardOutput struct {
+	UnitID        string   `json:"unit_id"`
+	Mode          string   `json:"mode" enum:"choice,input"`
+	Direction     string   `json:"direction" enum:"word,translation"`
+	Kind          string   `json:"kind"`
+	Status        string   `json:"status"`
+	Definition    string   `json:"definition,omitempty"`
+	Word          string   `json:"word,omitempty"`
+	Transcription string   `json:"transcription,omitempty"`
+	ImageURL      string   `json:"image_url,omitempty"`
+	Options       []string `json:"options,omitempty"`
+}
+
+type CardsOutput struct {
+	Cards []CardOutput `json:"cards"`
+}
+
+type DueCardsInput struct {
+	authx.BearerInput
+}
+
+type DueCardsOutput struct {
+	Count int `json:"count"`
+}
+
+type AnswerCardInput struct {
+	authx.BearerInput
+	Body struct {
+		UnitID string `json:"unit_id" minLength:"1"`
+		Answer string `json:"answer" maxLength:"200"`
+	}
+}
+
+type AnswerCardOutput struct {
+	Correct bool       `json:"correct"`
+	Unit    UnitOutput `json:"unit"`
 }
 
 type CheckPracticeInput struct {

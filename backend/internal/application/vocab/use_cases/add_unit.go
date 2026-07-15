@@ -49,7 +49,7 @@ func (uc *AddUnitUseCase) Execute(ctx context.Context, actor *iam.Actor, input s
 	}
 
 	// 2. Ask the LLM to validate and describe the word.
-	system, user := vocab.BuildCheckPrompt(input)
+	system, user := vocab.BuildCheckPrompt(input, actor.Account().NativeLanguage())
 	raw, err := uc.llm.Chat(ctx, system, user)
 	if err != nil {
 		return AddUnitResult{}, err

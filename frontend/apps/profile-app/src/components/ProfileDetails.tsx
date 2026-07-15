@@ -1,8 +1,27 @@
 import { useEffect, useState } from 'react'
 import { Check, Loader2, Pencil, X } from 'lucide-react'
-import { cn, Input, Textarea } from '@els/ui'
+import { cn, Input, Select, Textarea } from '@els/ui'
 import { Widget } from './Widget'
 import { useMe, useUpdateProfile, type MeProfile } from '../store/me'
+
+const NATIVE_LANGUAGES = [
+  'Russian',
+  'Ukrainian',
+  'Belarusian',
+  'Kazakh',
+  'Spanish',
+  'Portuguese',
+  'French',
+  'German',
+  'Italian',
+  'Polish',
+  'Turkish',
+  'Arabic',
+  'Chinese',
+  'Japanese',
+  'Korean',
+  'Hindi',
+]
 
 export function ProfileDetails() {
   const meQ = useMe()
@@ -17,6 +36,8 @@ function DetailsForm({ me }: { me: MeProfile }) {
   const [lastName, setLastName] = useState(me.lastName)
   const [englishLevel, setEnglishLevel] = useState(me.englishLevel)
   const [aboutMe, setAboutMe] = useState(me.aboutMe)
+  const [nativeLanguage, setNativeLanguage] = useState(me.nativeLanguage)
+  const [showTranslations, setShowTranslations] = useState(me.showTranslations)
   const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
@@ -25,6 +46,8 @@ function DetailsForm({ me }: { me: MeProfile }) {
       setLastName(me.lastName)
       setEnglishLevel(me.englishLevel)
       setAboutMe(me.aboutMe)
+      setNativeLanguage(me.nativeLanguage)
+      setShowTranslations(me.showTranslations)
     }
   }, [me, editing])
 
@@ -35,7 +58,7 @@ function DetailsForm({ me }: { me: MeProfile }) {
       return
     }
     try {
-      await update.mutateAsync({ firstName, lastName, englishLevel, aboutMe })
+      await update.mutateAsync({ firstName, lastName, englishLevel, aboutMe, nativeLanguage, showTranslations })
       setEditing(false)
     } catch (x) {
       setErr(x instanceof Error ? x.message : 'Failed to save')
@@ -85,7 +108,7 @@ function DetailsForm({ me }: { me: MeProfile }) {
         <Field label="Last name">
           <Input value={lastName} onChange={(e) => setLastName(e.target.value)} disabled={!editing} />
         </Field>
-        <Field label="English level" className="sm:col-span-2">
+        <Field label="English level">
           <Input
             value={englishLevel}
             onChange={(e) => setEnglishLevel(e.target.value)}
@@ -93,6 +116,28 @@ function DetailsForm({ me }: { me: MeProfile }) {
             placeholder="e.g. B2 (upper-intermediate)"
           />
         </Field>
+        <Field label="Native language">
+          <Select value={nativeLanguage} onChange={(e) => setNativeLanguage(e.target.value)} disabled={!editing}>
+            {!NATIVE_LANGUAGES.includes(nativeLanguage) && nativeLanguage && (
+              <option value={nativeLanguage}>{nativeLanguage}</option>
+            )}
+            {NATIVE_LANGUAGES.map((l) => (
+              <option key={l} value={l}>
+                {l}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <label className="flex items-center gap-2 sm:col-span-2">
+          <input
+            type="checkbox"
+            checked={showTranslations}
+            onChange={(e) => setShowTranslations(e.target.checked)}
+            disabled={!editing}
+            className="h-4 w-4 accent-brand-600"
+          />
+          <span className="text-sm text-neutral-700">Show translations into my native language across the platform</span>
+        </label>
         <Field label="About me" className="sm:col-span-2">
           <Textarea
             value={aboutMe}

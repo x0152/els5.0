@@ -173,7 +173,7 @@ func main() {
 			learn.Mount(ctx, a, learn.LoadConfig(), p, r, l, storage, urls)
 		},
 		vocab.Name: func(a huma.API, p *pgxpool.Pool, r *redis.Client, l *slog.Logger) {
-			vocab.Mount(a, mux, vocab.LoadConfig(), p, r, l)
+			vocab.Mount(a, mux, vocab.LoadConfig(), p, r, l, storage, urls)
 		},
 		reader.Name: func(a huma.API, p *pgxpool.Pool, r *redis.Client, l *slog.Logger) {
 			reader.Mount(ctx, a, reader.LoadConfig(), p, r, l, storage, urls)

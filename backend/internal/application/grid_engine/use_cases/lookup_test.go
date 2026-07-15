@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	usecases "github.com/els/backend/internal/application/grid_engine/use_cases"
 	"github.com/els/backend/internal/application/grid_engine/lookups"
+	usecases "github.com/els/backend/internal/application/grid_engine/use_cases"
 	"github.com/els/backend/internal/domain/grid"
 	"github.com/els/backend/internal/domain/iam"
 	"github.com/els/backend/internal/domain/shared"

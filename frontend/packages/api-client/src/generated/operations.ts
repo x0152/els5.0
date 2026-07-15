@@ -114,6 +114,9 @@ export function createApi(options: ApiClientOptions) {
     },
     vocab: {
       analyzeVocab: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/analyze'], 'post'>) => unwrap(clients.vocab.POST('/api/v1/vocab/analyze', init)),
+      generateVocabCards: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/cards'], 'post'>) => unwrap(clients.vocab.POST('/api/v1/vocab/cards', init)),
+      answerVocabCard: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/cards/answer'], 'post'>) => unwrap(clients.vocab.POST('/api/v1/vocab/cards/answer', init)),
+      dueVocabCards: (init?: MaybeOptionalInit<VocabPaths['/api/v1/vocab/cards/due'], 'get'>) => unwrap(clients.vocab.GET('/api/v1/vocab/cards/due', init)),
       vocabOccurrences: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/occurrences'], 'get'>) => unwrap(clients.vocab.GET('/api/v1/vocab/occurrences', init)),
       getVocabPractice: (init?: MaybeOptionalInit<VocabPaths['/api/v1/vocab/practice'], 'get'>) => unwrap(clients.vocab.GET('/api/v1/vocab/practice', init)),
       generateVocabPractice: (init?: MaybeOptionalInit<VocabPaths['/api/v1/vocab/practice'], 'post'>) => unwrap(clients.vocab.POST('/api/v1/vocab/practice', init)),

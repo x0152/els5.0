@@ -21,11 +21,11 @@ type fakeEntity struct {
 }
 
 type fakeStore struct {
-	mu      sync.Mutex
-	items   map[string]*fakeEntity
-	nextID  atomic.Int64
-	listErr error
-	getErr  error
+	mu        sync.Mutex
+	items     map[string]*fakeEntity
+	nextID    atomic.Int64
+	listErr   error
+	getErr    error
 	createErr error
 	updateErr error
 	deleteErr error

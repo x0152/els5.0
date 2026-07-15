@@ -43,10 +43,12 @@ func Register(api huma.API, deps Deps) {
 		Tags:        []string{"account"},
 	}, func(ctx context.Context, actor *iam.Actor, in *UpdateProfileInput) (MeOutput, error) {
 		res, err := deps.UpdateProfile.Execute(ctx, actor, usecases.UpdateProfileCommand{
-			FirstName:    in.Body.FirstName,
-			LastName:     in.Body.LastName,
-			EnglishLevel: in.Body.EnglishLevel,
-			AboutMe:      in.Body.AboutMe,
+			FirstName:        in.Body.FirstName,
+			LastName:         in.Body.LastName,
+			EnglishLevel:     in.Body.EnglishLevel,
+			AboutMe:          in.Body.AboutMe,
+			NativeLanguage:   in.Body.NativeLanguage,
+			ShowTranslations: in.Body.ShowTranslations,
 		})
 		if err != nil {
 			return MeOutput{}, err

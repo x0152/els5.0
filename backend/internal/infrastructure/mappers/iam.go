@@ -23,43 +23,49 @@ func AccountFromSQLC(r sqlc.Account) (*iam.Account, error) {
 		return nil, fmt.Errorf("account %s status: %w", id, err)
 	}
 	return iam.NewAccount(iam.NewAccountParams{
-		ID:           id,
-		Email:        r.Email,
-		FirstName:    r.FirstName,
-		LastName:     r.LastName,
-		PictureURL:   r.PictureUrl,
-		EnglishLevel: r.EnglishLevel,
-		AboutMe:      r.AboutMe,
-		Status:       status,
-		Timestamps:   timestamps,
+		ID:               id,
+		Email:            r.Email,
+		FirstName:        r.FirstName,
+		LastName:         r.LastName,
+		PictureURL:       r.PictureUrl,
+		EnglishLevel:     r.EnglishLevel,
+		AboutMe:          r.AboutMe,
+		NativeLanguage:   r.NativeLanguage,
+		ShowTranslations: r.ShowTranslations,
+		Status:           status,
+		Timestamps:       timestamps,
 	})
 }
 
 func AccountCreateParams(a *iam.Account) sqlc.CreateAccountParams {
 	return sqlc.CreateAccountParams{
-		ID:           postgres.UUIDFromGoogle(a.ID().UUID()),
-		Email:        a.Email().String(),
-		FirstName:    a.Name().First(),
-		LastName:     a.Name().Last(),
-		PictureUrl:   a.PictureURL(),
-		EnglishLevel: a.EnglishLevel(),
-		AboutMe:      a.AboutMe(),
-		Status:       a.Status().String(),
-		CreatedAt:    postgres.TimestamptzFromTime(a.CreatedAt()),
-		UpdatedAt:    postgres.TimestamptzFromTime(a.UpdatedAt()),
+		ID:               postgres.UUIDFromGoogle(a.ID().UUID()),
+		Email:            a.Email().String(),
+		FirstName:        a.Name().First(),
+		LastName:         a.Name().Last(),
+		PictureUrl:       a.PictureURL(),
+		EnglishLevel:     a.EnglishLevel(),
+		AboutMe:          a.AboutMe(),
+		NativeLanguage:   a.NativeLanguage(),
+		ShowTranslations: a.ShowTranslations(),
+		Status:           a.Status().String(),
+		CreatedAt:        postgres.TimestamptzFromTime(a.CreatedAt()),
+		UpdatedAt:        postgres.TimestamptzFromTime(a.UpdatedAt()),
 	}
 }
 
 func AccountUpdateParams(a *iam.Account) sqlc.UpdateAccountParams {
 	return sqlc.UpdateAccountParams{
-		ID:           postgres.UUIDFromGoogle(a.ID().UUID()),
-		Email:        a.Email().String(),
-		FirstName:    a.Name().First(),
-		LastName:     a.Name().Last(),
-		Status:       a.Status().String(),
-		EnglishLevel: a.EnglishLevel(),
-		AboutMe:      a.AboutMe(),
-		UpdatedAt:    postgres.TimestamptzFromTime(a.UpdatedAt()),
+		ID:               postgres.UUIDFromGoogle(a.ID().UUID()),
+		Email:            a.Email().String(),
+		FirstName:        a.Name().First(),
+		LastName:         a.Name().Last(),
+		Status:           a.Status().String(),
+		EnglishLevel:     a.EnglishLevel(),
+		AboutMe:          a.AboutMe(),
+		NativeLanguage:   a.NativeLanguage(),
+		ShowTranslations: a.ShowTranslations(),
+		UpdatedAt:        postgres.TimestamptzFromTime(a.UpdatedAt()),
 	}
 }
 

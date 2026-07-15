@@ -7,6 +7,7 @@ import { PracticeSheet, PracticeSkeleton, type PracticeAnswer } from '@els/block
 import { isApiError } from '@els/api-client'
 import { api } from '../lib/api.ts'
 import { produce } from '../lib/events.ts'
+import { useShowTranslations } from '../store/me.ts'
 import type { Unit } from '../lib/types.ts'
 
 const QUERY_KEY = ['vocab', 'practice']
@@ -161,6 +162,7 @@ function Shell({ children, onBack, aside }: { children: ReactNode; onBack: () =>
 }
 
 function WordList({ units }: { units: Unit[] }) {
+  const showTranslations = useShowTranslations()
   return (
     <aside
       onCopy={(e) => e.preventDefault()}
@@ -177,7 +179,7 @@ function WordList({ units }: { units: Unit[] }) {
               <span className="font-semibold text-neutral-900">{u.text}</span>
               {u.transcription && <span className="text-xs text-neutral-400">/{u.transcription}/</span>}
             </div>
-            {(u.definition || u.translation) && (
+            {(u.definition || (showTranslations && u.translation)) && (
               <p className="mt-0.5 text-sm text-neutral-500">{u.definition || u.translation}</p>
             )}
           </li>

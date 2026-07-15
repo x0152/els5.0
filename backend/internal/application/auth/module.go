@@ -159,7 +159,6 @@ func New(cfg Config, pool *pgxpool.Pool, rdb *redis.Client, logger *slog.Logger,
 	}
 }
 
-
 func (a *App) Run(ctx context.Context) error {
 	errCh := make(chan error, 1)
 	go func() {

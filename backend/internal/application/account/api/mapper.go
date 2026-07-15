@@ -31,17 +31,19 @@ func toAccountPictureOutput(a *iam.Account) AccountPictureOutput {
 
 func accountToMeOutput(a *iam.Account, actor *iam.Actor) MeOutput {
 	return MeOutput{
-		AccountID:     a.ID().String(),
-		Email:         a.Email().String(),
-		FirstName:     a.Name().First(),
-		LastName:      a.Name().Last(),
-		PictureURL:    a.PictureURL(),
-		EnglishLevel:  a.EnglishLevel(),
-		AboutMe:       a.AboutMe(),
-		Status:        a.Status().String(),
-		Role:          actor.Role().String(),
-		EntityID:      actor.EntityID().String(),
-		IsGlobalAdmin: actor.IsGlobalAdmin(),
+		AccountID:        a.ID().String(),
+		Email:            a.Email().String(),
+		FirstName:        a.Name().First(),
+		LastName:         a.Name().Last(),
+		PictureURL:       a.PictureURL(),
+		EnglishLevel:     a.EnglishLevel(),
+		AboutMe:          a.AboutMe(),
+		NativeLanguage:   a.NativeLanguage(),
+		ShowTranslations: a.ShowTranslations(),
+		Status:           a.Status().String(),
+		Role:             actor.Role().String(),
+		EntityID:         actor.EntityID().String(),
+		IsGlobalAdmin:    actor.IsGlobalAdmin(),
 	}
 }
 
@@ -55,6 +57,8 @@ func toMeOutput(r usecases.MeResult, impersonationEnabled bool) MeOutput {
 		PictureURL:           acc.PictureURL(),
 		EnglishLevel:         acc.EnglishLevel(),
 		AboutMe:              acc.AboutMe(),
+		NativeLanguage:       acc.NativeLanguage(),
+		ShowTranslations:     acc.ShowTranslations(),
 		Status:               acc.Status().String(),
 		Role:                 r.Actor.Role().String(),
 		EntityID:             r.Actor.EntityID().String(),

@@ -27,7 +27,7 @@ func addVocabWord(repo vocab.Repository) agent.Tool {
 				"text":          map[string]any{"type": "string", "description": "The word/phrase in English (correct spelling)."},
 				"kind":          map[string]any{"type": "string", "enum": []string{"word", "phrase", "phrasal_verb", "idiom"}, "description": "Unit type."},
 				"transcription": map[string]any{"type": "string", "description": "IPA transcription for a single word, otherwise empty."},
-				"translation":   map[string]any{"type": "string", "description": "Short translation into Russian."},
+				"translation":   map[string]any{"type": "string", "description": "Short translation into the user's native language (see run context)."},
 				"definition":    map[string]any{"type": "string", "description": "Definition in English."},
 				"example":       map[string]any{"type": "string", "description": "Usage example in English."},
 			},

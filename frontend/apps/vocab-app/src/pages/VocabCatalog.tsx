@@ -1,6 +1,8 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BookMarked, Dumbbell, Loader2, Plus, Search } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { ArrowRight, BookMarked, Dumbbell, Layers, Loader2, Plus, Search } from 'lucide-react'
+import { api } from '../lib/api.ts'
 import { Button, cn, ConfirmDialog, EmptyState, Input, LoadingState, useAgentView } from '@els/ui'
 import { AddWordModal } from '../components/AddWordModal.tsx'
 import { WordCard } from '../components/WordCard.tsx'
@@ -27,6 +29,12 @@ export function VocabCatalog() {
 
   const unitsQ = useUnits(query, status)
   const deleteM = useDeleteUnit()
+  const dueQ = useQuery({
+    queryKey: ['vocab', 'cards', 'due'],
+    queryFn: () => api.vocab.dueVocabCards({}),
+    staleTime: 60 * 1000,
+  })
+  const due = dueQ.data?.count ?? 0
 
   const items = useMemo(() => unitsQ.data?.pages.flatMap((p) => p?.items ?? []) ?? [], [unitsQ.data])
   const total = unitsQ.data?.pages[0]?.total ?? 0
@@ -68,6 +76,10 @@ export function VocabCatalog() {
             </p>
           </div>
           <div className="flex gap-2">
+            <Button variant="secondary" onClick={() => navigate('cards')}>
+              <Layers className="h-4 w-4" />
+              Cards
+            </Button>
             <Button variant="secondary" onClick={() => navigate('practice')}>
               <Dumbbell className="h-4 w-4" />
               Practice
@@ -78,6 +90,25 @@ export function VocabCatalog() {
             </Button>
           </div>
         </header>
+
+        {due > 0 && (
+          <button
+            type="button"
+            onClick={() => navigate('cards')}
+            className="flex w-full items-center justify-between rounded-2xl bg-brand-600 px-5 py-4 text-left text-white transition hover:bg-brand-700"
+          >
+            <span className="flex items-center gap-3">
+              <Layers className="h-5 w-5" />
+              <span>
+                <span className="font-semibold">
+                  {due} word{due === 1 ? '' : 's'} ready to review
+                </span>
+                <span className="ml-2 hidden text-sm text-white/70 sm:inline">A quick round of cards moves them forward.</span>
+              </span>
+            </span>
+            <ArrowRight className="h-5 w-5 shrink-0" />
+          </button>
+        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <form onSubmit={submitSearch} className="relative flex-1 min-w-[220px]">
