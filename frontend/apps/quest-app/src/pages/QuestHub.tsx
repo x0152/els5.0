@@ -39,15 +39,15 @@ export function QuestHub() {
   return (
     <div className="h-full min-h-0 w-full overflow-y-auto bg-neutral-50">
       <div className="mx-auto max-w-7xl space-y-8 p-6">
-        <header className="flex items-center justify-between">
-          <div>
+        <header className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
             <h1 className="flex items-center gap-2 text-2xl font-bold text-neutral-900">
-              <Swords className="h-6 w-6 text-brand-600" />
+              <Swords className="h-6 w-6 shrink-0 text-brand-600" />
               Quests
             </h1>
             <p className="mt-1 text-sm text-neutral-500">Interactive missions for language practice</p>
           </div>
-          <Button variant="brand" onClick={() => setShowCreate(true)}>
+          <Button variant="brand" onClick={() => setShowCreate(true)} className="shrink-0 whitespace-nowrap">
             <Plus className="h-4 w-4" />
             New adventure
           </Button>

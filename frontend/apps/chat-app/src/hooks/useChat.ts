@@ -36,6 +36,7 @@ export function useChat(active: boolean) {
   const [model, setModel] = useState('')
   const [models, setModels] = useState<string[]>([])
   const [streaming, setStreaming] = useState(false)
+  const [initializing, setInitializing] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const itemsRef = useRef<ChatItem[]>([])
   useEffect(() => {
@@ -44,6 +45,7 @@ export function useChat(active: boolean) {
 
   useEffect(() => {
     if (!active) return
+    setInitializing(true)
     let alive = true
     const pendingBubble: ChatItem = { kind: 'assistant', id: 'pending', segments: [], pending: true }
     const pollWhileGenerating = async () => {
@@ -80,6 +82,7 @@ export function useChat(active: boolean) {
       } catch {
         setStreaming(false)
       }
+      if (alive) setInitializing(false)
       try {
         const r = await api.ai.aiModels()
         if (!alive) return
@@ -132,6 +135,29 @@ export function useChat(active: boolean) {
     },
     [streaming, runStream],
   )
+
+  const askRef = useRef<string | null>(null)
+  const flushAsk = useCallback(() => {
+    const text = askRef.current
+    if (!text || !active || initializing || streaming) return
+    askRef.current = null
+    void send(`Explain this and how it's used: «${text}»`)
+  }, [active, initializing, streaming, send])
+
+  useEffect(() => {
+    const onAsk = (e: Event) => {
+      const text = ((e as CustomEvent<string>).detail ?? '').trim()
+      if (text.length < 2) return
+      askRef.current = text
+      flushAsk()
+    }
+    document.addEventListener('els:ask', onAsk)
+    return () => document.removeEventListener('els:ask', onAsk)
+  }, [flushAsk])
+
+  useEffect(() => {
+    flushAsk()
+  }, [flushAsk])
 
   const regenerate = useCallback(async () => {
     if (streaming) return

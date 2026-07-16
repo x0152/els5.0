@@ -1,8 +1,8 @@
 import { Fragment, useEffect, useMemo, useRef } from 'react'
-import { BookPlus } from 'lucide-react'
+import { BookPlus, MessageCircleQuestion } from 'lucide-react'
 import { cn } from '@els/ui'
 import type { Cue } from '../lib/types.ts'
-import { requestAnalyze } from '../lib/events.ts'
+import { requestAnalyze, requestAsk } from '../lib/events.ts'
 import { CueText } from './CueText.tsx'
 
 interface Props {
@@ -88,14 +88,24 @@ export function SubtitlePanel({ cues, activeIdx, currentMs, autoScroll, onToggle
               >
                 <CueText text={cue.text} />
               </span>
-              <button
-                type="button"
-                onClick={() => requestAnalyze(cue.text)}
-                title="Analyze this line"
-                className="shrink-0 self-center rounded-full bg-white p-1 text-neutral-400 opacity-0 shadow ring-1 ring-neutral-200 transition-opacity hover:text-brand-600 focus:opacity-100 group-hover:opacity-100"
-              >
-                <BookPlus size={14} />
-              </button>
+              <div className="flex shrink-0 self-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+                <button
+                  type="button"
+                  onClick={() => requestAnalyze(cue.text)}
+                  title="Analyze this line"
+                  className="rounded-full bg-white p-1 text-neutral-400 shadow ring-1 ring-neutral-200 transition-colors hover:text-brand-600"
+                >
+                  <BookPlus size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => requestAsk(cue.text)}
+                  title="Ask the assistant"
+                  className="rounded-full bg-white p-1 text-neutral-400 shadow ring-1 ring-neutral-200 transition-colors hover:text-brand-600"
+                >
+                  <MessageCircleQuestion size={14} />
+                </button>
+              </div>
             </div>
             </Fragment>
           )

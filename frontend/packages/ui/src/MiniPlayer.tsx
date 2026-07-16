@@ -148,6 +148,7 @@ function MiniPlayerWindow({ payload, onClose, onExpand }: { payload: MiniPlayerP
         <video
           ref={videoRef}
           src={payload.src}
+          playsInline
           className="block max-h-[200px] w-full"
           autoPlay={payload.playing}
           onLoadedMetadata={onLoaded}

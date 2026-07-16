@@ -22,6 +22,7 @@
     "@els/quest-app": "workspace:*",
     "@els/reader-app": "workspace:*",
     "@els/settings-app": "workspace:*",
+    "@els/speaking-app": "workspace:*",
     "@els/ui": "workspace:*",
     "@els/phrasebook-app": "workspace:*",
     "@els/vocab-app": "workspace:*",

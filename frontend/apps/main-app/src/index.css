@@ -18,6 +18,7 @@
 @source "../../reader-app/src/**/*.{ts,tsx}";
 @source "../../settings-app/src/**/*.{ts,tsx}";
 @source "../../chat-app/src/**/*.{ts,tsx}";
+@source "../../speaking-app/src/**/*.{ts,tsx}";
 
 @utility scrollbar-hide {
   scrollbar-width: none;

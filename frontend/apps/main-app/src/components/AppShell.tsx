@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { isApiError } from '@els/api-client'
 import { cn, MiniPlayerProvider } from '@els/ui'
@@ -14,6 +14,12 @@ export function AppShell() {
   const { isError, error, refetch } = useApps()
   const [chatOpen, setChatOpen] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const onAsk = () => setChatOpen(true)
+    document.addEventListener('els:ask', onAsk)
+    return () => document.removeEventListener('els:ask', onAsk)
+  }, [])
 
   if (isError) {
     const details = isApiError(error)

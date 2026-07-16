@@ -45,6 +45,9 @@ restart: ## restart the dev server
 spacy: ## start the spaCy service (needed for film subtitle parsing)
 	docker compose --profile spacy up --build -d spacy
 
+speech: ## start the pronunciation assessment service (needed for the Speaking app)
+	docker compose --profile speech up --build -d speech
+
 sh: ## shell inside the dev server
 	docker compose exec dev sh
 

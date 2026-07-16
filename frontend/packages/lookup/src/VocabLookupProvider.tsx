@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { BookOpen, BookPlus, Check, ChevronRight, Film, Loader2, Plus, X } from 'lucide-react'
-import { cn, CefrBadge, FrequencyBars } from '@els/ui'
-import { isApiError, type Api } from '@els/api-client'
+import { BookOpen, BookPlus, Check, ChevronDown, Film, Loader2, MessageCircleQuestion, Mic, Plus, Square, Volume2, X } from 'lucide-react'
+import { cn, CefrBadge, FrequencyBars, PhonemePopover, anchorOf, canonicalPhoneme, speak, useRecorder, type PhonemeAnchor, type PhonemeGuideInfo } from '@els/ui'
+import { type Api, type SpeechComponents } from '@els/api-client'
 import { SpotsDialog } from './SpotsDialog.tsx'
 import { streamAnalyze, type AnalyzeStreamItem } from './analyzeStream.ts'
 
@@ -86,52 +86,182 @@ function toRow(it: AnalyzeStreamItem): Row {
 }
 
 function MediaChips({ media, onPick }: { media: Occurrence[]; onPick: (m: Occurrence) => void }) {
-  const [open, setOpen] = useState(false)
   return (
-    <div className="mt-1">
-      <button
-        type="button"
-        onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          setOpen((v) => !v)
-        }}
-        className="inline-flex items-center gap-1 text-[11px] text-neutral-400 hover:text-neutral-600"
-      >
-        <ChevronRight className={cn('h-3 w-3 transition-transform', open && 'rotate-90')} />
-        {media.length} {media.length === 1 ? 'source' : 'sources'}
-      </button>
-      {open && (
-        <div className="mt-1 flex flex-wrap gap-1">
-          {media.map((m, mi) => {
-            const chip = (
-              <>
-                {m.mediaType === 'film' ? <Film size={10} /> : <BookOpen size={10} />}
-                <span className="max-w-[160px] truncate">{m.title || 'Untitled'}</span>
-                {m.count > 1 && <span className="text-neutral-400">×{m.count}</span>}
-              </>
-            )
-            const chipClass =
-              'inline-flex items-center gap-1 rounded-md bg-neutral-100 px-1.5 py-0.5 text-[10px] text-neutral-600 hover:bg-neutral-200'
-            return m.count <= 1 ? (
-              <a key={`${m.title}-${mi}`} href={spotHref(m, m.spots[0]?.ref ?? 0)} onClick={(e) => e.stopPropagation()} className={chipClass}>
-                {chip}
-              </a>
+    <div className="flex flex-wrap gap-1">
+      {media.map((m, mi) => {
+        const chip = (
+          <>
+            {m.mediaType === 'film' ? <Film size={11} /> : <BookOpen size={11} />}
+            <span className="max-w-[160px] truncate">{m.title || 'Untitled'}</span>
+            {m.count > 1 && <span className="text-neutral-400">×{m.count}</span>}
+          </>
+        )
+        const chipClass =
+          'inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-[11px] text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-100'
+        return m.count <= 1 ? (
+          <a key={`${m.title}-${mi}`} href={spotHref(m, m.spots[0]?.ref ?? 0)} onClick={(e) => e.stopPropagation()} className={chipClass}>
+            {chip}
+          </a>
+        ) : (
+          <button
+            type="button"
+            key={`${m.title}-${mi}`}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onPick(m)
+            }}
+            className={chipClass}
+          >
+            {chip}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+type AssessOutput = SpeechComponents['schemas']['AssessOutput']
+
+const VERDICT_STYLES: Record<string, string> = {
+  good: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  close: 'bg-amber-50 text-amber-700 ring-amber-300',
+  wrong: 'bg-red-50 text-red-700 ring-red-300',
+  missing: 'bg-neutral-100 text-neutral-400 ring-neutral-200 line-through',
+}
+
+interface AnalyzeRowProps {
+  row: Row
+  showTranslations: boolean
+  onCheck: (checked: boolean) => void
+  onPickPlaces: (m: Occurrence) => void
+  onSound: (symbol: string, anchor: PhonemeAnchor) => void
+  assess: (text: string, blob: Blob) => Promise<AssessOutput | undefined>
+}
+
+function AnalyzeRow({ row, showTranslations, onCheck, onPickPlaces, onSound, assess }: AnalyzeRowProps) {
+  const [open, setOpen] = useState(false)
+  const [scoring, setScoring] = useState(false)
+  const [result, setResult] = useState<AssessOutput | null>(null)
+  const [failed, setFailed] = useState(false)
+  const recorder = useRecorder((blob) => {
+    setScoring(true)
+    setFailed(false)
+    assess(row.text, blob)
+      .then((r) => setResult(r ?? null))
+      .catch(() => setFailed(true))
+      .finally(() => {
+        setScoring(false)
+        setOpen(true)
+      })
+  })
+
+  const hasSources = !row.common && row.media.length > 0
+  const disabled = row.state === 'added' || row.state === 'dup'
+  const iconBtn = 'rounded-lg p-1.5 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600'
+
+  return (
+    <div className={cn('rounded-xl px-2 py-3 transition-colors', disabled ? 'opacity-60' : 'hover:bg-neutral-50')}>
+      <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={row.checked}
+          disabled={disabled || row.state === 'adding'}
+          onChange={(e) => onCheck(e.target.checked)}
+          className="mt-1 h-4 w-4 shrink-0 accent-brand-600"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-semibold text-neutral-900">{row.text}</span>
+            {row.kind && KIND_LABEL[row.kind] && (
+              <span className="shrink-0 rounded-full bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500">
+                {KIND_LABEL[row.kind]}
+              </span>
+            )}
+            <CefrBadge level={row.cefr} className="shrink-0" />
+            <FrequencyBars value={row.frequency} className="shrink-0" />
+          </div>
+          {row.description && <p className="text-sm text-neutral-700">{row.description}</p>}
+          {showTranslations && row.translation && <p className="text-xs text-neutral-500">{row.translation}</p>}
+          {row.note && <p className="text-xs text-amber-600">{row.note}</p>}
+        </div>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <span className="mr-1">
+            {row.state === 'adding' && <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />}
+            {row.state === 'added' && <Check className="h-4 w-4 text-brand-600" />}
+            {row.state === 'dup' && <span className="text-[10px] text-neutral-400">saved</span>}
+          </span>
+          <button type="button" onClick={() => speak(row.text)} title="Listen" className={iconBtn}>
+            <Volume2 className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={recorder.state === 'recording' ? recorder.stop : recorder.start}
+            disabled={scoring || recorder.state === 'unsupported'}
+            title={recorder.state === 'recording' ? 'Stop recording' : 'Check my pronunciation'}
+            className={cn(iconBtn, 'disabled:opacity-50', recorder.state === 'recording' && 'bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-600')}
+          >
+            {recorder.state === 'recording' ? (
+              <Square className="h-4 w-4" />
+            ) : scoring ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <button
-                key={`${m.title}-${mi}`}
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  onPick(m)
-                }}
-                className={chipClass}
-              >
-                {chip}
-              </button>
-            )
-          })}
+              <Mic className="h-4 w-4" />
+            )}
+          </button>
+          {(hasSources || (row.common && row.total > 0) || result || failed) && (
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              title={hasSources ? `Found in ${row.media.length} source${row.media.length === 1 ? '' : 's'}` : 'Details'}
+              className={cn(iconBtn, 'flex items-center gap-0.5')}
+            >
+              {hasSources && <span className="text-[11px] tabular-nums">{row.media.length}</span>}
+              <ChevronDown className={cn('h-4 w-4 transition-transform', open && 'rotate-180')} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {recorder.state === 'recording' && (
+        <p className="mt-2 pl-7 text-xs text-red-600">Recording… {recorder.elapsed}s — say “{row.text}” and press stop.</p>
+      )}
+
+      {open && (
+        <div className="mt-2 space-y-2 pl-7">
+          {failed && <p className="text-xs text-red-600">The pronunciation service did not respond. Try again.</p>}
+          {result && (
+            <div className="rounded-lg bg-neutral-50 p-2 ring-1 ring-neutral-200">
+              <p className="text-xs font-medium text-neutral-900">
+                Pronunciation:{' '}
+                <span className={result.overall >= 85 ? 'text-emerald-600' : result.overall >= 60 ? 'text-amber-600' : 'text-red-600'}>
+                  {result.overall}/100
+                </span>
+              </p>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                {(result.words ?? []).flatMap((w, i) => [
+                  ...(w.phonemes ?? []).map((p, j) => (
+                    <button
+                      key={`${i}-${j}`}
+                      type="button"
+                      onClick={(e) => onSound(p.expected, anchorOf(e.currentTarget))}
+                      title={p.verdict === 'good' ? `/${p.expected}/` : `expected /${p.expected}/, heard /${p.heard ?? '—'}/`}
+                      className={cn('rounded px-1.5 py-0.5 font-mono text-xs ring-1', VERDICT_STYLES[p.verdict] ?? VERDICT_STYLES.good)}
+                    >
+                      {p.expected}
+                    </button>
+                  )),
+                  ...(w.extra ?? []).map((sym, j) => (
+                    <span key={`${i}-x-${j}`} title="Extra sound" className="rounded bg-purple-50 px-1.5 py-0.5 font-mono text-xs text-purple-600 ring-1 ring-purple-200">
+                      +{sym}
+                    </span>
+                  )),
+                ])}
+              </div>
+            </div>
+          )}
+          {row.common && row.total > 0 && <p className="text-[11px] text-neutral-400">common word · seen {row.total}×</p>}
+          {hasSources && <MediaChips media={row.media} onPick={onPickPlaces} />}
         </div>
       )}
     </div>
@@ -174,7 +304,7 @@ function readSelection(): Picked | null {
   return { text, context, rect: { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width } }
 }
 
-export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account'> }) {
+export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account' | 'speech' | 'core'> }) {
   const rootRef = useRef<HTMLDivElement>(null)
   const [showTranslations, setShowTranslations] = useState(true)
   const [pill, setPill] = useState<Picked | null>(null)
@@ -184,6 +314,8 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
   const [error, setError] = useState('')
   const [rows, setRows] = useState<Row[]>([])
   const [places, setPlaces] = useState<Occurrence | null>(null)
+  const [sound, setSound] = useState<{ symbol: string; anchor: PhonemeAnchor } | null>(null)
+  const [guide, setGuide] = useState<Map<string, PhonemeGuideInfo> | null>(null)
   const [fsEl, setFsEl] = useState<Element | null>(null)
   const abortRef = useRef<AbortController | null>(null)
   const pickedOpenRef = useRef(false)
@@ -303,40 +435,57 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
   }, [])
 
   useEffect(() => {
-    if (!picked) return
+    if (!picked || sound) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close()
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [picked, close])
+  }, [picked, sound, close])
 
-  const addSelected = useCallback(async () => {
-    const targets = rows
-      .map((r, i) => ({ text: r.text, checked: r.checked, state: r.state, i }))
-      .filter((t) => t.checked && (t.state === 'idle' || t.state === 'error'))
+  const addSelected = useCallback(() => {
+    const targets = rows.filter((r) => r.checked && (r.state === 'idle' || r.state === 'error'))
     if (targets.length === 0) return
-    let failed = false
-    for (const { text, i } of targets) {
-      setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, state: 'adding' } : r)))
-      try {
-        const res = await api.vocab.addVocabUnit({ body: { text } })
-        if (res?.correct && res.unit) {
-          setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, state: 'added' } : r)))
-        } else {
-          failed = true
-          setRows((prev) =>
-            prev.map((r, idx) => (idx === i ? { ...r, state: 'error', note: res?.correction || res?.explanation } : r)),
-          )
-        }
-      } catch (err) {
-        const dup = isApiError(err) && err.status === 409
-        if (!dup) failed = true
-        setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, state: dup ? 'dup' : 'error' } : r)))
-      }
+    for (const { text } of targets) {
+      void api.vocab.addVocabUnit({ body: { text } }).catch(() => {})
     }
-    if (!failed) close()
+    close()
   }, [api, close, rows])
 
   const pendingCount = rows.filter((r) => r.checked && (r.state === 'idle' || r.state === 'error')).length
+
+  const assess = useCallback(
+    async (text: string, blob: Blob) => {
+      const form = new FormData()
+      form.append('audio', blob, 'recording.webm')
+      form.append('text', text)
+      const result = await api.speech.assessSpeech({ body: form as unknown as never })
+      if (result) {
+        void api.core
+          .ingestCoreEvents({
+            body: {
+              events: [
+                {
+                  target: text,
+                  outcome: result.overall >= 60 ? 'ok' : 'fail',
+                  skill: 'speaking',
+                  source: { app: 'lookup', feature: 'analyze' },
+                },
+              ],
+            },
+          })
+          .catch(() => {})
+      }
+      return result
+    },
+    [api],
+  )
+
+  useEffect(() => {
+    if (!sound || guide) return
+    api.speech
+      .listSpeechPhonemes()
+      .then((d) => setGuide(new Map((d?.items ?? []).map((p) => [p.symbol, p]))))
+      .catch(() => {})
+  }, [sound, guide, api])
 
   const pillBelow = pill ? touchUi || pill.rect.top < 56 : false
   const pillGap = touchUi ? 36 : 8
@@ -345,13 +494,7 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
   return createPortal(
     <div ref={rootRef}>
       {pill && (
-        <button
-          type="button"
-          onPointerDown={(e) => e.preventDefault()}
-          onPointerUp={(e) => {
-            e.preventDefault()
-            void open(pill)
-          }}
+        <div
           style={{
             position: 'fixed',
             top: pillBelow ? pill.rect.bottom + pillGap : pill.rect.top - pillGap,
@@ -359,11 +502,35 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
             transform: `translate(-50%, ${pillBelow ? '0' : '-100%'})`,
             zIndex: 2147483646,
           }}
-          className="flex items-center gap-1.5 rounded-full bg-neutral-900 px-3 py-1.5 text-xs font-medium text-white shadow-lg ring-1 ring-black/10 transition-transform hover:scale-105"
+          className="flex items-center overflow-hidden rounded-full bg-neutral-900 text-xs font-medium text-white shadow-lg ring-1 ring-black/10"
         >
-          <BookPlus size={14} />
-          Analyze
-        </button>
+          <button
+            type="button"
+            onPointerDown={(e) => e.preventDefault()}
+            onPointerUp={(e) => {
+              e.preventDefault()
+              void open(pill)
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 transition-colors hover:bg-white/10"
+          >
+            <BookPlus size={14} />
+            Analyze
+          </button>
+          <button
+            type="button"
+            onPointerDown={(e) => e.preventDefault()}
+            onPointerUp={(e) => {
+              e.preventDefault()
+              const text = pill.text
+              setPill(null)
+              document.dispatchEvent(new CustomEvent('els:ask', { detail: text }))
+            }}
+            className="flex items-center gap-1.5 border-l border-white/15 px-3 py-1.5 transition-colors hover:bg-white/10"
+          >
+            <MessageCircleQuestion size={14} />
+            Ask
+          </button>
+        </div>
       )}
 
       {picked && (
@@ -394,48 +561,16 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
               {error && <p className="px-2 py-6 text-center text-sm text-red-600">{error}</p>}
               {!loading && !error &&
                 rows.map((row, i) => (
-                  <label
-                    key={`${row.text}-${i}`}
-                    className={cn(
-                      'flex cursor-pointer items-center gap-3 rounded-xl px-2 py-3 transition-colors',
-                      i > 0 && 'border-t border-neutral-100',
-                      row.state === 'added' || row.state === 'dup' ? 'opacity-60' : 'hover:bg-neutral-50',
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={row.checked}
-                      disabled={row.state === 'added' || row.state === 'dup' || row.state === 'adding'}
-                      onChange={(e) => setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, checked: e.target.checked } : r)))}
-                      className="h-4 w-4 shrink-0 accent-brand-600"
+                  <div key={`${row.text}-${i}`} className={cn(i > 0 && 'border-t border-neutral-100')}>
+                    <AnalyzeRow
+                      row={row}
+                      showTranslations={showTranslations}
+                      onCheck={(checked) => setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, checked } : r)))}
+                      onPickPlaces={setPlaces}
+                      onSound={(symbol, anchor) => setSound({ symbol, anchor })}
+                      assess={assess}
                     />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate text-sm font-semibold text-neutral-900">{row.text}</span>
-                        {row.kind && KIND_LABEL[row.kind] && (
-                          <span className="shrink-0 rounded-full bg-neutral-100 px-1.5 py-0.5 text-[10px] font-medium text-neutral-500">
-                            {KIND_LABEL[row.kind]}
-                          </span>
-                        )}
-                        <CefrBadge level={row.cefr} className="shrink-0" />
-                        <FrequencyBars value={row.frequency} className="shrink-0" />
-                      </div>
-                      {row.description && <p className="text-sm text-neutral-700">{row.description}</p>}
-                      {showTranslations && row.translation && (
-                        <p className="text-xs text-neutral-500">{row.translation}</p>
-                      )}
-                      {row.note && <p className="text-xs text-amber-600">{row.note}</p>}
-                      {row.common && row.total > 0 && (
-                        <p className="text-[11px] text-neutral-400">common word · seen {row.total}×</p>
-                      )}
-                      {!row.common && row.media.length > 0 && <MediaChips media={row.media} onPick={setPlaces} />}
-                    </div>
-                    <span className="shrink-0">
-                      {row.state === 'adding' && <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />}
-                      {row.state === 'added' && <Check className="h-4 w-4 text-brand-600" />}
-                      {row.state === 'dup' && <span className="text-[10px] text-neutral-400">already saved</span>}
-                    </span>
-                  </label>
+                  </div>
                 ))}
               {streaming && !loading && !error && (
                 <div className="flex items-center gap-2 px-3 py-2 text-xs text-neutral-400">
@@ -459,6 +594,15 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
             )}
           </div>
         </div>
+      )}
+
+      {sound && (
+        <PhonemePopover
+          symbol={canonicalPhoneme(sound.symbol)}
+          info={guide?.get(canonicalPhoneme(sound.symbol))}
+          anchor={sound.anchor}
+          onClose={() => setSound(null)}
+        />
       )}
 
       {places && (

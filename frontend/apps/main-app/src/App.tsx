@@ -62,6 +62,10 @@ const ChatAppRoutes = lazy(() =>
   import('@els/chat-app').then((m) => ({ default: m.ChatAppRoutes })),
 )
 
+const SpeakingAppRoutes = lazy(() =>
+  import('@els/speaking-app').then((m) => ({ default: m.SpeakingAppRoutes })),
+)
+
 function AppLoader() {
   return (
     <div className="flex items-center justify-center h-full w-full py-16 text-neutral-500">
@@ -189,6 +193,14 @@ export default function App() {
               element={
                 <Suspense fallback={<AppLoader />}>
                   <ChatAppRoutes />
+                </Suspense>
+              }
+            />
+            <Route
+              path="v1/speaking/*"
+              element={
+                <Suspense fallback={<AppLoader />}>
+                  <SpeakingAppRoutes />
                 </Suspense>
               }
             />

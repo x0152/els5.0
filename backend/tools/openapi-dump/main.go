@@ -19,6 +19,7 @@ import (
 	_ "github.com/els/backend/internal/application/quest"
 	_ "github.com/els/backend/internal/application/reader"
 	_ "github.com/els/backend/internal/application/settings"
+	_ "github.com/els/backend/internal/application/speech"
 	_ "github.com/els/backend/internal/application/vocab"
 	"github.com/els/backend/internal/utils/httpx"
 	"github.com/els/backend/internal/utils/openapi"

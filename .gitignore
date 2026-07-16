@@ -29,6 +29,7 @@ deployments/tls/
 *.pem
 
 tmp/
+__pycache__/
 
 # Copyrighted book content — kept locally only, never committed (demo seeds are committed instead)
 /backend/internal/application/learn/seed/essentialbook/

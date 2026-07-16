@@ -1,17 +1,30 @@
 import { useState, type ReactNode } from 'react'
-import { BookOpen, Film, ImageIcon, Loader2, Trash2, TriangleAlert, Volume2, X } from 'lucide-react'
-import { Badge, Button, cn, CefrBadge, FrequencyBars, Modal } from '@els/ui'
+import { useMutation } from '@tanstack/react-query'
+import { BookOpen, Film, ImageIcon, Loader2, Mic, Square, Trash2, TriangleAlert, Volume2, X } from 'lucide-react'
+import { Badge, Button, cn, CefrBadge, FrequencyBars, IpaText, Modal, PhonemePopover, anchorOf, canonicalPhoneme, speak, useRecorder, type PhonemeAnchor } from '@els/ui'
 import { SpotsDialog } from '@els/lookup'
+import type { SpeechComponents } from '@els/api-client'
+import { api } from '../lib/api.ts'
+import { pronounced } from '../lib/events.ts'
+import { usePhonemeGuide } from '../hooks/usePhonemeGuide.ts'
 import { useWordImage } from '../hooks/useWordImage.ts'
 import { useDeleteUnit, useUnitOccurrences, useUpdateStatus } from '../store/units.ts'
 import { useShowTranslations } from '../store/me.ts'
 import { KindGlyph } from './KindGlyph.tsx'
 import { statusPill } from '../lib/ui.ts'
-import { speak } from '../lib/speech.ts'
 import { KIND_LABELS, STATUS_LABELS } from '../lib/types.ts'
 import type { Unit, UnitStatus } from '../lib/types.ts'
 
 const STATUSES: UnitStatus[] = ['new', 'learning', 'learned']
+
+type Assessment = SpeechComponents['schemas']['AssessOutput']
+
+const VERDICT_STYLES: Record<string, string> = {
+  good: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
+  close: 'bg-amber-50 text-amber-700 ring-amber-300',
+  wrong: 'bg-red-50 text-red-700 ring-red-300',
+  missing: 'bg-neutral-100 text-neutral-400 ring-neutral-200 line-through',
+}
 
 interface Props {
   unit: Unit
@@ -27,6 +40,23 @@ export function WordDetailModal({ unit, onClose }: Props) {
   type Media = NonNullable<NonNullable<typeof occ>['media']>[number]
   const [places, setPlaces] = useState<Media | null>(null)
   const status = (updateM.variables?.id === unit.id ? updateM.variables.status : unit.status) as UnitStatus
+
+  const [sound, setSound] = useState<{ symbol: string; anchor: PhonemeAnchor } | null>(null)
+  const openSound = (symbol: string, anchor: PhonemeAnchor) => setSound({ symbol, anchor })
+  const guide = usePhonemeGuide()
+
+  const assessM = useMutation({
+    mutationFn: (blob: Blob) => {
+      const form = new FormData()
+      form.append('audio', blob, 'recording.webm')
+      form.append('text', unit.text)
+      return api.speech.assessSpeech({ body: form as unknown as never })
+    },
+    onSuccess: (data) => {
+      if (data) pronounced(unit.text, data.overall >= 60 ? 'ok' : 'fail')
+    },
+  })
+  const recorder = useRecorder((blob) => assessM.mutate(blob))
 
   const spotHref = (mediaType: string, mediaId: string, ref: number) =>
     mediaType === 'film' ? `/v1/films/${mediaId}?t=${ref}` : `/v1/reader/${mediaId}?pos=${ref}`
@@ -74,13 +104,45 @@ export function WordDetailModal({ unit, onClose }: Props) {
             >
               <Volume2 className="h-5 w-5" />
             </button>
+            <button
+              type="button"
+              onClick={recorder.state === 'recording' ? recorder.stop : recorder.start}
+              disabled={assessM.isPending || recorder.state === 'unsupported'}
+              title={recorder.state === 'recording' ? 'Stop recording' : 'Check my pronunciation'}
+              className={cn(
+                'rounded-full p-1.5 transition disabled:opacity-50',
+                recorder.state === 'recording'
+                  ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                  : 'text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700',
+              )}
+            >
+              {recorder.state === 'recording' ? (
+                <Square className="h-5 w-5" />
+              ) : assessM.isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Mic className="h-5 w-5" />
+              )}
+            </button>
           </h2>
-          {unit.transcription && <p className="text-sm text-neutral-400">/{unit.transcription}/</p>}
+          {unit.transcription && (
+            <p className="text-sm text-neutral-400">
+              /<IpaText ipa={unit.transcription} onSelect={openSound} />/
+            </p>
+          )}
         </div>
         <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
           <X className="h-4 w-4" />
         </Button>
       </div>
+
+      {recorder.state === 'recording' && (
+        <p className="mb-4 text-sm text-red-600">Recording… {recorder.elapsed}s — say “{unit.text}” and press stop.</p>
+      )}
+      {assessM.isError && (
+        <p className="mb-4 text-sm text-red-600">The pronunciation service did not respond. Try again.</p>
+      )}
+      {assessM.data && <PronunciationResult assessment={assessM.data} onSelect={openSound} />}
 
       {image.status === 'ready' && image.url && (
         <img
@@ -178,6 +240,15 @@ export function WordDetailModal({ unit, onClose }: Props) {
         <Trash2 className="h-4 w-4" /> Delete from collection
       </button>
 
+      {sound && (
+        <PhonemePopover
+          symbol={canonicalPhoneme(sound.symbol)}
+          info={guide(sound.symbol)}
+          anchor={sound.anchor}
+          onClose={() => setSound(null)}
+        />
+      )}
+
       {places && (
         <SpotsDialog
           title={places.title}
@@ -193,6 +264,50 @@ export function WordDetailModal({ unit, onClose }: Props) {
         />
       )}
     </Modal>
+  )
+}
+
+function PronunciationResult({
+  assessment,
+  onSelect,
+}: {
+  assessment: Assessment
+  onSelect: (symbol: string, anchor: PhonemeAnchor) => void
+}) {
+  const score = assessment.overall
+  return (
+    <div className="mb-4 rounded-xl bg-neutral-50 p-3 ring-1 ring-neutral-200">
+      <p className="text-sm font-medium text-neutral-900">
+        Pronunciation:{' '}
+        <span className={score >= 85 ? 'text-emerald-600' : score >= 60 ? 'text-amber-600' : 'text-red-600'}>
+          {score}/100
+        </span>
+      </p>
+      <div className="mt-2 flex flex-wrap items-center gap-1">
+        {(assessment.words ?? []).flatMap((w, i) => [
+          ...(w.phonemes ?? []).map((p, j) => (
+            <button
+              key={`${i}-${j}`}
+              type="button"
+              onClick={(e) => onSelect(p.expected, anchorOf(e.currentTarget))}
+              title={p.verdict === 'good' ? `/${p.expected}/` : `expected /${p.expected}/, heard /${p.heard ?? '—'}/`}
+              className={cn('rounded-lg px-2 py-1 font-mono text-sm ring-1', VERDICT_STYLES[p.verdict] ?? VERDICT_STYLES.good)}
+            >
+              {p.expected}
+            </button>
+          )),
+          ...(w.extra ?? []).map((sym, j) => (
+            <span
+              key={`${i}-extra-${j}`}
+              title="Extra sound"
+              className="rounded-lg bg-purple-50 px-2 py-1 font-mono text-sm text-purple-600 ring-1 ring-purple-200"
+            >
+              +{sym}
+            </span>
+          )),
+        ])}
+      </div>
+    </div>
   )
 }
 

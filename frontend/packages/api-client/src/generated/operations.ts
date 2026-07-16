@@ -13,6 +13,7 @@ import type {
   QuestPaths,
   ReaderPaths,
   SettingsPaths,
+  SpeechPaths,
   VocabPaths,
 } from './index.ts'
 
@@ -113,6 +114,11 @@ export function createApi(options: ApiClientOptions) {
       setAutoWordImages: (init: MaybeOptionalInit<SettingsPaths['/api/v1/settings/auto-word-images'], 'put'>) => unwrap(clients.settings.PUT('/api/v1/settings/auto-word-images', init)),
       getEventProcessing: (init?: MaybeOptionalInit<SettingsPaths['/api/v1/settings/event-processing'], 'get'>) => unwrap(clients.settings.GET('/api/v1/settings/event-processing', init)),
       setEventProcessing: (init: MaybeOptionalInit<SettingsPaths['/api/v1/settings/event-processing'], 'put'>) => unwrap(clients.settings.PUT('/api/v1/settings/event-processing', init)),
+    },
+    speech: {
+      assessSpeech: (init: MaybeOptionalInit<SpeechPaths['/api/v1/speech/assess'], 'post'>) => unwrap(clients.speech.POST('/api/v1/speech/assess', init)),
+      speechFeedback: (init: MaybeOptionalInit<SpeechPaths['/api/v1/speech/feedback'], 'post'>) => unwrap(clients.speech.POST('/api/v1/speech/feedback', init)),
+      listSpeechPhonemes: (init?: MaybeOptionalInit<SpeechPaths['/api/v1/speech/phonemes'], 'get'>) => unwrap(clients.speech.GET('/api/v1/speech/phonemes', init)),
     },
     vocab: {
       analyzeVocab: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/analyze'], 'post'>) => unwrap(clients.vocab.POST('/api/v1/vocab/analyze', init)),

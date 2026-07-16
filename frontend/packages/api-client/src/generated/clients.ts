@@ -11,6 +11,7 @@ import type {
   QuestPaths,
   ReaderPaths,
   SettingsPaths,
+  SpeechPaths,
   VocabPaths,
 } from './index.ts'
 
@@ -31,6 +32,7 @@ export interface ApiClient {
   quest: Client<QuestPaths>
   reader: Client<ReaderPaths>
   settings: Client<SettingsPaths>
+  speech: Client<SpeechPaths>
   vocab: Client<VocabPaths>
 }
 
@@ -62,6 +64,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     quest: make<QuestPaths>(),
     reader: make<ReaderPaths>(),
     settings: make<SettingsPaths>(),
+    speech: make<SpeechPaths>(),
     vocab: make<VocabPaths>(),
   }
 }

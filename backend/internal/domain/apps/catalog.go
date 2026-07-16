@@ -74,6 +74,15 @@ var Catalog = []App{
 		Access:      AccessPolicy{AllowAll: true},
 	},
 	{
+		ID:          "speaking",
+		Name:        "Speaking",
+		URI:         "/v1/speaking",
+		Description: "Read aloud and get phoneme-level pronunciation feedback",
+		Group:       "practice",
+		Disabled:    false,
+		Access:      AccessPolicy{AllowAll: true},
+	},
+	{
 		ID:          "vocab",
 		Name:        "My Vocabulary",
 		URI:         "/v1/vocab",

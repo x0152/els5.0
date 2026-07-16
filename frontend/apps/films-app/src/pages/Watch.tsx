@@ -6,6 +6,7 @@ import {
   Captions,
   CaptionsOff,
   Maximize,
+  MessageCircleQuestion,
   Minimize,
   PanelRightClose,
   PanelRightOpen,
@@ -19,7 +20,7 @@ import {
 } from 'lucide-react'
 import { Button, cn, ErrorState, LoadingState, Select, Spinner, useAgentView, useMiniPlayer } from '@els/ui'
 import { saveProgress, useFilm, useFilms } from '../lib/films.ts'
-import { emitListening, emitUnclear, requestAnalyze } from '../lib/events.ts'
+import { emitListening, emitUnclear, requestAnalyze, requestAsk } from '../lib/events.ts'
 import { seriesLastKey } from './Series.tsx'
 import { SubtitlePanel } from '../components/SubtitlePanel.tsx'
 import { CueText } from '../components/CueText.tsx'
@@ -439,6 +440,7 @@ function WatchInner({ id }: { id: string }) {
           <video
             ref={videoRef}
             src={videoUrl}
+            playsInline
             className="max-h-full w-full"
             onClick={togglePlay}
             onTimeUpdate={(e) => setCurrentMs(Math.round(e.currentTarget.currentTime * 1000))}
@@ -473,17 +475,30 @@ function WatchInner({ id }: { id: string }) {
                 >
                   <CueText text={activeCue.text} />
                 </span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    requestAnalyze(activeCue.text)
-                  }}
-                  title="Analyze this line"
-                  className="pointer-events-auto absolute -right-3 -top-3 rounded-full bg-black/70 p-1.5 text-white opacity-0 shadow-lg transition-opacity hover:text-brand-400 focus:opacity-100 group-hover/cue:opacity-100"
-                >
-                  <BookPlus size={14} />
-                </button>
+                <div className="pointer-events-auto absolute -right-3 -top-3 flex gap-1.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/cue:opacity-100 [@media(hover:none)]:opacity-100">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      requestAnalyze(activeCue.text)
+                    }}
+                    title="Analyze this line"
+                    className="rounded-full bg-black/70 p-1.5 text-white shadow-lg transition-colors hover:text-brand-400"
+                  >
+                    <BookPlus size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      requestAsk(activeCue.text)
+                    }}
+                    title="Ask the assistant"
+                    className="rounded-full bg-black/70 p-1.5 text-white shadow-lg transition-colors hover:text-brand-400"
+                  >
+                    <MessageCircleQuestion size={14} />
+                  </button>
+                </div>
               </div>
             </div>
           )}

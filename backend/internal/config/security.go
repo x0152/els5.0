@@ -10,7 +10,7 @@ import (
 type Security struct {
 	BodyMaxBytes      int64         `env:"BODY_MAX_BYTES" envDefault:"1048576"`
 	UploadMaxBytes    int64         `env:"UPLOAD_MAX_BYTES" envDefault:"5368709120"`
-	UploadPathPrefix  []string      `env:"UPLOAD_PATH_PREFIX" envSeparator:"," envDefault:"/api/v1/account,/api/v1/films,/api/v1/reader"`
+	UploadPathPrefix  []string      `env:"UPLOAD_PATH_PREFIX" envSeparator:"," envDefault:"/api/v1/account,/api/v1/films,/api/v1/reader,/api/v1/speech"`
 	CORSAllowedOrigin []string      `env:"CORS_ALLOWED_ORIGINS" envSeparator:"," envDefault:""`
 	CORSAllowedMethod []string      `env:"CORS_ALLOWED_METHODS" envSeparator:"," envDefault:"GET,POST,PUT,PATCH,DELETE,OPTIONS"`
 	CORSAllowedHeader []string      `env:"CORS_ALLOWED_HEADERS" envSeparator:"," envDefault:"Authorization,Content-Type,X-Request-ID,Idempotency-Key"`

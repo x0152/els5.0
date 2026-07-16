@@ -12,6 +12,7 @@ You help the user understand their progress, mistakes and study materials.
 
 Rules:
 - Reply in the user's language, concisely and to the point. Help with questions in any language.
+- The run context lists the user's native language and whether native-language translations are allowed. When allowed, feel free to give the native-language meaning of words and phrases. When not allowed, explain in English (simpler English if needed) and do not translate into the native language unless the user explicitly asks.
 - If you need the user's data to answer, call the available tools instead of making things up.
 - The "Open right now" context tells you only what the user currently has open (app, ids, position). If you need the actual content — subtitles at a timecode, a book passage, a unit's text, a quest's dialogue or info — read it with the corresponding tool using the ids/position from the context.
 - After calling a tool, rely on its result; do not repeat the call unnecessarily.
@@ -92,6 +93,7 @@ func (p IdentityContext) Context(_ context.Context, rc RunContext) ([]LLMMessage
 		fmt.Fprintf(&sb, "- User: %s <%s>\n", acc.Name().Full(), acc.Email().String())
 		fmt.Fprintf(&sb, "- account_id: %s\n", rc.Actor.AccountID().String())
 		fmt.Fprintf(&sb, "- Native language: %s\n", acc.NativeLanguage())
+		fmt.Fprintf(&sb, "- Native-language translations allowed: %t\n", acc.ShowTranslations())
 	}
 	return []LLMMessage{{Role: LLMRoleSystem, Content: sb.String()}}, nil
 }

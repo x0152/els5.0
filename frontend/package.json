@@ -19,6 +19,7 @@
     "dev:quest": "pnpm --filter @els/quest-app dev",
     "dev:reader": "pnpm --filter @els/reader-app dev",
     "dev:settings": "pnpm --filter @els/settings-app dev",
+    "dev:speaking": "pnpm --filter @els/speaking-app dev",
     "dev:vocab": "pnpm --filter @els/vocab-app dev",
     "dev:wordbook": "pnpm --filter @els/wordbook-app dev",
     "dev:essentialbook": "pnpm --filter @els/essentialbook-app dev",

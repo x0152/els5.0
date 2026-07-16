@@ -19,3 +19,9 @@ export function requestAnalyze(text: string) {
   if (t.length < 2) return
   document.dispatchEvent(new CustomEvent('els:analyze', { detail: t }))
 }
+
+export function requestAsk(text: string) {
+  const t = stripTags(text.replace(/\{[^}]*\}/g, '').replace(/\\N/g, ' '))
+  if (t.length < 2) return
+  document.dispatchEvent(new CustomEvent('els:ask', { detail: t }))
+}

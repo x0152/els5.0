@@ -26,6 +26,7 @@ import (
 	"github.com/els/backend/internal/application/quest"
 	"github.com/els/backend/internal/application/reader"
 	settingsapp "github.com/els/backend/internal/application/settings"
+	speechapp "github.com/els/backend/internal/application/speech"
 	"github.com/els/backend/internal/application/vocab"
 	"github.com/els/backend/internal/config"
 	"github.com/els/backend/internal/domain/media"
@@ -180,6 +181,9 @@ func main() {
 		},
 		settingsapp.Name: func(a huma.API, p *pgxpool.Pool, r *redis.Client, l *slog.Logger) {
 			settingsapp.Mount(a, settingsapp.LoadConfig(), p, r, l)
+		},
+		speechapp.Name: func(a huma.API, p *pgxpool.Pool, r *redis.Client, l *slog.Logger) {
+			speechapp.Mount(a, speechapp.LoadConfig(), p, r, l)
 		},
 	}
 

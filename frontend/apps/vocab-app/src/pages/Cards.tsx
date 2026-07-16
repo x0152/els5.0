@@ -2,12 +2,12 @@ import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'rea
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowLeft, ArrowRight, Check, Image, Loader2, RotateCcw, Volume2, X } from 'lucide-react'
-import { Badge, Button, cn, Input, useAgentView } from '@els/ui'
+import { Badge, Button, cn, Input, IpaText, PhonemePopover, canonicalPhoneme, speak, useAgentView, type PhonemeAnchor } from '@els/ui'
 import { isApiError } from '@els/api-client'
 import { KindGlyph } from '../components/KindGlyph.tsx'
 import { api } from '../lib/api.ts'
 import { reviewed } from '../lib/events.ts'
-import { speak } from '../lib/speech.ts'
+import { usePhonemeGuide } from '../hooks/usePhonemeGuide.ts'
 import { statusPill } from '../lib/ui.ts'
 import { useShowTranslations } from '../store/me.ts'
 import { KIND_LABELS, STATUS_LABELS } from '../lib/types.ts'
@@ -31,6 +31,9 @@ export function Cards() {
   const [feedback, setFeedback] = useState<CardAnswer | null>(null)
   const [chosen, setChosen] = useState('')
   const [typed, setTyped] = useState('')
+  const [sound, setSound] = useState<{ symbol: string; anchor: PhonemeAnchor } | null>(null)
+  const openSound = (symbol: string, anchor: PhonemeAnchor) => setSound({ symbol, anchor })
+  const guide = usePhonemeGuide()
   const retried = useRef(new Set<string>())
 
   const start = useMutation({
@@ -102,6 +105,7 @@ export function Cards() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (sound) return
       if (feedback) {
         if (e.key === 'Enter') {
           e.preventDefault()
@@ -119,7 +123,7 @@ export function Cards() {
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feedback, card, answer.isPending])
+  }, [feedback, card, answer.isPending, sound])
 
   const header = (
     <div className="flex items-center justify-between gap-3">
@@ -237,7 +241,11 @@ export function Cards() {
         {card.direction === 'translation' ? (
           <div className="text-center">
             <p className="text-3xl font-bold text-neutral-900">{card.word}</p>
-            {card.transcription && <p className="mt-1 text-sm text-neutral-400">/{card.transcription}/</p>}
+            {card.transcription && (
+              <p className="mt-1 text-sm text-neutral-400">
+                /<IpaText ipa={card.transcription} onSelect={openSound} />/
+              </p>
+            )}
             <p className="mt-2 text-sm text-neutral-500">Pick the right translation.</p>
           </div>
         ) : (
@@ -322,7 +330,11 @@ export function Cards() {
             {(card.direction === 'translation' || feedback.unit.transcription) && (
               <p className="mt-1.5 text-sm">
                 {card.direction === 'translation' && <span className="font-medium text-neutral-900">{feedback.unit.text} </span>}
-                {feedback.unit.transcription && <span className="text-neutral-400">/{feedback.unit.transcription}/</span>}
+                {feedback.unit.transcription && (
+                  <span className="text-neutral-400">
+                    /<IpaText ipa={feedback.unit.transcription} onSelect={openSound} />/
+                  </span>
+                )}
               </p>
             )}
             {showTranslations && feedback.unit.translation && card.direction !== 'translation' && (
@@ -337,6 +349,15 @@ export function Cards() {
           </div>
         )}
       </Panel>
+
+      {sound && (
+        <PhonemePopover
+          symbol={canonicalPhoneme(sound.symbol)}
+          info={guide(sound.symbol)}
+          anchor={sound.anchor}
+          onClose={() => setSound(null)}
+        />
+      )}
     </Shell>
   )
 }

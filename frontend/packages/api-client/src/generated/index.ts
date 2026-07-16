@@ -8,4 +8,5 @@ export type { paths as LearnPaths, components as LearnComponents } from './learn
 export type { paths as QuestPaths, components as QuestComponents } from './quest.ts'
 export type { paths as ReaderPaths, components as ReaderComponents } from './reader.ts'
 export type { paths as SettingsPaths, components as SettingsComponents } from './settings.ts'
+export type { paths as SpeechPaths, components as SpeechComponents } from './speech.ts'
 export type { paths as VocabPaths, components as VocabComponents } from './vocab.ts'
