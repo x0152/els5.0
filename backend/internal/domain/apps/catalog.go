@@ -74,6 +74,15 @@ var Catalog = []App{
 		Access:      AccessPolicy{AllowAll: true},
 	},
 	{
+		ID:          "diary",
+		Name:        "Diary",
+		URI:         "/v1/diary",
+		Description: "Daily English diary with a friendly AI reader and gentle corrections",
+		Group:       "practice",
+		Disabled:    false,
+		Access:      AccessPolicy{AllowAll: true},
+	},
+	{
 		ID:          "speaking",
 		Name:        "Speaking",
 		URI:         "/v1/speaking",

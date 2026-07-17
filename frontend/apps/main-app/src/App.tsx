@@ -66,6 +66,10 @@ const SpeakingAppRoutes = lazy(() =>
   import('@els/speaking-app').then((m) => ({ default: m.SpeakingAppRoutes })),
 )
 
+const DiaryAppRoutes = lazy(() =>
+  import('@els/diary-app').then((m) => ({ default: m.DiaryAppRoutes })),
+)
+
 function AppLoader() {
   return (
     <div className="flex items-center justify-center h-full w-full py-16 text-neutral-500">
@@ -201,6 +205,14 @@ export default function App() {
               element={
                 <Suspense fallback={<AppLoader />}>
                   <SpeakingAppRoutes />
+                </Suspense>
+              }
+            />
+            <Route
+              path="v1/diary/*"
+              element={
+                <Suspense fallback={<AppLoader />}>
+                  <DiaryAppRoutes />
                 </Suspense>
               }
             />

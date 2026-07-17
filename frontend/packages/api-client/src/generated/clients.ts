@@ -6,6 +6,7 @@ import type {
   AiPaths,
   AuthPaths,
   CorePaths,
+  DiaryPaths,
   FilmsPaths,
   LearnPaths,
   QuestPaths,
@@ -27,6 +28,7 @@ export interface ApiClient {
   ai: Client<AiPaths>
   auth: Client<AuthPaths>
   core: Client<CorePaths>
+  diary: Client<DiaryPaths>
   films: Client<FilmsPaths>
   learn: Client<LearnPaths>
   quest: Client<QuestPaths>
@@ -59,6 +61,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     ai: make<AiPaths>(),
     auth: make<AuthPaths>(),
     core: make<CorePaths>(),
+    diary: make<DiaryPaths>(),
     films: make<FilmsPaths>(),
     learn: make<LearnPaths>(),
     quest: make<QuestPaths>(),

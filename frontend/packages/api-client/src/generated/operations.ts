@@ -8,6 +8,7 @@ import type {
   AiPaths,
   AuthPaths,
   CorePaths,
+  DiaryPaths,
   FilmsPaths,
   LearnPaths,
   QuestPaths,
@@ -57,6 +58,13 @@ export function createApi(options: ApiClientOptions) {
       ingestCoreEvents: (init: MaybeOptionalInit<CorePaths['/api/v1/core/events'], 'post'>) => unwrap(clients.core.POST('/api/v1/core/events', init)),
       markCoreEventUnclear: (init: MaybeOptionalInit<CorePaths['/api/v1/core/events/unclear'], 'post'>) => unwrap(clients.core.POST('/api/v1/core/events/unclear', init)),
       deleteCoreRows: (init: MaybeOptionalInit<CorePaths['/api/v1/core/rows'], 'delete'>) => unwrap(clients.core.DELETE('/api/v1/core/rows', init)),
+    },
+    diary: {
+      diaryListEntries: (init?: MaybeOptionalInit<DiaryPaths['/api/v1/diary/entries'], 'get'>) => unwrap(clients.diary.GET('/api/v1/diary/entries', init)),
+      diarySubmitEntry: (init: MaybeOptionalInit<DiaryPaths['/api/v1/diary/entries'], 'post'>) => unwrap(clients.diary.POST('/api/v1/diary/entries', init)),
+      diaryResetHistory: (init?: MaybeOptionalInit<DiaryPaths['/api/v1/diary/entries'], 'delete'>) => unwrap(clients.diary.DELETE('/api/v1/diary/entries', init)),
+      diaryToday: (init?: MaybeOptionalInit<DiaryPaths['/api/v1/diary/today'], 'get'>) => unwrap(clients.diary.GET('/api/v1/diary/today', init)),
+      diaryTrainerCheck: (init: MaybeOptionalInit<DiaryPaths['/api/v1/diary/trainer/check'], 'post'>) => unwrap(clients.diary.POST('/api/v1/diary/trainer/check', init)),
     },
     films: {
       listFilms: (init?: MaybeOptionalInit<FilmsPaths['/api/v1/films'], 'get'>) => unwrap(clients.films.GET('/api/v1/films', init)),

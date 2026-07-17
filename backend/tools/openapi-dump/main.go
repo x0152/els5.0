@@ -14,6 +14,7 @@ import (
 	_ "github.com/els/backend/internal/application/ai"
 	_ "github.com/els/backend/internal/application/auth"
 	_ "github.com/els/backend/internal/application/core"
+	_ "github.com/els/backend/internal/application/diary"
 	_ "github.com/els/backend/internal/application/films"
 	_ "github.com/els/backend/internal/application/learn"
 	_ "github.com/els/backend/internal/application/quest"

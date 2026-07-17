@@ -20,6 +20,7 @@ import (
 	aiapp "github.com/els/backend/internal/application/ai"
 	"github.com/els/backend/internal/application/auth"
 	"github.com/els/backend/internal/application/core"
+	diaryapp "github.com/els/backend/internal/application/diary"
 	"github.com/els/backend/internal/application/films"
 	"github.com/els/backend/internal/application/learn"
 	mediaapp "github.com/els/backend/internal/application/media"
@@ -184,6 +185,9 @@ func main() {
 		},
 		speechapp.Name: func(a huma.API, p *pgxpool.Pool, r *redis.Client, l *slog.Logger) {
 			speechapp.Mount(a, speechapp.LoadConfig(), p, r, l)
+		},
+		diaryapp.Name: func(a huma.API, p *pgxpool.Pool, r *redis.Client, l *slog.Logger) {
+			diaryapp.Mount(a, diaryapp.LoadConfig(), p, r, l)
 		},
 	}
 

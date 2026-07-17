@@ -3,6 +3,7 @@ export type { paths as AdminPaths, components as AdminComponents } from './admin
 export type { paths as AiPaths, components as AiComponents } from './ai.ts'
 export type { paths as AuthPaths, components as AuthComponents } from './auth.ts'
 export type { paths as CorePaths, components as CoreComponents } from './core.ts'
+export type { paths as DiaryPaths, components as DiaryComponents } from './diary.ts'
 export type { paths as FilmsPaths, components as FilmsComponents } from './films.ts'
 export type { paths as LearnPaths, components as LearnComponents } from './learn.ts'
 export type { paths as QuestPaths, components as QuestComponents } from './quest.ts'
