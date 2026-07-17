@@ -1,9 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { BookOpen, Film, ImageIcon, Loader2, Mic, Square, Trash2, TriangleAlert, Volume2, X } from 'lucide-react'
-import { Badge, Button, cn, CefrBadge, FrequencyBars, IpaText, Modal, PhonemePopover, anchorOf, canonicalPhoneme, speak, useRecorder, type PhonemeAnchor } from '@els/ui'
+import { BookOpen, Film, ImageIcon, Loader2, Mic, CirclePlay, Square, Trash2, TriangleAlert, Volume2, X } from 'lucide-react'
+import { Badge, Button, cn, CefrBadge, FrequencyBars, IpaText, Modal, PhonemePopover, canonicalPhoneme, speak, useRecorder, type PhonemeAnchor } from '@els/ui'
 import { SpotsDialog } from '@els/lookup'
-import type { SpeechComponents } from '@els/api-client'
 import { api } from '../lib/api.ts'
 import { pronounced } from '../lib/events.ts'
 import { usePhonemeGuide } from '../hooks/usePhonemeGuide.ts'
@@ -11,20 +10,12 @@ import { useWordImage } from '../hooks/useWordImage.ts'
 import { useDeleteUnit, useUnitOccurrences, useUpdateStatus } from '../store/units.ts'
 import { useShowTranslations } from '../store/me.ts'
 import { KindGlyph } from './KindGlyph.tsx'
+import { PronunciationResult } from './PronunciationResult.tsx'
 import { statusPill } from '../lib/ui.ts'
 import { KIND_LABELS, STATUS_LABELS } from '../lib/types.ts'
 import type { Unit, UnitStatus } from '../lib/types.ts'
 
 const STATUSES: UnitStatus[] = ['new', 'learning', 'learned']
-
-type Assessment = SpeechComponents['schemas']['AssessOutput']
-
-const VERDICT_STYLES: Record<string, string> = {
-  good: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
-  close: 'bg-amber-50 text-amber-700 ring-amber-300',
-  wrong: 'bg-red-50 text-red-700 ring-red-300',
-  missing: 'bg-neutral-100 text-neutral-400 ring-neutral-200 line-through',
-}
 
 interface Props {
   unit: Unit
@@ -124,6 +115,17 @@ export function WordDetailModal({ unit, onClose }: Props) {
                 <Mic className="h-5 w-5" />
               )}
             </button>
+            {recorder.blob && (
+              <button
+                type="button"
+                onClick={recorder.play}
+                disabled={recorder.state === 'recording'}
+                title="Play my recording"
+                className="rounded-full p-1.5 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700 disabled:opacity-50"
+              >
+                <CirclePlay className="h-5 w-5" />
+              </button>
+            )}
           </h2>
           {unit.transcription && (
             <p className="text-sm text-neutral-400">
@@ -142,7 +144,7 @@ export function WordDetailModal({ unit, onClose }: Props) {
       {assessM.isError && (
         <p className="mb-4 text-sm text-red-600">The pronunciation service did not respond. Try again.</p>
       )}
-      {assessM.data && <PronunciationResult assessment={assessM.data} onSelect={openSound} />}
+      {assessM.data && <PronunciationResult assessment={assessM.data} onSelect={openSound} className="mb-4 bg-neutral-50" />}
 
       {image.status === 'ready' && image.url && (
         <img
@@ -264,50 +266,6 @@ export function WordDetailModal({ unit, onClose }: Props) {
         />
       )}
     </Modal>
-  )
-}
-
-function PronunciationResult({
-  assessment,
-  onSelect,
-}: {
-  assessment: Assessment
-  onSelect: (symbol: string, anchor: PhonemeAnchor) => void
-}) {
-  const score = assessment.overall
-  return (
-    <div className="mb-4 rounded-xl bg-neutral-50 p-3 ring-1 ring-neutral-200">
-      <p className="text-sm font-medium text-neutral-900">
-        Pronunciation:{' '}
-        <span className={score >= 85 ? 'text-emerald-600' : score >= 60 ? 'text-amber-600' : 'text-red-600'}>
-          {score}/100
-        </span>
-      </p>
-      <div className="mt-2 flex flex-wrap items-center gap-1">
-        {(assessment.words ?? []).flatMap((w, i) => [
-          ...(w.phonemes ?? []).map((p, j) => (
-            <button
-              key={`${i}-${j}`}
-              type="button"
-              onClick={(e) => onSelect(p.expected, anchorOf(e.currentTarget))}
-              title={p.verdict === 'good' ? `/${p.expected}/` : `expected /${p.expected}/, heard /${p.heard ?? '—'}/`}
-              className={cn('rounded-lg px-2 py-1 font-mono text-sm ring-1', VERDICT_STYLES[p.verdict] ?? VERDICT_STYLES.good)}
-            >
-              {p.expected}
-            </button>
-          )),
-          ...(w.extra ?? []).map((sym, j) => (
-            <span
-              key={`${i}-extra-${j}`}
-              title="Extra sound"
-              className="rounded-lg bg-purple-50 px-2 py-1 font-mono text-sm text-purple-600 ring-1 ring-purple-200"
-            >
-              +{sym}
-            </span>
-          )),
-        ])}
-      </div>
-    </div>
   )
 }
 

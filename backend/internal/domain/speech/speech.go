@@ -39,5 +39,5 @@ type Assessor interface {
 const (
 	MinStrictness     = 0.5
 	MaxStrictness     = 2.5
-	DefaultStrictness = 1.0
+	DefaultStrictness = 0.5
 )

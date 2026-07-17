@@ -22,9 +22,10 @@ type MeOutput struct {
 	PictureURL           string `json:"picture_url"`
 	EnglishLevel         string `json:"english_level"`
 	AboutMe              string `json:"about_me"`
-	NativeLanguage       string `json:"native_language"`
-	ShowTranslations     bool   `json:"show_translations"`
-	Status               string `json:"status"`
+	NativeLanguage       string  `json:"native_language"`
+	ShowTranslations     bool    `json:"show_translations"`
+	SpeechStrictness     float64 `json:"speech_strictness"`
+	Status               string  `json:"status"`
 	Role                 string `json:"role"`
 	EntityID             string `json:"entity_id"`
 	IsGlobalAdmin        bool   `json:"is_global_admin"`
@@ -36,8 +37,9 @@ type UpdateProfileBody struct {
 	LastName         string `json:"last_name" minLength:"1" maxLength:"100"`
 	EnglishLevel     string `json:"english_level" maxLength:"100"`
 	AboutMe          string `json:"about_me" maxLength:"2000"`
-	NativeLanguage   string `json:"native_language" maxLength:"100" doc:"The learner's native language name in English, e.g. Russian, Spanish"`
-	ShowTranslations bool   `json:"show_translations" doc:"Show translations into the native language across the platform"`
+	NativeLanguage   string  `json:"native_language" maxLength:"100" doc:"The learner's native language name in English, e.g. Russian, Spanish"`
+	ShowTranslations bool    `json:"show_translations" doc:"Show translations into the native language across the platform"`
+	SpeechStrictness float64 `json:"speech_strictness" enum:"0.5,1,2" doc:"Pronunciation scoring strictness: 0.5 easy, 1 normal, 2 strict"`
 }
 
 type UpdateProfileInput struct {

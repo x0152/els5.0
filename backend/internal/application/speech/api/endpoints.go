@@ -12,7 +12,6 @@ import (
 
 	usecases "github.com/els/backend/internal/application/speech/use_cases"
 	"github.com/els/backend/internal/domain/iam"
-	"github.com/els/backend/internal/domain/speech"
 	authx "github.com/els/backend/internal/utils/auth"
 )
 
@@ -45,7 +44,7 @@ func Register(api huma.API, deps Deps) {
 		cmd := usecases.AssessCommand{
 			Audio:      audio,
 			Text:       formValue(in.RawBody.Form, "text"),
-			Strictness: formFloat(in.RawBody.Form, "strictness", speech.DefaultStrictness),
+			Strictness: formFloat(in.RawBody.Form, "strictness", actor.Account().SpeechStrictness()),
 		}
 		res, err := deps.Assess.Execute(ctx, actor, cmd)
 		if err != nil {

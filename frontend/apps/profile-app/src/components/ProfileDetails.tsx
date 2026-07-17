@@ -38,6 +38,7 @@ function DetailsForm({ me }: { me: MeProfile }) {
   const [aboutMe, setAboutMe] = useState(me.aboutMe)
   const [nativeLanguage, setNativeLanguage] = useState(me.nativeLanguage)
   const [showTranslations, setShowTranslations] = useState(me.showTranslations)
+  const [speechStrictness, setSpeechStrictness] = useState(me.speechStrictness)
   const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
@@ -48,6 +49,7 @@ function DetailsForm({ me }: { me: MeProfile }) {
       setAboutMe(me.aboutMe)
       setNativeLanguage(me.nativeLanguage)
       setShowTranslations(me.showTranslations)
+      setSpeechStrictness(me.speechStrictness)
     }
   }, [me, editing])
 
@@ -58,7 +60,15 @@ function DetailsForm({ me }: { me: MeProfile }) {
       return
     }
     try {
-      await update.mutateAsync({ firstName, lastName, englishLevel, aboutMe, nativeLanguage, showTranslations })
+      await update.mutateAsync({
+        firstName,
+        lastName,
+        englishLevel,
+        aboutMe,
+        nativeLanguage,
+        showTranslations,
+        speechStrictness,
+      })
       setEditing(false)
     } catch (x) {
       setErr(x instanceof Error ? x.message : 'Failed to save')
@@ -138,6 +148,36 @@ function DetailsForm({ me }: { me: MeProfile }) {
           />
           <span className="text-sm text-neutral-700">Show translations into my native language across the platform</span>
         </label>
+        <Field label="Pronunciation strictness" className="sm:col-span-2">
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                { value: 0.5, label: 'Easy', hint: 'forgiving' },
+                { value: 1, label: 'Normal', hint: 'balanced' },
+                { value: 2, label: 'Strict', hint: 'exact' },
+              ] as const
+            ).map((level) => (
+              <button
+                key={level.value}
+                type="button"
+                disabled={!editing}
+                onClick={() => setSpeechStrictness(level.value)}
+                className={cn(
+                  'rounded-xl px-3 py-2 text-left text-sm ring-1 transition disabled:opacity-60',
+                  speechStrictness === level.value
+                    ? 'bg-brand-600 text-white ring-brand-600'
+                    : 'bg-white text-neutral-700 ring-neutral-200 hover:bg-neutral-50',
+                )}
+              >
+                <span className="font-medium">{level.label}</span>
+                <span className={cn('ml-1.5 text-xs', speechStrictness === level.value ? 'text-white/80' : 'text-neutral-400')}>
+                  {level.hint}
+                </span>
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-neutral-500">Pick the level that matches your pronunciation. Used in Speaking and vocab checks.</p>
+        </Field>
         <Field label="About me" className="sm:col-span-2">
           <Textarea
             value={aboutMe}

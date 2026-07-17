@@ -21,6 +21,7 @@ type Account struct {
 	AboutMe          string
 	NativeLanguage   string
 	ShowTranslations bool
+	SpeechStrictness float64
 }
 
 type Administrator struct {

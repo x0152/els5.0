@@ -12,8 +12,8 @@ import (
 )
 
 const createAccount = `-- name: CreateAccount :exec
-INSERT INTO accounts (id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+INSERT INTO accounts (id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations, speech_strictness)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 `
 
 type CreateAccountParams struct {
@@ -29,6 +29,7 @@ type CreateAccountParams struct {
 	AboutMe          string
 	NativeLanguage   string
 	ShowTranslations bool
+	SpeechStrictness float64
 }
 
 func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) error {
@@ -45,6 +46,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) er
 		arg.AboutMe,
 		arg.NativeLanguage,
 		arg.ShowTranslations,
+		arg.SpeechStrictness,
 	)
 	return err
 }
@@ -75,7 +77,7 @@ func (q *Queries) ExistsAccountEmail(ctx context.Context, lower string) (bool, e
 }
 
 const getAccountByEmail = `-- name: GetAccountByEmail :one
-SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations
+SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations, speech_strictness
 FROM accounts
 WHERE lower(email) = lower($1)
 `
@@ -96,12 +98,13 @@ func (q *Queries) GetAccountByEmail(ctx context.Context, lower string) (Account,
 		&i.AboutMe,
 		&i.NativeLanguage,
 		&i.ShowTranslations,
+		&i.SpeechStrictness,
 	)
 	return i, err
 }
 
 const getAccountByID = `-- name: GetAccountByID :one
-SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations
+SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations, speech_strictness
 FROM accounts
 WHERE id = $1
 `
@@ -122,12 +125,13 @@ func (q *Queries) GetAccountByID(ctx context.Context, id pgtype.UUID) (Account, 
 		&i.AboutMe,
 		&i.NativeLanguage,
 		&i.ShowTranslations,
+		&i.SpeechStrictness,
 	)
 	return i, err
 }
 
 const getAccountsByIDs = `-- name: GetAccountsByIDs :many
-SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations
+SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations, speech_strictness
 FROM accounts
 WHERE id = ANY($1::uuid[])
 `
@@ -154,6 +158,7 @@ func (q *Queries) GetAccountsByIDs(ctx context.Context, ids []pgtype.UUID) ([]Ac
 			&i.AboutMe,
 			&i.NativeLanguage,
 			&i.ShowTranslations,
+			&i.SpeechStrictness,
 		); err != nil {
 			return nil, err
 		}
@@ -166,7 +171,7 @@ func (q *Queries) GetAccountsByIDs(ctx context.Context, ids []pgtype.UUID) ([]Ac
 }
 
 const searchAccountsByEmail = `-- name: SearchAccountsByEmail :many
-SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations
+SELECT id, email, created_at, updated_at, first_name, last_name, status, picture_url, english_level, about_me, native_language, show_translations, speech_strictness
 FROM accounts
 WHERE email ILIKE $1
 ORDER BY email ASC
@@ -200,6 +205,7 @@ func (q *Queries) SearchAccountsByEmail(ctx context.Context, arg SearchAccountsB
 			&i.AboutMe,
 			&i.NativeLanguage,
 			&i.ShowTranslations,
+			&i.SpeechStrictness,
 		); err != nil {
 			return nil, err
 		}
@@ -221,7 +227,8 @@ SET email             = $2,
     english_level     = $7,
     about_me          = $8,
     native_language   = $9,
-    show_translations = $10
+    show_translations = $10,
+    speech_strictness = $11
 WHERE id = $1
 `
 
@@ -236,6 +243,7 @@ type UpdateAccountParams struct {
 	AboutMe          string
 	NativeLanguage   string
 	ShowTranslations bool
+	SpeechStrictness float64
 }
 
 // Basic profile update: picture_url is NOT changed here — only via UpdateAccountPicture.
@@ -251,6 +259,7 @@ func (q *Queries) UpdateAccount(ctx context.Context, arg UpdateAccountParams) (i
 		arg.AboutMe,
 		arg.NativeLanguage,
 		arg.ShowTranslations,
+		arg.SpeechStrictness,
 	)
 	if err != nil {
 		return 0, err

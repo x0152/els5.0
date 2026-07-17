@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { BookOpen, BookPlus, Check, ChevronDown, Film, Loader2, MessageCircleQuestion, Mic, Plus, Square, Volume2, X } from 'lucide-react'
+import { BookOpen, BookPlus, Check, ChevronDown, CirclePlay, Film, Loader2, MessageCircleQuestion, Mic, Plus, Square, Volume2, X } from 'lucide-react'
 import { cn, CefrBadge, FrequencyBars, PhonemePopover, anchorOf, canonicalPhoneme, speak, useRecorder, type PhonemeAnchor, type PhonemeGuideInfo } from '@els/ui'
 import { type Api, type SpeechComponents } from '@els/api-client'
 import { SpotsDialog } from './SpotsDialog.tsx'
@@ -209,6 +209,11 @@ function AnalyzeRow({ row, showTranslations, onCheck, onPickPlaces, onSound, ass
               <Mic className="h-4 w-4" />
             )}
           </button>
+          {recorder.blob && (
+            <button type="button" onClick={recorder.play} disabled={recorder.state === 'recording'} title="Play my recording" className={cn(iconBtn, 'disabled:opacity-50')}>
+              <CirclePlay className="h-4 w-4" />
+            </button>
+          )}
           {(hasSources || (row.common && row.total > 0) || result || failed) && (
             <button
               type="button"

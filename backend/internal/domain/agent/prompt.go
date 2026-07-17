@@ -94,6 +94,7 @@ func (p IdentityContext) Context(_ context.Context, rc RunContext) ([]LLMMessage
 		fmt.Fprintf(&sb, "- account_id: %s\n", rc.Actor.AccountID().String())
 		fmt.Fprintf(&sb, "- Native language: %s\n", acc.NativeLanguage())
 		fmt.Fprintf(&sb, "- Native-language translations allowed: %t\n", acc.ShowTranslations())
+		fmt.Fprintf(&sb, "- Pronunciation strictness: %.2f\n", acc.SpeechStrictness())
 	}
 	return []LLMMessage{{Role: LLMRoleSystem, Content: sb.String()}}, nil
 }

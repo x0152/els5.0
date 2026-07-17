@@ -2,6 +2,7 @@ package iam
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -14,7 +15,34 @@ type AccountID struct{ vo.ID }
 
 func NewAccountID() AccountID { return AccountID{ID: vo.NewID()} }
 
-const DefaultNativeLanguage = "Russian"
+const (
+	DefaultNativeLanguage   = "Russian"
+	DefaultSpeechStrictness = 0.5
+)
+
+// AllowedSpeechStrictness levels: easy (0.5), normal (1), strict (2).
+var AllowedSpeechStrictness = []float64{0.5, 1, 2}
+
+func NormalizeSpeechStrictness(v float64) float64 {
+	best := DefaultSpeechStrictness
+	bestDist := math.Abs(v - best)
+	for _, allowed := range AllowedSpeechStrictness {
+		d := math.Abs(v - allowed)
+		if d < bestDist {
+			best, bestDist = allowed, d
+		}
+	}
+	return best
+}
+
+func ValidSpeechStrictness(v float64) bool {
+	for _, allowed := range AllowedSpeechStrictness {
+		if v == allowed {
+			return true
+		}
+	}
+	return false
+}
 
 type Account struct {
 	id               AccountID
@@ -25,6 +53,7 @@ type Account struct {
 	aboutMe          string
 	nativeLanguage   string
 	showTranslations bool
+	speechStrictness float64
 	status           AccountStatus
 	timestamps       vo.Timestamps
 }
@@ -39,6 +68,7 @@ type NewAccountParams struct {
 	AboutMe          string
 	NativeLanguage   string
 	ShowTranslations bool
+	SpeechStrictness float64
 	Status           AccountStatus
 	Timestamps       vo.Timestamps
 }
@@ -71,6 +101,7 @@ func NewAccount(p NewAccountParams) (*Account, error) {
 	if nativeLanguage == "" {
 		nativeLanguage = DefaultNativeLanguage
 	}
+	speechStrictness := NormalizeSpeechStrictness(p.SpeechStrictness)
 
 	return &Account{
 		id:               p.ID,
@@ -81,6 +112,7 @@ func NewAccount(p NewAccountParams) (*Account, error) {
 		aboutMe:          strings.TrimSpace(p.AboutMe),
 		nativeLanguage:   nativeLanguage,
 		showTranslations: p.ShowTranslations,
+		speechStrictness: speechStrictness,
 		status:           p.Status,
 		timestamps:       p.Timestamps,
 	}, nil
@@ -97,6 +129,7 @@ func NewPendingAccountNow(id AccountID, email, firstName, lastName string) (*Acc
 		FirstName:        firstName,
 		LastName:         lastName,
 		ShowTranslations: true,
+		SpeechStrictness: DefaultSpeechStrictness,
 		Status:           AccountStatusPendingPassword,
 		Timestamps:       timestamps,
 	})
@@ -108,9 +141,10 @@ func (a *Account) Name() vo.PersonName    { return a.name }
 func (a *Account) PictureURL() string     { return a.pictureURL }
 func (a *Account) EnglishLevel() string   { return a.englishLevel }
 func (a *Account) AboutMe() string        { return a.aboutMe }
-func (a *Account) NativeLanguage() string { return a.nativeLanguage }
-func (a *Account) ShowTranslations() bool { return a.showTranslations }
-func (a *Account) Status() AccountStatus  { return a.status }
+func (a *Account) NativeLanguage() string    { return a.nativeLanguage }
+func (a *Account) ShowTranslations() bool    { return a.showTranslations }
+func (a *Account) SpeechStrictness() float64 { return a.speechStrictness }
+func (a *Account) Status() AccountStatus     { return a.status }
 func (a *Account) IsActive() bool         { return a.status == AccountStatusActive }
 func (a *Account) CreatedAt() time.Time   { return a.timestamps.CreatedAt() }
 func (a *Account) UpdatedAt() time.Time   { return a.timestamps.UpdatedAt() }
@@ -166,7 +200,7 @@ func (a *Account) Rename(name vo.PersonName) error {
 	return nil
 }
 
-func (a *Account) UpdateProfile(name vo.PersonName, englishLevel, aboutMe, nativeLanguage string, showTranslations bool) error {
+func (a *Account) UpdateProfile(name vo.PersonName, englishLevel, aboutMe, nativeLanguage string, showTranslations bool, speechStrictness float64) error {
 	if name.IsZero() {
 		return shared.Validation(fmt.Errorf("account.name: must not be empty"))
 	}
@@ -185,6 +219,9 @@ func (a *Account) UpdateProfile(name vo.PersonName, englishLevel, aboutMe, nativ
 	if nativeLanguage == "" {
 		nativeLanguage = DefaultNativeLanguage
 	}
+	if !ValidSpeechStrictness(speechStrictness) {
+		return shared.Validation(fmt.Errorf("account.speech_strictness: must be one of 0.5, 1, 2"))
+	}
 	timestamps, err := a.timestamps.Touch(timex.Now())
 	if err != nil {
 		return shared.Validation(fmt.Errorf("account.timestamps: %w", err))
@@ -194,6 +231,7 @@ func (a *Account) UpdateProfile(name vo.PersonName, englishLevel, aboutMe, nativ
 	a.aboutMe = aboutMe
 	a.nativeLanguage = nativeLanguage
 	a.showTranslations = showTranslations
+	a.speechStrictness = speechStrictness
 	a.timestamps = timestamps
 	return nil
 }

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, ArrowRight, Check, Image, Loader2, RotateCcw, Volume2, X } from 'lucide-react'
-import { Badge, Button, cn, Input, IpaText, PhonemePopover, canonicalPhoneme, speak, useAgentView, type PhonemeAnchor } from '@els/ui'
+import { ArrowLeft, ArrowRight, Check, CirclePlay, Image, Loader2, Mic, RotateCcw, Square, Volume2, X } from 'lucide-react'
+import { Badge, Button, cn, Input, IpaText, PhonemePopover, canonicalPhoneme, speak, useAgentView, useRecorder, type PhonemeAnchor } from '@els/ui'
 import { isApiError } from '@els/api-client'
 import { KindGlyph } from '../components/KindGlyph.tsx'
+import { PronunciationResult } from '../components/PronunciationResult.tsx'
 import { api } from '../lib/api.ts'
-import { reviewed } from '../lib/events.ts'
+import { pronounced, reviewed } from '../lib/events.ts'
 import { usePhonemeGuide } from '../hooks/usePhonemeGuide.ts'
 import { statusPill } from '../lib/ui.ts'
 import { useShowTranslations } from '../store/me.ts'
@@ -36,6 +37,22 @@ export function Cards() {
   const guide = usePhonemeGuide()
   const retried = useRef(new Set<string>())
 
+  const assessM = useMutation({
+    mutationFn: ({ text, blob }: { text: string; blob: Blob }) => {
+      const form = new FormData()
+      form.append('audio', blob, 'recording.webm')
+      form.append('text', text)
+      return api.speech.assessSpeech({ body: form as unknown as never })
+    },
+    onSuccess: (data, vars) => {
+      if (data) pronounced(vars.text, data.overall >= 60 ? 'ok' : 'fail')
+    },
+  })
+  const recorder = useRecorder((blob) => {
+    const text = feedback?.unit.text
+    if (text) assessM.mutate({ text, blob })
+  })
+
   const start = useMutation({
     mutationFn: (imgs: boolean) => api.vocab.generateVocabCards({ body: { images_only: imgs } }),
     onSuccess: (d) => {
@@ -59,6 +76,8 @@ export function Cards() {
       api.vocab.answerVocabCard({ body: { unit_id: vars.card.unit_id, answer: vars.value } }),
     onSuccess: (res, vars) => {
       if (!res) return
+      assessM.reset()
+      recorder.clear()
       setFeedback(res)
       reviewed(res.unit.text, res.correct ? 'ok' : 'fail', vars.card.mode === 'input' ? 'writing' : 'reading')
       setResults((r) => (r.some((x) => x.card.unit_id === vars.card.unit_id) ? r : [...r, { card: vars.card, answer: res }]))
@@ -94,6 +113,8 @@ export function Cards() {
     setFeedback(null)
     setChosen('')
     setTyped('')
+    assessM.reset()
+    recorder.clear()
     setIndex((i) => i + 1)
   }
 
@@ -326,7 +347,43 @@ export function Cards() {
               >
                 <Volume2 className="h-4 w-4" />
               </button>
+              <button
+                type="button"
+                onClick={recorder.state === 'recording' ? recorder.stop : recorder.start}
+                disabled={assessM.isPending || recorder.state === 'unsupported'}
+                title={recorder.state === 'recording' ? 'Stop recording' : 'Check my pronunciation'}
+                className={cn(
+                  'rounded-full p-1.5 transition disabled:opacity-50',
+                  recorder.state === 'recording'
+                    ? 'bg-white text-red-600 hover:bg-red-50'
+                    : 'text-neutral-500 hover:bg-white hover:text-neutral-800',
+                )}
+              >
+                {recorder.state === 'recording' ? (
+                  <Square className="h-4 w-4" />
+                ) : assessM.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+              </button>
+              {recorder.blob && (
+                <button
+                  type="button"
+                  onClick={recorder.play}
+                  disabled={recorder.state === 'recording'}
+                  title="Play my recording"
+                  className="rounded-full p-1.5 text-neutral-500 transition hover:bg-white hover:text-neutral-800 disabled:opacity-50"
+                >
+                  <CirclePlay className="h-4 w-4" />
+                </button>
+              )}
             </p>
+            {recorder.state === 'recording' && (
+              <p className="mt-1.5 text-xs text-red-600">Recording… {recorder.elapsed}s — say “{feedback.unit.text}” and press stop.</p>
+            )}
+            {assessM.isError && <p className="mt-1.5 text-xs text-red-600">The pronunciation service did not respond. Try again.</p>}
+            {assessM.data && <PronunciationResult assessment={assessM.data} onSelect={openSound} className="mt-2" />}
             {(card.direction === 'translation' || feedback.unit.transcription) && (
               <p className="mt-1.5 text-sm">
                 {card.direction === 'translation' && <span className="font-medium text-neutral-900">{feedback.unit.text} </span>}

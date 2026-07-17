@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { BookOpen, Loader2, Mic, Sparkles, Square, Volume2 } from 'lucide-react'
+import { BookOpen, Loader2, Mic, CirclePlay, Sparkles, Square, Volume2 } from 'lucide-react'
 import { Button, ErrorState, Textarea, cn, speak, useAgentView, useRecorder } from '@els/ui'
 import { api } from '../lib/api.ts'
 import { spoken } from '../lib/events.ts'
@@ -21,7 +21,6 @@ const PRESETS = [
 export function SpeakingPage() {
   const navigate = useNavigate()
   const [text, setText] = useState<string>(PRESETS[0])
-  const [strictness, setStrictness] = useState(1.0)
   const [assessment, setAssessment] = useState<Assessment | null>(null)
   const [assessedText, setAssessedText] = useState('')
   const [selected, setSelected] = useState<{ word: WordResult; phoneme: PhonemeResult } | null>(null)
@@ -32,6 +31,8 @@ export function SpeakingPage() {
     staleTime: 60_000,
   })
   const native = meQ.data?.native_language || 'Russian'
+  const strictness = meQ.data?.speech_strictness ?? 0.5
+  const strictnessLabel = strictness >= 2 ? 'Strict' : strictness >= 1 ? 'Normal' : 'Easy'
 
   const guideQ = useQuery({
     queryKey: ['speech', 'phonemes'],
@@ -143,22 +144,25 @@ export function SpeakingPage() {
             )}
             <Button variant="secondary" onClick={() => speak(text)} disabled={!text.trim()}>
               <Volume2 className="h-4 w-4" />
-              Listen
+              Example
             </Button>
-            <label className="ml-auto flex items-center gap-2 text-sm text-neutral-600">
-              Strictness
-              <input
-                type="range"
-                min={0.5}
-                max={2.5}
-                step={0.25}
-                value={strictness}
-                onChange={(e) => setStrictness(Number(e.target.value))}
-                className="w-28 accent-brand-600"
+            {recorder.blob && (
+              <Button variant="secondary" onClick={recorder.play} disabled={recorder.state === 'recording'}>
+                <CirclePlay className="h-4 w-4" />
+                My recording
+              </Button>
+            )}
+            <p className="ml-auto text-sm text-neutral-500">
+              {strictnessLabel}
+              <button
+                type="button"
+                onClick={() => navigate('/v1/profile')}
+                className="ml-1 text-brand-600 hover:underline"
                 disabled={busy}
-              />
-              <span className="w-8 tabular-nums text-neutral-500">{strictness.toFixed(2)}</span>
-            </label>
+              >
+                change in profile
+              </button>
+            </p>
           </div>
           {recorder.state === 'unsupported' && (
             <p className="text-sm text-red-600">Microphone access is unavailable. Allow it in browser settings.</p>

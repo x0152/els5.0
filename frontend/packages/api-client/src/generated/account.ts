@@ -142,6 +142,8 @@ export interface components {
             picture_url: string;
             role: string;
             show_translations: boolean;
+            /** Format: double */
+            speech_strictness: number;
             status: string;
         };
         Meta: {
@@ -199,6 +201,12 @@ export interface components {
             native_language: string;
             /** @description Show translations into the native language across the platform */
             show_translations: boolean;
+            /**
+             * Format: double
+             * @description Pronunciation scoring strictness: 0.5 easy, 1 normal, 2 strict
+             * @enum {number}
+             */
+            speech_strictness: 0.5 | 1 | 2;
         };
     };
     responses: never;

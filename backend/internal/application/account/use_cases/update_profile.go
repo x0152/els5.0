@@ -23,6 +23,7 @@ type UpdateProfileCommand struct {
 	AboutMe          string
 	NativeLanguage   string
 	ShowTranslations bool
+	SpeechStrictness float64
 }
 
 type UpdateProfileResult struct {
@@ -38,7 +39,11 @@ func (uc *UpdateProfileUseCase) Execute(ctx context.Context, actor *iam.Actor, c
 	if err != nil {
 		return UpdateProfileResult{}, shared.Validation(err)
 	}
-	if err := account.UpdateProfile(name, cmd.EnglishLevel, cmd.AboutMe, cmd.NativeLanguage, cmd.ShowTranslations); err != nil {
+	strictness := cmd.SpeechStrictness
+	if strictness == 0 {
+		strictness = account.SpeechStrictness()
+	}
+	if err := account.UpdateProfile(name, cmd.EnglishLevel, cmd.AboutMe, cmd.NativeLanguage, cmd.ShowTranslations, strictness); err != nil {
 		return UpdateProfileResult{}, err
 	}
 	if err := uc.accounts.Update(ctx, account); err != nil {
