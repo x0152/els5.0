@@ -284,4 +284,9 @@ Sensitive values come from Secret, the rest from ConfigMap.
     configMapKeyRef:
       name: {{ include "els-expert.configName" . }}
       key: SPACY_URL
+- name: SPEECH_URL
+  valueFrom:
+    configMapKeyRef:
+      name: {{ include "els-expert.configName" . }}
+      key: SPEECH_URL
 {{- end -}}
