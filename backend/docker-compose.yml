@@ -43,6 +43,14 @@ services:
     ports:
       - "8001:8000"
 
+  tts:
+    build:
+      context: ../services/tts
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+
   redis:
     image: redis:7-alpine
     environment:
@@ -142,6 +150,7 @@ services:
       S3_ENDPOINT: minio:9000
       SPACY_URL: http://spacy:8000
       SPEECH_URL: http://speech:8000
+      TTS_URL: http://tts:8000
       TZ: ${TZ}
     volumes:
       - .:/app

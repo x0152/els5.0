@@ -18,6 +18,7 @@ export function groupSections(sections: Section[]): Record<SectionGroup, Section
   const acc: Record<SectionGroup, Section[]> = {
     personal: [],
     practice: [],
+    trainers: [],
     books: [],
     media: [],
     admin: [],

@@ -68,7 +68,7 @@ func Register(api huma.API, deps Deps) {
 		if err != nil {
 			return ProviderModelsOutput{}, err
 		}
-		override := ports.AIProviderConfig{BaseURL: in.BaseURL, APIKey: in.APIKey}
+		override := ports.AIProviderConfig{Kind: in.Kind, BaseURL: in.BaseURL, APIKey: in.APIKey}
 		models, err := deps.ListModels.Execute(ctx, actor, feature, override)
 		if err != nil {
 			return ProviderModelsOutput{}, err

@@ -18,7 +18,7 @@ type Store struct {
 func NewStore(pool *pgxpool.Pool) *Store { return &Store{pool: pool} }
 
 func (s *Store) ListAIProviders(ctx context.Context) ([]settings.AIProvider, error) {
-	rows, err := s.pool.Query(ctx, `SELECT feature, base_url, api_key, model FROM ai_providers ORDER BY feature`)
+	rows, err := s.pool.Query(ctx, `SELECT feature, kind, base_url, api_key, model, params FROM ai_providers ORDER BY feature`)
 	if err != nil {
 		return nil, fmt.Errorf("list ai providers: %w", err)
 	}
@@ -26,7 +26,7 @@ func (s *Store) ListAIProviders(ctx context.Context) ([]settings.AIProvider, err
 	out := make([]settings.AIProvider, 0)
 	for rows.Next() {
 		var p settings.AIProvider
-		if err := rows.Scan(&p.Feature, &p.BaseURL, &p.APIKey, &p.Model); err != nil {
+		if err := rows.Scan(&p.Feature, &p.Kind, &p.BaseURL, &p.APIKey, &p.Model, &p.Params); err != nil {
 			return nil, fmt.Errorf("scan ai provider: %w", err)
 		}
 		out = append(out, p)
@@ -37,8 +37,8 @@ func (s *Store) ListAIProviders(ctx context.Context) ([]settings.AIProvider, err
 func (s *Store) GetAIProvider(ctx context.Context, feature settings.Feature) (settings.AIProvider, error) {
 	var p settings.AIProvider
 	err := s.pool.QueryRow(ctx,
-		`SELECT feature, base_url, api_key, model FROM ai_providers WHERE feature = $1`, string(feature)).
-		Scan(&p.Feature, &p.BaseURL, &p.APIKey, &p.Model)
+		`SELECT feature, kind, base_url, api_key, model, params FROM ai_providers WHERE feature = $1`, string(feature)).
+		Scan(&p.Feature, &p.Kind, &p.BaseURL, &p.APIKey, &p.Model, &p.Params)
 	if err == pgx.ErrNoRows {
 		return settings.AIProvider{}, shared.ErrNotFound
 	}
@@ -49,11 +49,17 @@ func (s *Store) GetAIProvider(ctx context.Context, feature settings.Feature) (se
 }
 
 func (s *Store) UpsertAIProvider(ctx context.Context, p settings.AIProvider) error {
+	if p.Kind == "" {
+		p.Kind = settings.KindOpenAI
+	}
+	if p.Params == nil {
+		p.Params = map[string]string{}
+	}
 	_, err := s.pool.Exec(ctx,
-		`INSERT INTO ai_providers (feature, base_url, api_key, model, updated_at)
-		 VALUES ($1,$2,$3,$4, now())
-		 ON CONFLICT (feature) DO UPDATE SET base_url=$2, api_key=$3, model=$4, updated_at=now()`,
-		string(p.Feature), p.BaseURL, p.APIKey, p.Model)
+		`INSERT INTO ai_providers (feature, kind, base_url, api_key, model, params, updated_at)
+		 VALUES ($1,$2,$3,$4,$5,$6, now())
+		 ON CONFLICT (feature) DO UPDATE SET kind=$2, base_url=$3, api_key=$4, model=$5, params=$6, updated_at=now()`,
+		string(p.Feature), string(p.Kind), p.BaseURL, p.APIKey, p.Model, p.Params)
 	if err != nil {
 		return fmt.Errorf("upsert ai provider: %w", err)
 	}

@@ -22,7 +22,13 @@ func (r *Resolver) Resolve(ctx context.Context) ports.AIProviderConfig {
 	if err != nil {
 		return r.fallback
 	}
-	cfg := ports.AIProviderConfig{BaseURL: provider.BaseURL, APIKey: provider.APIKey, Model: provider.Model}
+	cfg := ports.AIProviderConfig{
+		Kind:    string(provider.Kind),
+		BaseURL: provider.BaseURL,
+		APIKey:  provider.APIKey,
+		Model:   provider.Model,
+		Params:  provider.Params,
+	}
 	if cfg.IsEmpty() {
 		return r.fallback
 	}

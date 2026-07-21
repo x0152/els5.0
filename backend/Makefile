@@ -1,4 +1,4 @@
-.PHONY: help up down logs ps rebuild restart sh psql run build test lint fmt tidy openapi openapi-all migrate-up migrate-down bootstrap sqlc-generate sqlc-vet image image-push new-app spacy security security-gosec security-vuln security-trivy security-gitleaks
+.PHONY: help up down logs ps rebuild restart sh psql run build test lint fmt tidy openapi openapi-all migrate-up migrate-down bootstrap sqlc-generate sqlc-vet image image-push new-app spacy speech tts security security-gosec security-vuln security-trivy security-gitleaks
 
 APP_NAME := els-backend
 BIN_DIR  := bin
@@ -47,6 +47,9 @@ spacy: ## start the spaCy service (needed for film subtitle parsing)
 
 speech: ## start the pronunciation assessment service (needed for the Speaking app)
 	docker compose --profile speech up --build -d speech
+
+tts: ## start the KittenTTS speech synthesis service (needed for listening audio)
+	docker compose up --build -d tts
 
 sh: ## shell inside the dev server
 	docker compose exec dev sh

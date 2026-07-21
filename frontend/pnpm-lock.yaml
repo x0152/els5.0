@@ -615,6 +615,79 @@ importers:
         specifier: 'catalog:'
         version: 8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3)
 
+  apps/listening-app:
+    dependencies:
+      '@els/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
+      '@els/core-events':
+        specifier: workspace:*
+        version: link:../../packages/core-events
+      '@els/dev-harness':
+        specifier: workspace:*
+        version: link:../../packages/dev-harness
+      '@els/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.100.5(react@19.2.5)
+      lucide-react:
+        specifier: 'catalog:'
+        version: 1.8.0(react@19.2.5)
+      react:
+        specifier: 'catalog:'
+        version: 19.2.5
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.5(react@19.2.5)
+      react-router-dom:
+        specifier: 'catalog:'
+        version: 7.16.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+    devDependencies:
+      '@eslint/js':
+        specifier: 'catalog:'
+        version: 10.0.1(eslint@10.2.1(jiti@2.6.1))
+      '@tailwindcss/vite':
+        specifier: 'catalog:'
+        version: 4.2.2(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3))
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.6.0
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.14)
+      '@vitejs/plugin-react':
+        specifier: 'catalog:'
+        version: 6.0.1(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3))
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1(jiti@2.6.1)
+      eslint-plugin-react-hooks:
+        specifier: 'catalog:'
+        version: 7.1.1(eslint@10.2.1(jiti@2.6.1))
+      eslint-plugin-react-refresh:
+        specifier: 'catalog:'
+        version: 0.5.2(eslint@10.2.1(jiti@2.6.1))
+      globals:
+        specifier: 'catalog:'
+        version: 17.5.0
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.2.2
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      typescript-eslint:
+        specifier: 'catalog:'
+        version: 8.58.2(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3)
+      vite:
+        specifier: 'catalog:'
+        version: 8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3)
+
   apps/main-app:
     dependencies:
       '@els/admin-app':
@@ -641,6 +714,9 @@ importers:
       '@els/journal-app':
         specifier: workspace:*
         version: link:../journal-app
+      '@els/listening-app':
+        specifier: workspace:*
+        version: link:../listening-app
       '@els/lookup':
         specifier: workspace:*
         version: link:../../packages/lookup
@@ -656,6 +732,9 @@ importers:
       '@els/reader-app':
         specifier: workspace:*
         version: link:../reader-app
+      '@els/reading-app':
+        specifier: workspace:*
+        version: link:../reading-app
       '@els/settings-app':
         specifier: workspace:*
         version: link:../settings-app
@@ -671,6 +750,12 @@ importers:
       '@els/wordbook-app':
         specifier: workspace:*
         version: link:../wordbook-app
+      '@els/workout-app':
+        specifier: workspace:*
+        version: link:../workout-app
+      '@els/writing-app':
+        specifier: workspace:*
+        version: link:../writing-app
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.100.5(react@19.2.5)
@@ -948,6 +1033,82 @@ importers:
       '@els/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@els/dev-harness':
+        specifier: workspace:*
+        version: link:../../packages/dev-harness
+      '@els/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.100.5(react@19.2.5)
+      lucide-react:
+        specifier: 'catalog:'
+        version: 1.8.0(react@19.2.5)
+      react:
+        specifier: 'catalog:'
+        version: 19.2.5
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.5(react@19.2.5)
+      react-router-dom:
+        specifier: 'catalog:'
+        version: 7.16.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+    devDependencies:
+      '@eslint/js':
+        specifier: 'catalog:'
+        version: 10.0.1(eslint@10.2.1(jiti@2.6.1))
+      '@tailwindcss/vite':
+        specifier: 'catalog:'
+        version: 4.2.2(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3))
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.6.0
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.14)
+      '@vitejs/plugin-react':
+        specifier: 'catalog:'
+        version: 6.0.1(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3))
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1(jiti@2.6.1)
+      eslint-plugin-react-hooks:
+        specifier: 'catalog:'
+        version: 7.1.1(eslint@10.2.1(jiti@2.6.1))
+      eslint-plugin-react-refresh:
+        specifier: 'catalog:'
+        version: 0.5.2(eslint@10.2.1(jiti@2.6.1))
+      globals:
+        specifier: 'catalog:'
+        version: 17.5.0
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.2.2
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      typescript-eslint:
+        specifier: 'catalog:'
+        version: 8.58.2(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3)
+      vite:
+        specifier: 'catalog:'
+        version: 8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3)
+
+  apps/reading-app:
+    dependencies:
+      '@els/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
+      '@els/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
+      '@els/core-events':
+        specifier: workspace:*
+        version: link:../../packages/core-events
       '@els/dev-harness':
         specifier: workspace:*
         version: link:../../packages/dev-harness
@@ -1302,6 +1463,155 @@ importers:
         specifier: 'catalog:'
         version: 8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3)
 
+  apps/workout-app:
+    dependencies:
+      '@els/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
+      '@els/blocks':
+        specifier: workspace:*
+        version: link:../../packages/blocks
+      '@els/core-events':
+        specifier: workspace:*
+        version: link:../../packages/core-events
+      '@els/dev-harness':
+        specifier: workspace:*
+        version: link:../../packages/dev-harness
+      '@els/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.100.5(react@19.2.5)
+      lucide-react:
+        specifier: 'catalog:'
+        version: 1.8.0(react@19.2.5)
+      react:
+        specifier: 'catalog:'
+        version: 19.2.5
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.5(react@19.2.5)
+      react-router-dom:
+        specifier: 'catalog:'
+        version: 7.16.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+    devDependencies:
+      '@eslint/js':
+        specifier: 'catalog:'
+        version: 10.0.1(eslint@10.2.1(jiti@2.6.1))
+      '@tailwindcss/vite':
+        specifier: 'catalog:'
+        version: 4.2.2(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3))
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.6.0
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.14)
+      '@vitejs/plugin-react':
+        specifier: 'catalog:'
+        version: 6.0.1(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3))
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1(jiti@2.6.1)
+      eslint-plugin-react-hooks:
+        specifier: 'catalog:'
+        version: 7.1.1(eslint@10.2.1(jiti@2.6.1))
+      eslint-plugin-react-refresh:
+        specifier: 'catalog:'
+        version: 0.5.2(eslint@10.2.1(jiti@2.6.1))
+      globals:
+        specifier: 'catalog:'
+        version: 17.5.0
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.2.2
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      typescript-eslint:
+        specifier: 'catalog:'
+        version: 8.58.2(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3)
+      vite:
+        specifier: 'catalog:'
+        version: 8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3)
+
+  apps/writing-app:
+    dependencies:
+      '@els/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
+      '@els/core-events':
+        specifier: workspace:*
+        version: link:../../packages/core-events
+      '@els/dev-harness':
+        specifier: workspace:*
+        version: link:../../packages/dev-harness
+      '@els/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.100.5(react@19.2.5)
+      lucide-react:
+        specifier: 'catalog:'
+        version: 1.8.0(react@19.2.5)
+      react:
+        specifier: 'catalog:'
+        version: 19.2.5
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.5(react@19.2.5)
+      react-router-dom:
+        specifier: 'catalog:'
+        version: 7.16.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+    devDependencies:
+      '@eslint/js':
+        specifier: 'catalog:'
+        version: 10.0.1(eslint@10.2.1(jiti@2.6.1))
+      '@tailwindcss/vite':
+        specifier: 'catalog:'
+        version: 4.2.2(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3))
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.6.0
+      '@types/react':
+        specifier: 'catalog:'
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.2.3(@types/react@19.2.14)
+      '@vitejs/plugin-react':
+        specifier: 'catalog:'
+        version: 6.0.1(vite@8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3))
+      eslint:
+        specifier: 'catalog:'
+        version: 10.2.1(jiti@2.6.1)
+      eslint-plugin-react-hooks:
+        specifier: 'catalog:'
+        version: 7.1.1(eslint@10.2.1(jiti@2.6.1))
+      eslint-plugin-react-refresh:
+        specifier: 'catalog:'
+        version: 0.5.2(eslint@10.2.1(jiti@2.6.1))
+      globals:
+        specifier: 'catalog:'
+        version: 17.5.0
+      tailwindcss:
+        specifier: 'catalog:'
+        version: 4.2.2
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
+      typescript-eslint:
+        specifier: 'catalog:'
+        version: 8.58.2(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3)
+      vite:
+        specifier: 'catalog:'
+        version: 8.0.9(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(yaml@2.8.3)
+
   packages/api-client:
     dependencies:
       openapi-fetch:
@@ -1378,6 +1688,16 @@ importers:
       typescript-eslint:
         specifier: 'catalog:'
         version: 8.58.2(eslint@10.2.1(jiti@2.6.1))(typescript@6.0.3)
+
+  packages/core-events:
+    dependencies:
+      '@els/api-client':
+        specifier: workspace:*
+        version: link:../api-client
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 6.0.3
 
   packages/data-table:
     dependencies:

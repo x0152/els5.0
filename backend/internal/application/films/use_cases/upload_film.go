@@ -47,6 +47,7 @@ type UploadFilmCommand struct {
 	Filename      string
 	VideoTempPath string
 	Kind          string
+	Level         string
 	SeriesTitle   string
 	Season        int
 	Episode       int
@@ -65,11 +66,17 @@ func (uc *UploadFilmUseCase) Execute(ctx context.Context, actor *iam.Actor, cmd 
 	if cmd.Kind == films.KindSeries {
 		kind = films.KindSeries
 	}
+	level, err := films.ParseLevel(cmd.Level)
+	if err != nil {
+		_ = os.Remove(cmd.VideoTempPath)
+		return films.Film{}, err
+	}
 	film := films.Film{
 		ID:            uuid.NewString(),
 		Title:         filmTitle(cmd, kind),
 		Status:        films.StatusProcessing,
 		Kind:          kind,
+		Level:         level,
 		SeriesTitle:   strings.TrimSpace(cmd.SeriesTitle),
 		Season:        cmd.Season,
 		Episode:       cmd.Episode,

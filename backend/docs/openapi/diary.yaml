@@ -1,5 +1,31 @@
 components:
   schemas:
+    CheckEntryInputBody:
+      additionalProperties: false
+      properties:
+        text:
+          description: Diary draft to check for grammar errors
+          maxLength: 5000
+          minLength: 1
+          type: string
+      required:
+        - text
+      type: object
+    CheckEntryOutput:
+      additionalProperties: false
+      properties:
+        errors:
+          items:
+            $ref: "#/components/schemas/GrammarErrorOutput"
+          type:
+            - array
+            - "null"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - errors
+      type: object
     CheckResult:
       additionalProperties: false
       properties:
@@ -70,6 +96,8 @@ components:
           type: string
         date:
           type: string
+        draft:
+          type: string
         id:
           type: string
         native_sample:
@@ -129,6 +157,23 @@ components:
       required:
         - ok
         - error
+      type: object
+    GrammarErrorOutput:
+      additionalProperties: false
+      properties:
+        correction:
+          type: string
+        explanation:
+          type: string
+        original:
+          type: string
+        type:
+          type: string
+      required:
+        - original
+        - correction
+        - explanation
+        - type
       type: object
     HealthOutput:
       additionalProperties: false
@@ -204,6 +249,10 @@ components:
     SubmitEntryInputBody:
       additionalProperties: false
       properties:
+        draft:
+          description: The first version of the text, before error fixes
+          maxLength: 5000
+          type: string
         question:
           description: The question the entry answers
           maxLength: 500
@@ -215,6 +264,19 @@ components:
           type: string
       required:
         - text
+      type: object
+    SuccessBodyCheckEntryOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/CheckEntryOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
       type: object
     SuccessBodyEntriesOutput:
       additionalProperties: false
@@ -294,19 +356,6 @@ components:
         - ok
         - data
       type: object
-    SuccessBodyTrainerCheckOutput:
-      additionalProperties: false
-      properties:
-        data:
-          $ref: "#/components/schemas/TrainerCheckOutput"
-        meta:
-          $ref: "#/components/schemas/Meta"
-        ok:
-          type: boolean
-      required:
-        - ok
-        - data
-      type: object
     TodayOutput:
       additionalProperties: false
       properties:
@@ -327,64 +376,6 @@ components:
         - question
         - warmup
         - streak
-      type: object
-    TrainerCheckInputBody:
-      additionalProperties: false
-      properties:
-        dialogue:
-          description: Dialogue context the draft replies to
-          maxLength: 3000
-          type: string
-        draft:
-          description: Draft reply to check
-          maxLength: 2000
-          minLength: 1
-          type: string
-        level:
-          description: "Strictness: 1 grammar, 2 natural, 3 native"
-          format: int64
-          maximum: 3
-          minimum: 1
-          type: integer
-      required:
-        - draft
-        - level
-      type: object
-    TrainerCheckOutput:
-      additionalProperties: false
-      properties:
-        comment:
-          type: string
-        issues:
-          items:
-            $ref: "#/components/schemas/TrainerIssueOutput"
-          type:
-            - array
-            - "null"
-        pass:
-          type: boolean
-      required:
-        - pass
-        - comment
-        - issues
-      type: object
-    TrainerIssueOutput:
-      additionalProperties: false
-      properties:
-        fragment:
-          type: string
-        hint:
-          type: string
-        severity:
-          enum:
-            - grammar
-            - style
-            - native
-          type: string
-      required:
-        - fragment
-        - severity
-        - hint
       type: object
 info:
   title: diary
@@ -490,6 +481,38 @@ paths:
       summary: Submit today's entry and get the friend reply with corrections
       tags:
         - diary
+  /api/v1/diary/entries/check:
+    post:
+      operationId: diaryCheckEntry
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CheckEntryInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyCheckEntryOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Check a diary draft for grammar errors before submitting
+      tags:
+        - diary
   /api/v1/diary/today:
     get:
       operationId: diaryToday
@@ -514,38 +537,6 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Error
       summary: "Today's diary state: question, warmup and streak"
-      tags:
-        - diary
-  /api/v1/diary/trainer/check:
-    post:
-      operationId: diaryTrainerCheck
-      parameters:
-        - description: Bearer <token>
-          in: header
-          name: Authorization
-          schema:
-            description: Bearer <token>
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TrainerCheckInputBody"
-        required: true
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SuccessBodyTrainerCheckOutput"
-          description: OK
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-          description: Error
-      summary: Check a draft reply without revealing corrections
       tags:
         - diary
   /health:

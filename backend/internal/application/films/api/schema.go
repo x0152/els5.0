@@ -34,6 +34,7 @@ type FilmSummary struct {
 	PositionMs  int    `json:"position_ms"`
 	Status      string `json:"status"`
 	Kind        string `json:"kind"`
+	Level       string `json:"level"`
 	SeriesTitle string `json:"series_title,omitempty"`
 	Season      int    `json:"season"`
 	Episode     int    `json:"episode"`
@@ -50,6 +51,7 @@ type FilmOutput struct {
 	Status      string                `json:"status"`
 	Error       string                `json:"error,omitempty"`
 	Kind        string                `json:"kind"`
+	Level       string                `json:"level"`
 	SeriesTitle string                `json:"series_title,omitempty"`
 	Season      int                   `json:"season"`
 	Episode     int                   `json:"episode"`

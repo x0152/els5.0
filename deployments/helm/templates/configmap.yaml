@@ -85,4 +85,5 @@ data:
   LLM_TIMEOUT_SECONDS: {{ .Values.config.llm.timeoutSeconds | quote }}
   SPACY_URL: {{ if .Values.spacy.enabled }}{{ printf "http://%s-spacy:%v" (include "els-expert.fullname" .) .Values.spacy.service.port | quote }}{{ else }}{{ "http://localhost:8000" | quote }}{{ end }}
   SPEECH_URL: {{ if .Values.speech.enabled }}{{ printf "http://%s-speech:%v" (include "els-expert.fullname" .) .Values.speech.service.port | quote }}{{ else }}{{ "http://localhost:8001" | quote }}{{ end }}
+  TTS_URL: {{ if .Values.tts.enabled }}{{ printf "http://%s-tts:%v" (include "els-expert.fullname" .) .Values.tts.service.port | quote }}{{ else }}{{ "http://localhost:8002" | quote }}{{ end }}
 {{- end }}

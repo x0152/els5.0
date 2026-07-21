@@ -15,7 +15,7 @@ import (
 	"github.com/els/backend/internal/domain/media"
 	domainsettings "github.com/els/backend/internal/domain/settings"
 	"github.com/els/backend/internal/domain/shared/ports"
-	"github.com/els/backend/internal/infrastructure/adapters/bothub"
+	"github.com/els/backend/internal/infrastructure/adapters/imagegen"
 	"github.com/els/backend/internal/infrastructure/adapters/llm"
 	"github.com/els/backend/internal/infrastructure/adapters/providercfg"
 	"github.com/els/backend/internal/infrastructure/adapters/redissession"
@@ -64,7 +64,7 @@ func Mount(ctx context.Context, humaAPI huma.API, cfg Config, pool *pgxpool.Pool
 	provRepo := settingsrepo.NewStore(pool)
 	imageResolver := providercfg.NewResolver(provRepo, domainsettings.FeatureImage,
 		ports.AIProviderConfig{BaseURL: cfg.Image.URL, APIKey: cfg.Image.APIKey, Model: cfg.Image.Model})
-	imageProvider := bothub.NewWithResolver(cfg.Image.URL, cfg.Image.APIKey, cfg.Image.Model, time.Duration(cfg.Image.Timeout)*time.Second, imageResolver)
+	imageProvider := imagegen.NewWithResolver(cfg.Image.URL, cfg.Image.APIKey, cfg.Image.Model, time.Duration(cfg.Image.Timeout)*time.Second, imageResolver)
 	if ensurer, ok := storage.(media.BucketEnsurer); ok {
 		if err := ensurer.EnsureBucket(ctx, cfg.Bucket); err != nil {
 			logger.Warn("learn: ensure illustration bucket failed", slog.String("err", err.Error()))

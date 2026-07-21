@@ -23,7 +23,7 @@ export function ExercisesList({ exercises, checkAnswer, onTheory }: { exercises:
   )
 }
 
-function ExerciseCard({ ex }: { ex: Exercise }) {
+export function ExerciseCard({ ex }: { ex: Exercise }) {
   const progress = useProgress()
   const [nonce, setNonce] = useState(0)
   // Short ids ("1", "1.2", "A") sit inline; long titles from chat must stack or they crush the instruction.

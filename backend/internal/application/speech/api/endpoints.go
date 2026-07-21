@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -12,16 +13,19 @@ import (
 
 	usecases "github.com/els/backend/internal/application/speech/use_cases"
 	"github.com/els/backend/internal/domain/iam"
+	"github.com/els/backend/internal/domain/speech"
 	authx "github.com/els/backend/internal/utils/auth"
 )
 
 const maxAudioBytes = 10 << 20
 
 type Deps struct {
-	Authenticator *authx.Authenticator
-	Assess        *usecases.AssessUseCase
-	Feedback      *usecases.FeedbackUseCase
-	ListPhonemes  *usecases.ListPhonemesUseCase
+	Authenticator    *authx.Authenticator
+	Assess           *usecases.AssessUseCase
+	Feedback         *usecases.FeedbackUseCase
+	ListPhonemes     *usecases.ListPhonemesUseCase
+	GeneratePractice *usecases.GeneratePracticeUseCase
+	Synthesize       *usecases.SynthesizeUseCase
 }
 
 func Register(api huma.API, deps Deps) {
@@ -79,6 +83,44 @@ func Register(api huma.API, deps Deps) {
 			return PhonemesOutput{}, err
 		}
 		return toPhonemesOutput(items), nil
+	})
+
+	authx.Authed(api, deps.Authenticator, huma.Operation{
+		OperationID: "speechSynthesize",
+		Method:      http.MethodPost,
+		Path:        "/api/v1/speech/tts",
+		Summary:     "Synthesize speech audio for a text",
+		Tags:        []string{"speech"},
+	}, func(ctx context.Context, actor *iam.Actor, in *SynthesizeInput) (SynthesizeOutput, error) {
+		res, err := deps.Synthesize.Execute(ctx, actor, usecases.SynthesizeCommand{Text: in.Body.Text, Voice: in.Body.Voice, Speed: in.Body.Speed})
+		if err != nil {
+			return SynthesizeOutput{}, err
+		}
+		return SynthesizeOutput{AudioBase64: base64.StdEncoding.EncodeToString(res.Audio), Voice: res.Voice}, nil
+	})
+
+	authx.Authed(api, deps.Authenticator, huma.Operation{
+		OperationID: "listSpeechVoices",
+		Method:      http.MethodGet,
+		Path:        "/api/v1/speech/voices",
+		Summary:     "List available TTS voices",
+		Tags:        []string{"speech"},
+	}, func(ctx context.Context, actor *iam.Actor, _ *ListVoicesInput) (VoicesOutput, error) {
+		return VoicesOutput{Voices: speech.Voices}, nil
+	})
+
+	authx.Authed(api, deps.Authenticator, huma.Operation{
+		OperationID: "speechGeneratePractice",
+		Method:      http.MethodPost,
+		Path:        "/api/v1/speech/practice",
+		Summary:     "Generate sentences to practice reading aloud",
+		Tags:        []string{"speech"},
+	}, func(ctx context.Context, actor *iam.Actor, in *GeneratePracticeInput) (SpeechPracticeOutput, error) {
+		sentences, err := deps.GeneratePractice.Execute(ctx, actor, usecases.GeneratePracticeCommand{Topic: in.Body.Topic, Sounds: in.Body.Sounds})
+		if err != nil {
+			return SpeechPracticeOutput{}, err
+		}
+		return SpeechPracticeOutput{Sentences: sentences}, nil
 	})
 }
 

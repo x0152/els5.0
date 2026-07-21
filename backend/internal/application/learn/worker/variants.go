@@ -67,6 +67,9 @@ func (g *Variants) run(accountID, variantID string, kind practice.Kind, number i
 		if exercises.Len() > 0 {
 			exercises.WriteString("\n\n")
 		}
+		if lead := strings.TrimSpace(item.Lead); lead != "" {
+			block += "\n\n~~~lead\n" + lead + "\n~~~"
+		}
 		exercises.WriteString(block)
 		g.write(accountID, variantID, kind, number, title, exercises.String(), practice.StatusGenerating)
 	}

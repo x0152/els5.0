@@ -30,6 +30,7 @@ export interface FilmSummary {
   position_ms: number
   status: FilmStatus
   kind: FilmKind
+  level: string
   series_title?: string
   season: number
   episode: number

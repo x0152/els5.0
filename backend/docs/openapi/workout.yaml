@@ -1,0 +1,659 @@
+components:
+  schemas:
+    CheckResult:
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        name:
+          examples:
+            - postgres
+          type: string
+        ok:
+          type: boolean
+      required:
+        - name
+        - ok
+      type: object
+    ErrorBody:
+      additionalProperties: false
+      properties:
+        code:
+          type: string
+        details:
+          items:
+            $ref: "#/components/schemas/ErrorDetail"
+          type:
+            - array
+            - "null"
+        message:
+          type: string
+      required:
+        - code
+        - message
+      type: object
+    ErrorDetail:
+      additionalProperties: false
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+      required:
+        - message
+      type: object
+    ErrorResponse:
+      additionalProperties: false
+      properties:
+        error:
+          $ref: "#/components/schemas/ErrorBody"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - error
+      type: object
+    GrammarOutput:
+      additionalProperties: false
+      properties:
+        exercises:
+          type: string
+        topic:
+          type: string
+      required:
+        - topic
+        - exercises
+      type: object
+    HealthOutput:
+      additionalProperties: false
+      properties:
+        module:
+          examples:
+            - auth
+          type: string
+        status:
+          examples:
+            - ok
+          type: string
+        time:
+          format: date-time
+          type: string
+      required:
+        - status
+        - time
+      type: object
+    ItemResultInput:
+      additionalProperties: false
+      properties:
+        end_ms:
+          format: int64
+          type: integer
+        film_id:
+          type: string
+        kind:
+          enum:
+            - phrase
+            - word
+          type: string
+        score:
+          format: int64
+          maximum: 100
+          minimum: 0
+          type: integer
+        start_ms:
+          format: int64
+          type: integer
+        text:
+          maxLength: 300
+          minLength: 1
+          type: string
+      required:
+        - kind
+        - text
+        - score
+      type: object
+    LessonOutput:
+      additionalProperties: false
+      properties:
+        created_at:
+          type: string
+        cycle_index:
+          format: int64
+          type: integer
+        end_ms:
+          format: int64
+          type: integer
+        film_id:
+          type: string
+        id:
+          type: string
+        number:
+          format: int64
+          type: integer
+        review:
+          type: boolean
+        start_ms:
+          format: int64
+          type: integer
+        status:
+          enum:
+            - active
+            - completed
+          type: string
+        steps:
+          items:
+            $ref: "#/components/schemas/StepOutput"
+          type:
+            - array
+            - "null"
+      required:
+        - id
+        - number
+        - cycle_index
+        - review
+        - start_ms
+        - end_ms
+        - status
+        - steps
+        - created_at
+      type: object
+    Meta:
+      additionalProperties: false
+      properties:
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+        request_id:
+          type: string
+      type: object
+    Pagination:
+      additionalProperties: false
+      properties:
+        has_more:
+          type: boolean
+        limit:
+          format: int64
+          type: integer
+        offset:
+          format: int64
+          type: integer
+        total:
+          format: int64
+          type: integer
+      required:
+        - limit
+        - offset
+        - total
+        - has_more
+      type: object
+    PhraseOutput:
+      additionalProperties: false
+      properties:
+        end_ms:
+          format: int64
+          type: integer
+        film_id:
+          type: string
+        start_ms:
+          format: int64
+          type: integer
+        text:
+          type: string
+      required:
+        - text
+      type: object
+    QuestionOutput:
+      additionalProperties: false
+      properties:
+        answer:
+          format: int64
+          type: integer
+        options:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        text:
+          type: string
+      required:
+        - text
+        - options
+        - answer
+      type: object
+    ReadingOutput:
+      additionalProperties: false
+      properties:
+        body:
+          type: string
+        title:
+          type: string
+        words:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - title
+        - body
+      type: object
+    ReadyOutput:
+      additionalProperties: false
+      properties:
+        checks:
+          items:
+            $ref: "#/components/schemas/CheckResult"
+          type:
+            - array
+            - "null"
+        module:
+          examples:
+            - auth
+          type: string
+        ready:
+          type: boolean
+        time:
+          format: date-time
+          type: string
+      required:
+        - ready
+        - time
+      type: object
+    StepOutput:
+      additionalProperties: false
+      properties:
+        done:
+          type: boolean
+        grammar:
+          $ref: "#/components/schemas/GrammarOutput"
+        id:
+          type: string
+        kind:
+          enum:
+            - warmup
+            - watch
+            - questions
+            - speak
+            - dictation
+            - reading
+            - writing
+            - grammar
+            - vocab
+          type: string
+        phrases:
+          items:
+            $ref: "#/components/schemas/PhraseOutput"
+          type:
+            - array
+            - "null"
+        questions:
+          items:
+            $ref: "#/components/schemas/QuestionOutput"
+          type:
+            - array
+            - "null"
+        reading:
+          $ref: "#/components/schemas/ReadingOutput"
+        score:
+          format: int64
+          type: integer
+        title:
+          type: string
+        vocab:
+          items:
+            $ref: "#/components/schemas/VocabWordOutput"
+          type:
+            - array
+            - "null"
+        warmup:
+          items:
+            $ref: "#/components/schemas/WarmupItemOutput"
+          type:
+            - array
+            - "null"
+        watch:
+          $ref: "#/components/schemas/WatchOutput"
+        writing:
+          $ref: "#/components/schemas/WritingOutput"
+      required:
+        - id
+        - kind
+        - title
+        - done
+        - score
+      type: object
+    SubmitStepInputBody:
+      additionalProperties: false
+      properties:
+        results:
+          items:
+            $ref: "#/components/schemas/ItemResultInput"
+          maxItems: 30
+          type:
+            - array
+            - "null"
+        score:
+          format: int64
+          maximum: 100
+          minimum: 0
+          type: integer
+      required:
+        - score
+      type: object
+    SuccessBodyHealthOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/HealthOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyLessonOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/LessonOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyReadyOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ReadyOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyTodayOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/TodayOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    TodayOutput:
+      additionalProperties: false
+      properties:
+        completed:
+          type: boolean
+        days:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        lesson:
+          $ref: "#/components/schemas/LessonOutput"
+        streak:
+          format: int64
+          type: integer
+      required:
+        - streak
+        - days
+        - completed
+      type: object
+    VocabWordOutput:
+      additionalProperties: false
+      properties:
+        definition:
+          type: string
+        example:
+          type: string
+        text:
+          type: string
+        translation:
+          type: string
+      required:
+        - text
+      type: object
+    WarmupItemOutput:
+      additionalProperties: false
+      properties:
+        end_ms:
+          format: int64
+          type: integer
+        film_id:
+          type: string
+        mode:
+          enum:
+            - speak
+            - dictation
+          type: string
+        start_ms:
+          format: int64
+          type: integer
+        text:
+          type: string
+      required:
+        - mode
+        - text
+      type: object
+    WatchOutput:
+      additionalProperties: false
+      properties:
+        end_ms:
+          format: int64
+          type: integer
+        film_id:
+          type: string
+        recap:
+          type: string
+        start_ms:
+          format: int64
+          type: integer
+        summary:
+          type: string
+        title:
+          type: string
+      required:
+        - film_id
+        - title
+        - start_ms
+        - end_ms
+      type: object
+    WritingOutput:
+      additionalProperties: false
+      properties:
+        dialogue:
+          type: string
+        scenario:
+          type: string
+      required:
+        - scenario
+        - dialogue
+      type: object
+info:
+  title: workout
+  version: 0.1.0
+openapi: 3.1.0
+paths:
+  /api/v1/workout/lessons:
+    post:
+      operationId: workoutStartLesson
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyLessonOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Return the active lesson, generating one if none is ready
+      tags:
+        - workout
+  /api/v1/workout/lessons/{id}:
+    get:
+      operationId: workoutGetLesson
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyLessonOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Get a lesson with all step payloads
+      tags:
+        - workout
+  /api/v1/workout/lessons/{id}/steps/{step}:
+    post:
+      operationId: workoutSubmitStep
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            format: uuid
+            type: string
+        - in: path
+          name: step
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitStepInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyLessonOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Submit a step result; the lesson completes with its last step
+      tags:
+        - workout
+  /api/v1/workout/today:
+    get:
+      operationId: workoutToday
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyTodayOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Current lesson, streak and completion calendar
+      tags:
+        - workout
+  /health:
+    get:
+      description: Returns 200 if the process is alive. Does not depend on external services.
+      operationId: health
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyHealthOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Liveness probe
+      tags:
+        - probes
+  /ready:
+    get:
+      description: Returns 200 if the module is ready to accept traffic (all dependencies alive). 503 if any check failed.
+      operationId: ready
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyReadyOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Readiness probe
+      tags:
+        - probes

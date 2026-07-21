@@ -246,7 +246,7 @@ function EpisodeEditForm({ episode, onDone }: { episode: FilmSummary; onDone: ()
 
   const submit = (ev: React.FormEvent) => {
     ev.preventDefault()
-    update.mutate({ id: episode.id, title, description }, { onSuccess: onDone })
+    update.mutate({ id: episode.id, title, description, level: episode.level || 'B1' }, { onSuccess: onDone })
   }
 
   return (

@@ -1,4 +1,4 @@
-package diary
+package writing
 
 import (
 	"encoding/json"

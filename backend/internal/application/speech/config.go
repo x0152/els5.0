@@ -11,6 +11,7 @@ type Config struct {
 	Session    SessionConfig `envPrefix:"SPEECH_SESSION_"`
 	LLM        LLMConfig     `envPrefix:"LLM_"`
 	ServiceURL string        `env:"SPEECH_URL" envDefault:"http://localhost:8001"`
+	TTSURL     string        `env:"TTS_URL" envDefault:"http://localhost:8002"`
 }
 
 type SessionConfig struct {

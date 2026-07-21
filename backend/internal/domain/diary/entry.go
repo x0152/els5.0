@@ -20,6 +20,7 @@ type Entry struct {
 	AccountID    string
 	Date         time.Time
 	Question     string
+	Draft        string
 	Text         string
 	Reply        string
 	NextQuestion string

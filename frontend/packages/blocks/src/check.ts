@@ -6,6 +6,11 @@ export type CheckResult = {
 
 export type CheckFn = (input: { prompt: string; answers: string[]; answer: string }) => Promise<CheckResult>
 
+export function checkLocal(answers: string[], answer: string): boolean {
+  const got = normalize(answer)
+  return answers.some((a) => normalize(a) === got)
+}
+
 function normalize(s: string): string {
   return s
     .toLowerCase()

@@ -9,11 +9,15 @@ import type {
   DiaryPaths,
   FilmsPaths,
   LearnPaths,
+  ListeningPaths,
   QuestPaths,
   ReaderPaths,
+  ReadingPaths,
   SettingsPaths,
   SpeechPaths,
   VocabPaths,
+  WorkoutPaths,
+  WritingPaths,
 } from './index.ts'
 
 export interface ApiClientOptions {
@@ -31,11 +35,15 @@ export interface ApiClient {
   diary: Client<DiaryPaths>
   films: Client<FilmsPaths>
   learn: Client<LearnPaths>
+  listening: Client<ListeningPaths>
   quest: Client<QuestPaths>
   reader: Client<ReaderPaths>
+  reading: Client<ReadingPaths>
   settings: Client<SettingsPaths>
   speech: Client<SpeechPaths>
   vocab: Client<VocabPaths>
+  workout: Client<WorkoutPaths>
+  writing: Client<WritingPaths>
 }
 
 export function createApiClient(options: ApiClientOptions): ApiClient {
@@ -64,10 +72,14 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     diary: make<DiaryPaths>(),
     films: make<FilmsPaths>(),
     learn: make<LearnPaths>(),
+    listening: make<ListeningPaths>(),
     quest: make<QuestPaths>(),
     reader: make<ReaderPaths>(),
+    reading: make<ReadingPaths>(),
     settings: make<SettingsPaths>(),
     speech: make<SpeechPaths>(),
     vocab: make<VocabPaths>(),
+    workout: make<WorkoutPaths>(),
+    writing: make<WritingPaths>(),
   }
 }

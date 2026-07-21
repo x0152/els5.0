@@ -27,6 +27,7 @@ type EventSink interface {
 type SubmitEntryCommand struct {
 	Text     string
 	Question string
+	Draft    string
 }
 
 type SubmitEntryUseCase struct {
@@ -53,6 +54,7 @@ func (uc *SubmitEntryUseCase) Execute(ctx context.Context, actor *iam.Actor, cmd
 		AccountID: accountID,
 		Date:      today,
 		Question:  cmd.Question,
+		Draft:     cmd.Draft,
 		Text:      cmd.Text,
 		CreatedAt: now,
 	}

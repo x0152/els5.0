@@ -101,6 +101,7 @@ func Register(api huma.API, deps Deps) {
 			Filename:      form.Video.Filename,
 			VideoTempPath: tempPath,
 			Kind:          formValue(in.RawBody.Form, "kind"),
+			Level:         formValue(in.RawBody.Form, "level"),
 			SeriesTitle:   formValue(in.RawBody.Form, "series_title"),
 			Season:        formInt(in.RawBody.Form, "season"),
 			Episode:       formInt(in.RawBody.Form, "episode"),
@@ -140,6 +141,7 @@ func Register(api huma.API, deps Deps) {
 		cmd := usecases.UpdateFilmCommand{
 			Title:       formValue(in.RawBody.Form, "title"),
 			Description: formValue(in.RawBody.Form, "description"),
+			Level:       formValue(in.RawBody.Form, "level"),
 		}
 		if form != nil && form.Poster.IsSet {
 			defer form.Poster.Close()

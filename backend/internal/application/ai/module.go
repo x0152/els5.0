@@ -18,7 +18,7 @@ import (
 	"github.com/els/backend/internal/domain/media"
 	domainsettings "github.com/els/backend/internal/domain/settings"
 	"github.com/els/backend/internal/domain/shared/ports"
-	"github.com/els/backend/internal/infrastructure/adapters/bothub"
+	"github.com/els/backend/internal/infrastructure/adapters/imagegen"
 	"github.com/els/backend/internal/infrastructure/adapters/ffmpeg"
 	"github.com/els/backend/internal/infrastructure/adapters/filmvision"
 	"github.com/els/backend/internal/infrastructure/adapters/llm"
@@ -79,7 +79,7 @@ func Mount(humaAPI huma.API, mux *http.ServeMux, cfg Config, pool *pgxpool.Pool,
 	}
 	imageResolver := providercfg.NewResolver(provRepo, domainsettings.FeatureImage,
 		ports.AIProviderConfig{BaseURL: cfg.Image.URL, APIKey: cfg.Image.APIKey, Model: cfg.Image.Model})
-	imageGen := bothub.NewWithResolver(cfg.Image.URL, cfg.Image.APIKey, cfg.Image.Model, time.Duration(cfg.Image.Timeout)*time.Second, imageResolver)
+	imageGen := imagegen.NewWithResolver(cfg.Image.URL, cfg.Image.APIKey, cfg.Image.Model, time.Duration(cfg.Image.Timeout)*time.Second, imageResolver)
 	if ensurer, ok := storage.(media.BucketEnsurer); ok && storage != nil {
 		if err := ensurer.EnsureBucket(context.Background(), cfg.Bucket); err != nil {
 			logger.Warn("ai media storage: ensure bucket failed", slog.String("err", err.Error()))

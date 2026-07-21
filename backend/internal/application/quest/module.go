@@ -15,7 +15,7 @@ import (
 	"github.com/els/backend/internal/domain/media"
 	domainsettings "github.com/els/backend/internal/domain/settings"
 	"github.com/els/backend/internal/domain/shared/ports"
-	"github.com/els/backend/internal/infrastructure/adapters/bothub"
+	"github.com/els/backend/internal/infrastructure/adapters/imagegen"
 	"github.com/els/backend/internal/infrastructure/adapters/llm"
 	"github.com/els/backend/internal/infrastructure/adapters/providercfg"
 	"github.com/els/backend/internal/infrastructure/adapters/redissession"
@@ -70,7 +70,7 @@ func Mount(
 
 	imageResolver := providercfg.NewResolver(provRepo, domainsettings.FeatureImage,
 		ports.AIProviderConfig{BaseURL: cfg.Image.URL, APIKey: cfg.Image.APIKey, Model: cfg.Image.Model})
-	imageGen := bothub.NewWithResolver(cfg.Image.URL, cfg.Image.APIKey, cfg.Image.Model, time.Duration(cfg.Image.Timeout)*time.Second, imageResolver)
+	imageGen := imagegen.NewWithResolver(cfg.Image.URL, cfg.Image.APIKey, cfg.Image.Model, time.Duration(cfg.Image.Timeout)*time.Second, imageResolver)
 
 	storage, urls := buildStorage(cfg, logger)
 	images := runtime.NewImages(imageGen, storage, cfg.Bucket, gateway, store, logger)

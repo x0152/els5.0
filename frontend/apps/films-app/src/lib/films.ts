@@ -57,6 +57,7 @@ export function useUploadFilm() {
       subtitles?: File
       poster?: File
       kind: 'film' | 'series'
+      level: string
       seriesTitle?: string
       season?: number
       episode?: number
@@ -65,6 +66,7 @@ export function useUploadFilm() {
       form.append('title', args.title)
       form.append('video', args.video)
       form.append('kind', args.kind)
+      form.append('level', args.level)
       if (args.kind === 'series') {
         form.append('series_title', args.seriesTitle ?? '')
         form.append('season', String(args.season ?? 1))
@@ -81,10 +83,11 @@ export function useUploadFilm() {
 export function useUpdateFilm() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (args: { id: string; title: string; description: string; poster?: File }) => {
+    mutationFn: async (args: { id: string; title: string; description: string; level: string; poster?: File }) => {
       const form = new FormData()
       form.append('title', args.title)
       form.append('description', args.description)
+      form.append('level', args.level)
       if (args.poster) form.append('poster', args.poster)
       return api.films.updateFilm({ params: { path: { id: args.id } }, body: form as unknown as never })
     },

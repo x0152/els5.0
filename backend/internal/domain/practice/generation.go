@@ -11,6 +11,7 @@ type PlanItem struct {
 	Section string `json:"section"`
 	Type    string `json:"type"`
 	Hint    string `json:"hint"`
+	Lead    string `json:"lead"`
 }
 
 const maxPlanItems = 8
@@ -80,13 +81,12 @@ For each planned exercise give:
 - "section": the theory section letter it relates to (e.g. "A").
 - "type": one of "gap-fill", "multiple-choice", "word-bank", "matching", "sorting", "find-in-text", "dialogue", "picture", "free-writing".
 - "hint": a short note (in English) on what exactly this exercise should drill.
-Respond with STRICT JSON only: {"title": "<short label, e.g. 'Extra practice'>", "items": [{"section": "", "type": "", "hint": ""}]}.`
+- "lead": one short, warm English line (max 12 words) spoken to the learner right before the exercise, e.g. "Now spot these phrases in a real dialogue.".
+Respond with STRICT JSON only: {"title": "<short label, e.g. 'Extra practice'>", "items": [{"section": "", "type": "", "hint": "", "lead": ""}]}.`
 
-const exerciseSystem = `You write ONE practice exercise for an English textbook from the chapter THEORY, following the requested type and focus.
-All generated text MUST be in English only. The existing exercise set is shown ONLY as a DSL syntax reference.
-
-Output the exercise as a Markdown block that starts with a header line "## <n> → <L>" (the given number and theory section letter), followed by an instruction line, then the body using these building blocks (pick what fits the type):
-- Fill-in gap: "{{answer|alt1|alt2}}" — list every acceptable answer separated by "|".
+// BlockCatalog describes the exercise DSL building blocks the frontend can render;
+// it is embedded into every prompt that asks an LLM to write exercises.
+const BlockCatalog = `- Fill-in gap: "{{answer|alt1|alt2}}" — list every acceptable answer separated by "|".
 - Multiple choice: "{{*correct|wrong1|wrong2}}" — exactly one option, the correct one, is prefixed with "*".
 - Numbered items: lines like "1. ... {{...}} ...". A small hint can follow as "_(hint)_".
 - Word bank: a "~~~bank\nword, word, word\n~~~" block of helper words.
@@ -97,7 +97,13 @@ Output the exercise as a Markdown block that starts with a header line "## <n> �
 - Dialogue with gaps: several consecutive "~~~bubble\n@Name\nreply text with {{gap|alt}}\n~~~" blocks (one block per reply, two speakers) form a chat where the learner completes the replies.
 - Collocation fork with gaps: "~~~fork\na remarkable\n{{*range|height|speed}}, coincidence\n~~~" — first line is the stem, branches may contain gaps. A bare text gap in a branch is unanswerable (too many words fit): every fork gap MUST be multiple-choice ({{*correct|wrong|wrong}}) or the exercise MUST include a "~~~bank" with the answers. One fork per "~~~fork" block; use several blocks for several stems.
 - Free writing: "~~~write rows=N\n> an example answer\n~~~".
-- Inline "**bold**" and "_italic_" are allowed.
+- Inline "**bold**" and "_italic_" are allowed.`
+
+const exerciseSystem = `You write ONE practice exercise for an English textbook from the chapter THEORY, following the requested type and focus.
+All generated text MUST be in English only. The existing exercise set is shown ONLY as a DSL syntax reference.
+
+Output the exercise as a Markdown block that starts with a header line "## <n> → <L>" (the given number and theory section letter), followed by an instruction line, then the body using these building blocks (pick what fits the type):
+` + BlockCatalog + `
 
 Rules:
 - Output ONLY this one exercise (no theory, no other exercises, no explanations).

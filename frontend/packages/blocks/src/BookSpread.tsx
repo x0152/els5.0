@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Check, Loader2, Plus, RotateCcw, Trash2, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, Check, Loader2, Play, Plus, RotateCcw, Trash2, TriangleAlert } from 'lucide-react'
 import { Button } from '@els/ui'
+import { PracticeSession } from './PracticeSession.tsx'
 import { mockCheckAnswer } from './check.ts'
 import {
   PracticeMetaCtx,
@@ -188,15 +189,57 @@ function PracticeExercises({
         <PracticeSkeleton />
       ) : (
         <ProgressProvider key={activeId} meta={meta} variant={activeId} generating={active?.status === 'generating'}>
-          <ExercisesList exercises={active ? active.exercises : mainExercises} checkAnswer={checkAnswer} onTheory={onTheory} />
-          {active?.status === 'generating' && (
-            <div className="mt-6">
-              <PracticeSkeleton count={1} />
-            </div>
-          )}
+          <SessionOrList
+            exercises={active ? active.exercises : mainExercises}
+            generating={active?.status === 'generating'}
+            checkAnswer={checkAnswer}
+            onTheory={onTheory}
+          />
         </ProgressProvider>
       )}
     </div>
+  )
+}
+
+function SessionOrList({
+  exercises,
+  generating,
+  checkAnswer,
+  onTheory,
+}: {
+  exercises: string
+  generating?: boolean
+  checkAnswer: CheckAnswerFn
+  onTheory: (s: string) => void
+}) {
+  const [session, setSession] = useState(false)
+  if (session) {
+    return <PracticeSession exercises={exercises} checkAnswer={checkAnswer} onTheory={onTheory} onExit={() => setSession(false)} />
+  }
+  return (
+    <>
+      {!generating && (
+        <button
+          type="button"
+          onClick={() => setSession(true)}
+          className="mb-4 flex w-full items-center gap-3 rounded-2xl border border-brand-200/80 bg-gradient-to-r from-brand-50 to-emerald-50/40 px-4 py-3 text-left shadow-sm transition-colors hover:border-brand-300 hover:from-brand-100/70"
+        >
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-600 text-white shadow-md">
+            <Play className="ml-0.5 h-4 w-4" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-brand-800">Practice as a session</span>
+            <span className="block text-xs text-neutral-500">One exercise at a time, with a summary and retry at the end</span>
+          </span>
+        </button>
+      )}
+      <ExercisesList exercises={exercises} checkAnswer={checkAnswer} onTheory={onTheory} />
+      {generating && (
+        <div className="mt-6">
+          <PracticeSkeleton count={1} />
+        </div>
+      )}
+    </>
   )
 }
 

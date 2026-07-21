@@ -15,14 +15,15 @@ func ensureMissionVoices(mission *quest.CustomMission) {
 	usedVoices := make(map[string]bool)
 	for i := range mission.Characters {
 		ch := &mission.Characters[i]
-		voice := quest.AssignCharacterFallback(ch.Name, i, ch.Gender)
+		// Prefer the voice the LLM picked for the character; fall back only when it is invalid or already taken.
+		voice := quest.EnsureVoiceByGender(ch.Voice, ch.Name, ch.Gender)
 		for attempts := 0; attempts < len(quest.Voices()) && usedVoices[voice]; attempts++ {
 			voice = quest.AssignCharacterFallback(ch.Name+":"+strings.Repeat("x", attempts+1), i+attempts, ch.Gender)
 		}
 		ch.Voice = voice
 		usedVoices[voice] = true
 	}
-	mission.NarratorVoice = quest.EnsureNarratorVoice("", commonFallbackVoice())
+	mission.NarratorVoice = quest.EnsureNarratorVoice(mission.NarratorVoice, commonFallbackVoice())
 }
 
 func missionCharacterVoice(mission *quest.CustomMission, name string) (string, bool) {

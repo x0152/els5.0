@@ -201,14 +201,19 @@ export function parseTheory(md: string): TheorySection[] {
   return sections
 }
 
-export type Exercise = { id: string; section?: string; instruction: string; nodes: Node[] }
+export type Exercise = { id: string; section?: string; instruction: string; lead?: string; nodes: Node[] }
 
 export function parseExercises(md: string): Exercise[] {
   return md
     .split(/^##\s+/m)
     .map((s) => s.replace(/\s+$/, ''))
     .filter((s) => s.trim())
-    .map((chunk) => {
+    .map((raw) => {
+      let lead: string | undefined
+      const chunk = raw.replace(/^~~~lead\n([\s\S]*?)\n~~~$/m, (_, text: string) => {
+        lead = text.trim()
+        return ''
+      })
       const nl = chunk.indexOf('\n')
       const head = (nl === -1 ? chunk : chunk.slice(0, nl)).trim()
       const bodyLines = nl === -1 ? [] : chunk.slice(nl + 1).split('\n')
@@ -228,6 +233,6 @@ export function parseExercises(md: string): Exercise[] {
         if (/^:::/.test(t) || /^~~~/.test(t) || t.includes('{{') || /^\d+\.\s/.test(t) || /^-\s/.test(t)) break
         instr.push(t)
       }
-      return { id: id.trim(), section: section?.trim(), instruction: instr.join(' '), nodes: parseBlocks(bodyLines.slice(k).join('\n')) }
+      return { id: id.trim(), section: section?.trim(), instruction: instr.join(' '), lead, nodes: parseBlocks(bodyLines.slice(k).join('\n')) }
     })
 }

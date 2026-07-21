@@ -36,6 +36,12 @@ type Assessor interface {
 	Assess(ctx context.Context, audio []byte, text string, strictness float64) (Assessment, error)
 }
 
+type Synthesizer interface {
+	Synthesize(ctx context.Context, text, voice string, speed float64) ([]byte, error)
+}
+
+var Voices = []string{"Bella", "Jasper", "Luna", "Bruno", "Rosie", "Hugo", "Kiki", "Leo"}
+
 const (
 	MinStrictness     = 0.5
 	MaxStrictness     = 2.5

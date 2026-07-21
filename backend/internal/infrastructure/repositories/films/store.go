@@ -20,7 +20,7 @@ type Store struct {
 
 func NewStore(pool *pgxpool.Pool) *Store { return &Store{pool: pool} }
 
-const columns = `id, title, description, poster_path, duration_ms, status, error, kind, series_title, season, episode, audio_variants, subtitles, created_at`
+const columns = `id, title, description, poster_path, duration_ms, status, error, kind, level, series_title, season, episode, audio_variants, subtitles, created_at`
 
 func (s *Store) List(ctx context.Context) ([]films.Film, error) {
 	rows, err := s.pool.Query(ctx, `SELECT `+columns+` FROM films ORDER BY created_at DESC`)
@@ -55,9 +55,9 @@ func (s *Store) Create(ctx context.Context, film films.Film) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.pool.Exec(ctx, `INSERT INTO films (id, title, description, poster_path, duration_ms, status, error, kind, series_title, season, episode, audio_variants, subtitles, created_at)
-		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
-		film.ID, film.Title, film.Description, film.PosterPath, film.DurationMs, film.Status, film.Error, kindOrDefault(film.Kind), film.SeriesTitle, film.Season, film.Episode, variants, subtitles, film.CreatedAt)
+	_, err = s.pool.Exec(ctx, `INSERT INTO films (id, title, description, poster_path, duration_ms, status, error, kind, level, series_title, season, episode, audio_variants, subtitles, created_at)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
+		film.ID, film.Title, film.Description, film.PosterPath, film.DurationMs, film.Status, film.Error, kindOrDefault(film.Kind), film.Level, film.SeriesTitle, film.Season, film.Episode, variants, subtitles, film.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("create film: %w", err)
 	}
@@ -70,9 +70,9 @@ func (s *Store) Update(ctx context.Context, film films.Film) error {
 		return err
 	}
 	ct, err := s.pool.Exec(ctx, `UPDATE films
-		SET title=$2, description=$3, poster_path=$4, duration_ms=$5, status=$6, error=$7, kind=$8, series_title=$9, season=$10, episode=$11, audio_variants=$12, subtitles=$13
+		SET title=$2, description=$3, poster_path=$4, duration_ms=$5, status=$6, error=$7, kind=$8, level=$9, series_title=$10, season=$11, episode=$12, audio_variants=$13, subtitles=$14
 		WHERE id=$1`,
-		film.ID, film.Title, film.Description, film.PosterPath, film.DurationMs, film.Status, film.Error, kindOrDefault(film.Kind), film.SeriesTitle, film.Season, film.Episode, variants, subtitles)
+		film.ID, film.Title, film.Description, film.PosterPath, film.DurationMs, film.Status, film.Error, kindOrDefault(film.Kind), film.Level, film.SeriesTitle, film.Season, film.Episode, variants, subtitles)
 	if err != nil {
 		return fmt.Errorf("update film: %w", err)
 	}
@@ -206,7 +206,7 @@ type scannable interface {
 func scanFilm(row scannable) (films.Film, error) {
 	var film films.Film
 	var variants, subtitles []byte
-	if err := row.Scan(&film.ID, &film.Title, &film.Description, &film.PosterPath, &film.DurationMs, &film.Status, &film.Error, &film.Kind, &film.SeriesTitle, &film.Season, &film.Episode, &variants, &subtitles, &film.CreatedAt); err != nil {
+	if err := row.Scan(&film.ID, &film.Title, &film.Description, &film.PosterPath, &film.DurationMs, &film.Status, &film.Error, &film.Kind, &film.Level, &film.SeriesTitle, &film.Season, &film.Episode, &variants, &subtitles, &film.CreatedAt); err != nil {
 		return films.Film{}, err
 	}
 	film.AudioVariants = []films.AudioVariant{}

@@ -122,6 +122,8 @@ components:
           type: string
         kind:
           type: string
+        level:
+          type: string
         position_ms:
           format: int64
           type: integer
@@ -149,6 +151,7 @@ components:
         - position_ms
         - status
         - kind
+        - level
         - season
         - episode
         - audio_tracks
@@ -172,6 +175,8 @@ components:
           type: string
         kind:
           type: string
+        level:
+          type: string
         position_ms:
           format: int64
           type: integer
@@ -193,6 +198,7 @@ components:
         - position_ms
         - status
         - kind
+        - level
         - season
         - episode
         - created_at

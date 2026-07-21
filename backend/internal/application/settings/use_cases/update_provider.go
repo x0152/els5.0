@@ -11,10 +11,12 @@ import (
 
 type UpdateProviderCommand struct {
 	Feature     settings.Feature
+	Kind        settings.Kind
 	BaseURL     string
 	Model       string
 	APIKey      string
 	KeyProvided bool
+	Params      map[string]string
 }
 
 type UpdateProviderUseCase struct {
@@ -41,6 +43,8 @@ func (uc *UpdateProviderUseCase) Execute(ctx context.Context, actor *iam.Actor, 
 	}
 	// 3. Overwrite the provider.
 	provider := settings.NewAIProvider(cmd.Feature, cmd.BaseURL, apiKey, cmd.Model)
+	provider.Kind = cmd.Kind
+	provider.Params = cmd.Params
 	if err := uc.repo.UpsertAIProvider(ctx, provider); err != nil {
 		return settings.AIProvider{}, err
 	}

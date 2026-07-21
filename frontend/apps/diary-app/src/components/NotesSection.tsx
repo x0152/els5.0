@@ -26,7 +26,7 @@ export function NotesSection({ notes, nativeSample, defaultOpen = false }: { not
             notes.map((n, i) => (
               <div key={i}>
                 <p className="text-neutral-800">
-                  <CorrectionDiff item={n} />
+                  <CorrectionDiff items={[n]} />
                 </p>
                 <p className="mt-1 text-sm text-neutral-500">{n.description}</p>
               </div>

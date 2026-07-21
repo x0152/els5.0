@@ -6,11 +6,21 @@ import (
 )
 
 func toProviderOutput(p settings.AIProvider) ProviderOutput {
+	kind := p.Kind
+	if kind == "" {
+		kind = settings.KindOpenAI
+	}
+	params := p.Params
+	if params == nil {
+		params = map[string]string{}
+	}
 	return ProviderOutput{
 		Feature: string(p.Feature),
+		Kind:    string(kind),
 		BaseURL: p.BaseURL,
 		Model:   p.Model,
 		HasKey:  p.HasKey(),
+		Params:  params,
 	}
 }
 
@@ -27,10 +37,16 @@ func toUpdateProviderCommand(in *UpdateProviderInput) (usecases.UpdateProviderCo
 	if err != nil {
 		return usecases.UpdateProviderCommand{}, err
 	}
+	kind, err := settings.ParseKind(in.Body.Kind)
+	if err != nil {
+		return usecases.UpdateProviderCommand{}, err
+	}
 	cmd := usecases.UpdateProviderCommand{
 		Feature: feature,
+		Kind:    kind,
 		BaseURL: in.Body.BaseURL,
 		Model:   in.Body.Model,
+		Params:  in.Body.Params,
 	}
 	if in.Body.APIKey != nil {
 		cmd.KeyProvided = true

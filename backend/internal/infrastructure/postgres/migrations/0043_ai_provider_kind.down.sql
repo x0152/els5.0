@@ -1,0 +1,3 @@
+ALTER TABLE ai_providers
+    DROP COLUMN IF EXISTS kind,
+    DROP COLUMN IF EXISTS params;

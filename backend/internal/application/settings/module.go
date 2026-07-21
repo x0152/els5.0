@@ -11,6 +11,7 @@ import (
 	"github.com/els/backend/internal/application/settings/api"
 	usecases "github.com/els/backend/internal/application/settings/use_cases"
 	domainsettings "github.com/els/backend/internal/domain/settings"
+	"github.com/els/backend/internal/infrastructure/adapters/comfyui"
 	"github.com/els/backend/internal/infrastructure/adapters/llm"
 	"github.com/els/backend/internal/infrastructure/adapters/redissession"
 	iamrepo "github.com/els/backend/internal/infrastructure/repositories/iam"
@@ -49,7 +50,7 @@ func Mount(humaAPI huma.API, cfg Config, pool *pgxpool.Pool, rdb *redis.Client, 
 		Authenticator:      authn,
 		ListProviders:      usecases.NewListProvidersUseCase(repo),
 		UpdateProvider:     usecases.NewUpdateProviderUseCase(repo),
-		ListModels:         usecases.NewListModelsUseCase(repo, llm.NewModelLister(), defaults),
+		ListModels:         usecases.NewListModelsUseCase(repo, llm.NewModelLister(), comfyui.NewModelLister(), defaults),
 		GetEventProcessing: usecases.NewGetFlagUseCase(repo, domainsettings.FlagEventProcessing),
 		SetEventProcessing: usecases.NewSetFlagUseCase(repo, domainsettings.FlagEventProcessing),
 		GetAutoWordImages:  usecases.NewGetFlagUseCase(repo, domainsettings.FlagAutoWordImages),

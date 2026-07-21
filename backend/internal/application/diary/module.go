@@ -54,9 +54,9 @@ func Mount(humaAPI huma.API, cfg Config, pool *pgxpool.Pool, rdb *redis.Client, 
 	api.Register(humaAPI, api.Deps{
 		Authenticator: authn,
 		GetToday:      usecases.NewGetTodayUseCase(repo, nil),
+		CheckEntry:    usecases.NewCheckEntryUseCase(llmClient),
 		SubmitEntry:   usecases.NewSubmitEntryUseCase(repo, llmClient, events, nil),
 		ListEntries:   usecases.NewListEntriesUseCase(repo),
 		ResetHistory:  usecases.NewResetHistoryUseCase(repo),
-		TrainerCheck:  usecases.NewTrainerCheckUseCase(llmClient),
 	})
 }

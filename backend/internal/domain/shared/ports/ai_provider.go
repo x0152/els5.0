@@ -3,9 +3,11 @@ package ports
 import "context"
 
 type AIProviderConfig struct {
+	Kind    string
 	BaseURL string
 	APIKey  string
 	Model   string
+	Params  map[string]string
 }
 
 func (c AIProviderConfig) IsEmpty() bool {

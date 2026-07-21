@@ -11,13 +11,14 @@ import (
 )
 
 type ListModelsUseCase struct {
-	repo     settings.AIProviderRepository
-	lister   ports.ModelLister
-	defaults map[settings.Feature]ports.AIProviderConfig
+	repo        settings.AIProviderRepository
+	lister      ports.ModelLister
+	comfyLister ports.ModelLister
+	defaults    map[settings.Feature]ports.AIProviderConfig
 }
 
-func NewListModelsUseCase(repo settings.AIProviderRepository, lister ports.ModelLister, defaults map[settings.Feature]ports.AIProviderConfig) *ListModelsUseCase {
-	return &ListModelsUseCase{repo: repo, lister: lister, defaults: defaults}
+func NewListModelsUseCase(repo settings.AIProviderRepository, lister, comfyLister ports.ModelLister, defaults map[settings.Feature]ports.AIProviderConfig) *ListModelsUseCase {
+	return &ListModelsUseCase{repo: repo, lister: lister, comfyLister: comfyLister, defaults: defaults}
 }
 
 func (uc *ListModelsUseCase) Execute(ctx context.Context, actor *iam.Actor, feature settings.Feature, override ports.AIProviderConfig) ([]string, error) {
@@ -34,15 +35,25 @@ func (uc *ListModelsUseCase) Execute(ctx context.Context, actor *iam.Actor, feat
 	if cfg.IsEmpty() {
 		cfg = uc.defaults[feature]
 	}
-	// 3. Override address and token with form values if provided.
+	// 3. Override address, token and kind with form values if provided.
 	if override.BaseURL != "" {
 		cfg.BaseURL = override.BaseURL
 	}
 	if override.APIKey != "" {
 		cfg.APIKey = override.APIKey
 	}
-	// 4. Ask the provider for the model list.
-	models, err := uc.lister.ListModels(ctx, cfg)
+	if override.Kind != "" {
+		cfg.Kind = override.Kind
+	}
+	if cfg.Kind == "" {
+		cfg.Kind = string(provider.Kind)
+	}
+	// 4. Ask the matching engine for the model list.
+	lister := uc.lister
+	if cfg.Kind == string(settings.KindComfyUI) {
+		lister = uc.comfyLister
+	}
+	models, err := lister.ListModels(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}

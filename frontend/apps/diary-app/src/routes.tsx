@@ -1,9 +1,8 @@
 import { NavLink, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { DiaryAppPage } from './DiaryAppPage.tsx'
 import { HistoryPage } from './HistoryPage.tsx'
-import { TrainerPage } from './TrainerPage.tsx'
 
-const PAGES = ['history', 'trainer']
+const PAGES = ['history']
 
 function useBasePath(): string {
   const { pathname } = useLocation()
@@ -25,9 +24,6 @@ function Layout() {
         <NavLink to={`${base}/history`} className={link}>
           History
         </NavLink>
-        <NavLink to={`${base}/trainer`} className={link}>
-          Trainer
-        </NavLink>
       </nav>
       <div className="min-h-0 flex-1">
         <Outlet />
@@ -42,7 +38,6 @@ export function DiaryAppRoutes() {
       <Route element={<Layout />}>
         <Route index element={<DiaryAppPage />} />
         <Route path="history" element={<HistoryPage />} />
-        <Route path="trainer" element={<TrainerPage />} />
         <Route path="*" element={<DiaryAppPage />} />
       </Route>
     </Routes>

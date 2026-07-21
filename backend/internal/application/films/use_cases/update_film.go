@@ -26,6 +26,7 @@ func NewUpdateFilmUseCase(repo films.Repository, storage media.Storage, bucket s
 type UpdateFilmCommand struct {
 	Title       string
 	Description string
+	Level       string
 	Poster      *UploadAsset
 }
 
@@ -41,9 +42,14 @@ func (uc *UpdateFilmUseCase) Execute(ctx context.Context, actor *iam.Actor, id s
 		return films.Film{}, err
 	}
 
-	// 3. Update the title and description.
+	// 3. Update the title, description and level.
 	film.Title = strings.TrimSpace(cmd.Title)
 	film.Description = strings.TrimSpace(cmd.Description)
+	level, err := films.ParseLevel(cmd.Level)
+	if err != nil {
+		return films.Film{}, err
+	}
+	film.Level = level
 	if err := film.Validate(); err != nil {
 		return films.Film{}, err
 	}

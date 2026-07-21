@@ -71,3 +71,37 @@ type PhonemeInfoOutput struct {
 type PhonemesOutput struct {
 	Items []PhonemeInfoOutput `json:"items"`
 }
+
+type SynthesizeInput struct {
+	authx.BearerInput
+	Body struct {
+		Text  string  `json:"text" minLength:"1" maxLength:"2000" doc:"Text to speak aloud"`
+		Voice string  `json:"voice,omitempty" maxLength:"20" doc:"Voice name; a random one is used when omitted"`
+		Speed float64 `json:"speed,omitempty" minimum:"0" maximum:"2" doc:"Speech speed multiplier, default 1.0"`
+	}
+}
+
+type SynthesizeOutput struct {
+	AudioBase64 string `json:"audio_base64" doc:"WAV audio, base64-encoded"`
+	Voice       string `json:"voice" doc:"Voice that was actually used"`
+}
+
+type ListVoicesInput struct {
+	authx.BearerInput
+}
+
+type VoicesOutput struct {
+	Voices []string `json:"voices"`
+}
+
+type GeneratePracticeInput struct {
+	authx.BearerInput
+	Body struct {
+		Topic  string   `json:"topic,omitempty" maxLength:"200" doc:"Optional topic for the sentences"`
+		Sounds []string `json:"sounds,omitempty" maxItems:"10" doc:"Target IPA sounds to pack into the sentences"`
+	}
+}
+
+type SpeechPracticeOutput struct {
+	Sentences []string `json:"sentences"`
+}

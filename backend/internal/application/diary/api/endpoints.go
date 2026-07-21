@@ -14,10 +14,10 @@ import (
 type Deps struct {
 	Authenticator *authx.Authenticator
 	GetToday      *usecases.GetTodayUseCase
+	CheckEntry    *usecases.CheckEntryUseCase
 	SubmitEntry   *usecases.SubmitEntryUseCase
 	ListEntries   *usecases.ListEntriesUseCase
 	ResetHistory  *usecases.ResetHistoryUseCase
-	TrainerCheck  *usecases.TrainerCheckUseCase
 }
 
 func Register(api huma.API, deps Deps) {
@@ -33,6 +33,20 @@ func Register(api huma.API, deps Deps) {
 			return TodayOutput{}, err
 		}
 		return toTodayOutput(res), nil
+	})
+
+	authx.Authed(api, deps.Authenticator, huma.Operation{
+		OperationID: "diaryCheckEntry",
+		Method:      http.MethodPost,
+		Path:        "/api/v1/diary/entries/check",
+		Summary:     "Check a diary draft for grammar errors before submitting",
+		Tags:        []string{"diary"},
+	}, func(ctx context.Context, actor *iam.Actor, in *CheckEntryInput) (CheckEntryOutput, error) {
+		res, err := deps.CheckEntry.Execute(ctx, actor, in.Body.Text)
+		if err != nil {
+			return CheckEntryOutput{}, err
+		}
+		return toCheckEntryOutput(res), nil
 	})
 
 	authx.Authed(api, deps.Authenticator, huma.Operation{
@@ -72,23 +86,5 @@ func Register(api huma.API, deps Deps) {
 		DefaultStatus: http.StatusNoContent,
 	}, func(ctx context.Context, actor *iam.Actor, _ *ResetHistoryInput) (ResetHistoryOutput, error) {
 		return ResetHistoryOutput{}, deps.ResetHistory.Execute(ctx, actor)
-	})
-
-	authx.Authed(api, deps.Authenticator, huma.Operation{
-		OperationID: "diaryTrainerCheck",
-		Method:      http.MethodPost,
-		Path:        "/api/v1/diary/trainer/check",
-		Summary:     "Check a draft reply without revealing corrections",
-		Tags:        []string{"diary"},
-	}, func(ctx context.Context, actor *iam.Actor, in *TrainerCheckInput) (TrainerCheckOutput, error) {
-		cmd, err := toTrainerCheckCommand(in)
-		if err != nil {
-			return TrainerCheckOutput{}, err
-		}
-		res, err := deps.TrainerCheck.Execute(ctx, actor, cmd)
-		if err != nil {
-			return TrainerCheckOutput{}, err
-		}
-		return toTrainerCheckOutput(res), nil
 	})
 }

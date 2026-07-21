@@ -16,11 +16,20 @@ const PRESETS = [
   'The weather was really very good this evening.',
   'Would you like a cup of water with your vegetables?',
   'She usually works with three other girls in the village.',
-] as const
+]
+
+function weakSounds(assessment: Assessment): string[] {
+  const sounds = new Set<string>()
+  for (const w of assessment.words ?? [])
+    for (const p of w.phonemes ?? [])
+      if (p.verdict === 'wrong' || p.verdict === 'missing') sounds.add(p.expected)
+  return [...sounds].slice(0, 6)
+}
 
 export function SpeakingPage() {
   const navigate = useNavigate()
-  const [text, setText] = useState<string>(PRESETS[0])
+  const [presets, setPresets] = useState<string[]>(PRESETS)
+  const [text, setText] = useState<string>(PRESETS[0]!)
   const [assessment, setAssessment] = useState<Assessment | null>(null)
   const [assessedText, setAssessedText] = useState('')
   const [selected, setSelected] = useState<{ word: WordResult; phoneme: PhonemeResult } | null>(null)
@@ -74,6 +83,16 @@ export function SpeakingPage() {
     },
   })
 
+  const practiceM = useMutation({
+    mutationFn: (sounds: string[]) => api.speech.speechGeneratePractice({ body: { sounds } }),
+    onSuccess: (data) => {
+      const sentences = data?.sentences ?? []
+      if (!sentences.length) return
+      setPresets(sentences)
+      setText(sentences[0]!)
+    },
+  })
+
   const recorder = useRecorder((blob) => assessM.mutate(blob))
   const busy = assessM.isPending || recorder.state === 'recording'
 
@@ -113,7 +132,7 @@ export function SpeakingPage() {
             disabled={recorder.state === 'recording'}
           />
           <div className="flex flex-wrap gap-2">
-            {PRESETS.map((p) => (
+            {presets.map((p) => (
               <button
                 key={p}
                 type="button"
@@ -128,6 +147,15 @@ export function SpeakingPage() {
                 {p}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => practiceM.mutate([])}
+              disabled={practiceM.isPending}
+              className="flex items-center gap-1 rounded-full px-3 py-1.5 text-xs text-brand-600 ring-1 ring-brand-200 transition hover:bg-brand-50 disabled:opacity-50"
+            >
+              {practiceM.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+              New sentences
+            </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 border-t border-neutral-100 pt-4">
@@ -204,6 +232,12 @@ export function SpeakingPage() {
                 {feedbackM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 {feedbackM.isPending ? 'Analyzing…' : 'Explain with AI'}
               </Button>
+              {weakSounds(assessment).length > 0 && (
+                <Button variant="secondary" onClick={() => practiceM.mutate(weakSounds(assessment))} disabled={practiceM.isPending}>
+                  {practiceM.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mic className="h-4 w-4" />}
+                  Practice {weakSounds(assessment).map((s) => `/${s}/`).join(' ')}
+                </Button>
+              )}
               <span className="text-sm text-neutral-500">Advice is tailored for {native} speakers (from your profile).</span>
             </div>
 

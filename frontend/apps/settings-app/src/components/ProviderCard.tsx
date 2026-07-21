@@ -12,6 +12,17 @@ const ICONS: Record<Feature, LucideIcon> = {
   image: ImageIcon,
 }
 
+type Kind = 'openai' | 'comfyui'
+
+const COMFY_PARAMS: { key: string; label: string; placeholder: string }[] = [
+  { key: 'steps', label: 'Steps', placeholder: '25' },
+  { key: 'cfg', label: 'CFG scale', placeholder: '6.5' },
+  { key: 'sampler', label: 'Sampler', placeholder: 'euler' },
+  { key: 'scheduler', label: 'Scheduler', placeholder: 'normal' },
+  { key: 'width', label: 'Width', placeholder: '1024' },
+  { key: 'height', label: 'Height', placeholder: '1024' },
+]
+
 type Props = {
   feature: Feature
   title: string
@@ -20,11 +31,13 @@ type Props = {
 }
 
 export function ProviderCard({ feature, title, description, provider }: Props) {
+  const [kind, setKind] = useState<Kind>((provider?.kind as Kind) ?? 'openai')
   const [baseUrl, setBaseUrl] = useState(provider?.base_url ?? '')
   const [model, setModel] = useState(provider?.model ?? '')
   const [apiKey, setApiKey] = useState('')
   const [keyTouched, setKeyTouched] = useState(false)
   const [hasKey, setHasKey] = useState(provider?.has_key ?? false)
+  const [params, setParams] = useState<Record<string, string>>(provider?.params ?? {})
 
   const [models, setModels] = useState<string[]>([])
   const [modelsLoading, setModelsLoading] = useState(false)
@@ -34,6 +47,10 @@ export function ProviderCard({ feature, title, description, provider }: Props) {
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
+  const comfy = kind === 'comfyui'
+  const setParam = (key: string, value: string) =>
+    setParams((prev) => ({ ...prev, [key]: value }))
+
   const loadModels = async () => {
     setModelsLoading(true)
     setModelsError(null)
@@ -42,6 +59,7 @@ export function ProviderCard({ feature, title, description, provider }: Props) {
         params: {
           path: { feature },
           query: {
+            kind,
             ...(baseUrl.trim() ? { base_url: baseUrl.trim() } : {}),
             ...(keyTouched && apiKey ? { api_key: apiKey } : {}),
           },
@@ -60,11 +78,14 @@ export function ProviderCard({ feature, title, description, provider }: Props) {
     setSaved(false)
     setSaveError(null)
     try {
+      const cleanParams = Object.fromEntries(Object.entries(params).filter(([, v]) => v.trim() !== ''))
       const res = await api.settings.updateAIProvider({
         params: { path: { feature } },
         body: {
+          kind,
           base_url: baseUrl.trim(),
           model: model.trim(),
+          params: comfy ? cleanParams : {},
           ...(keyTouched ? { api_key: apiKey } : {}),
         },
       })
@@ -96,15 +117,42 @@ export function ProviderCard({ feature, title, description, provider }: Props) {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
+        {feature === 'image' && (
+          <Field label="Engine">
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  { id: 'openai', label: 'OpenAI-compatible API' },
+                  { id: 'comfyui', label: 'ComfyUI server' },
+                ] as const
+              ).map((k) => (
+                <button
+                  key={k.id}
+                  type="button"
+                  onClick={() => {
+                    setKind(k.id)
+                    setModels([])
+                  }}
+                  className={`rounded-lg border p-2 text-sm transition-colors ${
+                    kind === k.id ? 'border-brand-500 bg-brand-50 font-medium text-brand-700' : 'border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300'
+                  }`}
+                >
+                  {k.label}
+                </button>
+              ))}
+            </div>
+          </Field>
+        )}
+
         <Field label="Base URL">
           <Input
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
-            placeholder="https://api.openai.com/v1"
+            placeholder={comfy ? 'http://localhost:8188' : 'https://api.openai.com/v1'}
           />
         </Field>
 
-        <Field label="API token">
+        <Field label={comfy ? 'API token (optional)' : 'API token'}>
           <div className="relative">
             <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
             <Input
@@ -120,7 +168,7 @@ export function ProviderCard({ feature, title, description, provider }: Props) {
           </div>
         </Field>
 
-        <Field label="Model">
+        <Field label={comfy ? 'Checkpoint' : 'Model'}>
           <ModelCombobox
             value={model}
             onChange={setModel}
@@ -130,6 +178,29 @@ export function ProviderCard({ feature, title, description, provider }: Props) {
             onLoad={loadModels}
           />
         </Field>
+
+        {comfy && (
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {COMFY_PARAMS.map((p) => (
+                <Field key={p.key} label={p.label}>
+                  <Input
+                    value={params[p.key] ?? ''}
+                    onChange={(e) => setParam(p.key, e.target.value)}
+                    placeholder={p.placeholder}
+                  />
+                </Field>
+              ))}
+            </div>
+            <Field label="Negative prompt">
+              <Input
+                value={params['negative_prompt'] ?? ''}
+                onChange={(e) => setParam('negative_prompt', e.target.value)}
+                placeholder="text, watermark, low quality"
+              />
+            </Field>
+          </>
+        )}
 
         <div className="flex items-center gap-3 pt-1">
           <Button onClick={save} disabled={saving} variant="brand">

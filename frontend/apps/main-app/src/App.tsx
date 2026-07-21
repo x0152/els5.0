@@ -70,6 +70,22 @@ const DiaryAppRoutes = lazy(() =>
   import('@els/diary-app').then((m) => ({ default: m.DiaryAppRoutes })),
 )
 
+const WritingAppRoutes = lazy(() =>
+  import('@els/writing-app').then((m) => ({ default: m.WritingAppRoutes })),
+)
+
+const ReadingAppRoutes = lazy(() =>
+  import('@els/reading-app').then((m) => ({ default: m.ReadingAppRoutes })),
+)
+
+const ListeningAppRoutes = lazy(() =>
+  import('@els/listening-app').then((m) => ({ default: m.ListeningAppRoutes })),
+)
+
+const WorkoutAppRoutes = lazy(() =>
+  import('@els/workout-app').then((m) => ({ default: m.WorkoutAppRoutes })),
+)
+
 function AppLoader() {
   return (
     <div className="flex items-center justify-center h-full w-full py-16 text-neutral-500">
@@ -213,6 +229,38 @@ export default function App() {
               element={
                 <Suspense fallback={<AppLoader />}>
                   <DiaryAppRoutes />
+                </Suspense>
+              }
+            />
+            <Route
+              path="v1/writing/*"
+              element={
+                <Suspense fallback={<AppLoader />}>
+                  <WritingAppRoutes />
+                </Suspense>
+              }
+            />
+            <Route
+              path="v1/reading/*"
+              element={
+                <Suspense fallback={<AppLoader />}>
+                  <ReadingAppRoutes />
+                </Suspense>
+              }
+            />
+            <Route
+              path="v1/listening/*"
+              element={
+                <Suspense fallback={<AppLoader />}>
+                  <ListeningAppRoutes />
+                </Suspense>
+              }
+            />
+            <Route
+              path="v1/workout/*"
+              element={
+                <Suspense fallback={<AppLoader />}>
+                  <WorkoutAppRoutes />
                 </Suspense>
               }
             />

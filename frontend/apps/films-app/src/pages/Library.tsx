@@ -361,12 +361,13 @@ function EditForm({ film, onDone }: { film: FilmSummary; onDone: () => void }) {
   const update = useUpdateFilm()
   const [title, setTitle] = useState(film.title)
   const [description, setDescription] = useState(film.description ?? '')
+  const [level, setLevel] = useState(film.level || 'B1')
   const [poster, setPoster] = useState<File | null>(null)
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) return
-    update.mutate({ id: film.id, title, description, poster: poster ?? undefined }, { onSuccess: onDone })
+    update.mutate({ id: film.id, title, description, level, poster: poster ?? undefined }, { onSuccess: onDone })
   }
 
   return (
@@ -384,6 +385,9 @@ function EditForm({ film, onDone }: { film: FilmSummary; onDone: () => void }) {
           </Field>
           <Field label="Description">
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+          </Field>
+          <Field label="Level">
+            <LevelPicker value={level} onChange={setLevel} />
           </Field>
         </div>
       </div>
@@ -406,6 +410,27 @@ function EditForm({ film, onDone }: { film: FilmSummary; onDone: () => void }) {
   )
 }
 
+const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+
+function LevelPicker({ value, onChange }: { value: string; onChange: (level: string) => void }) {
+  return (
+    <div className="flex gap-1">
+      {LEVELS.map((l) => (
+        <button
+          key={l}
+          type="button"
+          onClick={() => onChange(l)}
+          className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 transition-colors ${
+            value === l ? 'bg-brand-600 text-white ring-brand-600' : 'bg-white text-neutral-600 ring-neutral-200 hover:bg-neutral-50'
+          }`}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function UploadForm({ onDone }: { onDone: () => void }) {
   const upload = useUploadFilm()
   const [kind, setKind] = useState<'film' | 'series'>('film')
@@ -413,6 +438,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
   const [seriesTitle, setSeriesTitle] = useState('')
   const [season, setSeason] = useState(1)
   const [episode, setEpisode] = useState(1)
+  const [level, setLevel] = useState('B1')
   const [video, setVideo] = useState<File | null>(null)
   const [subtitles, setSubtitles] = useState<File | null>(null)
   const [poster, setPoster] = useState<File | null>(null)
@@ -428,6 +454,7 @@ function UploadForm({ onDone }: { onDone: () => void }) {
         subtitles: subtitles ?? undefined,
         poster: poster ?? undefined,
         kind,
+        level,
         seriesTitle: seriesTitle.trim(),
         season,
         episode,
@@ -502,6 +529,9 @@ function UploadForm({ onDone }: { onDone: () => void }) {
           </Field>
           <Field label="Subtitles (.srt)">
             <FileField value={subtitles} onChange={setSubtitles} accept=".srt" placeholder="Optional subtitles" icon={<Captions className="h-4 w-4" />} />
+          </Field>
+          <Field label="Level (CEFR)">
+            <LevelPicker value={level} onChange={setLevel} />
           </Field>
         </div>
       </div>

@@ -19,7 +19,7 @@ type Store struct {
 
 func NewStore(pool *pgxpool.Pool) *Store { return &Store{pool: pool} }
 
-const entryColumns = `id, account_id, entry_date, question, text, reply, next_question, native_sample, corrections, created_at`
+const entryColumns = `id, account_id, entry_date, question, draft, text, reply, next_question, native_sample, corrections, created_at`
 
 func (s *Store) Insert(ctx context.Context, e diary.Entry) error {
 	corrections, err := json.Marshal(e.Corrections)
@@ -27,9 +27,9 @@ func (s *Store) Insert(ctx context.Context, e diary.Entry) error {
 		return fmt.Errorf("marshal corrections: %w", err)
 	}
 	_, err = s.pool.Exec(ctx,
-		`INSERT INTO diary_entries (id, account_id, entry_date, question, text, reply, next_question, native_sample, corrections, created_at)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-		e.ID, e.AccountID, e.Date, e.Question, e.Text, e.Reply, e.NextQuestion, e.NativeSample, corrections, e.CreatedAt)
+		`INSERT INTO diary_entries (id, account_id, entry_date, question, draft, text, reply, next_question, native_sample, corrections, created_at)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+		e.ID, e.AccountID, e.Date, e.Question, e.Draft, e.Text, e.Reply, e.NextQuestion, e.NativeSample, corrections, e.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("insert diary entry: %w", err)
 	}
@@ -102,7 +102,7 @@ func (s *Store) DeleteAll(ctx context.Context, accountID string) error {
 func scanEntry(row pgx.Row) (diary.Entry, error) {
 	var e diary.Entry
 	var corrections []byte
-	err := row.Scan(&e.ID, &e.AccountID, &e.Date, &e.Question, &e.Text, &e.Reply, &e.NextQuestion, &e.NativeSample, &corrections, &e.CreatedAt)
+	err := row.Scan(&e.ID, &e.AccountID, &e.Date, &e.Question, &e.Draft, &e.Text, &e.Reply, &e.NextQuestion, &e.NativeSample, &corrections, &e.CreatedAt)
 	if err == pgx.ErrNoRows {
 		return diary.Entry{}, shared.ErrNotFound
 	}

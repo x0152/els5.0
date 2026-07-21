@@ -148,6 +148,22 @@ components:
         - Size
         - Filename
       type: object
+    GeneratePracticeInputBody:
+      additionalProperties: false
+      properties:
+        sounds:
+          description: Target IPA sounds to pack into the sentences
+          items:
+            type: string
+          maxItems: 10
+          type:
+            - array
+            - "null"
+        topic:
+          description: Optional topic for the sentences
+          maxLength: 200
+          type: string
+      type: object
     HealthOutput:
       additionalProperties: false
       properties:
@@ -273,6 +289,18 @@ components:
         - ready
         - time
       type: object
+    SpeechPracticeOutput:
+      additionalProperties: false
+      properties:
+        sentences:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - sentences
+      type: object
     SuccessBodyAssessOutput:
       additionalProperties: false
       properties:
@@ -337,6 +365,91 @@ components:
       required:
         - ok
         - data
+      type: object
+    SuccessBodySpeechPracticeOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/SpeechPracticeOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodySynthesizeOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/SynthesizeOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyVoicesOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/VoicesOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SynthesizeInputBody:
+      additionalProperties: false
+      properties:
+        speed:
+          description: Speech speed multiplier, default 1.0
+          format: double
+          maximum: 2
+          minimum: 0
+          type: number
+        text:
+          description: Text to speak aloud
+          maxLength: 2000
+          minLength: 1
+          type: string
+        voice:
+          description: Voice name; a random one is used when omitted
+          maxLength: 20
+          type: string
+      required:
+        - text
+      type: object
+    SynthesizeOutput:
+      additionalProperties: false
+      properties:
+        audio_base64:
+          description: WAV audio, base64-encoded
+          type: string
+        voice:
+          description: Voice that was actually used
+          type: string
+      required:
+        - audio_base64
+        - voice
+      type: object
+    VoicesOutput:
+      additionalProperties: false
+      properties:
+        voices:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - voices
       type: object
     WordOutput:
       additionalProperties: false
@@ -470,6 +583,96 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Error
       summary: List the phoneme articulation guide
+      tags:
+        - speech
+  /api/v1/speech/practice:
+    post:
+      operationId: speechGeneratePractice
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeneratePracticeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodySpeechPracticeOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Generate sentences to practice reading aloud
+      tags:
+        - speech
+  /api/v1/speech/tts:
+    post:
+      operationId: speechSynthesize
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SynthesizeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodySynthesizeOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Synthesize speech audio for a text
+      tags:
+        - speech
+  /api/v1/speech/voices:
+    get:
+      operationId: listSpeechVoices
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyVoicesOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: List available TTS voices
       tags:
         - speech
   /health:

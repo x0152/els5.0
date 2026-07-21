@@ -3,23 +3,29 @@ package api
 import (
 	usecases "github.com/els/backend/internal/application/diary/use_cases"
 	"github.com/els/backend/internal/domain/diary"
+	"github.com/els/backend/internal/domain/quest"
 	"github.com/els/backend/internal/utils/timex"
 )
 
 func toSubmitEntryCommand(in *SubmitEntryInput) usecases.SubmitEntryCommand {
-	return usecases.SubmitEntryCommand{Text: in.Body.Text, Question: in.Body.Question}
+	return usecases.SubmitEntryCommand{Text: in.Body.Text, Question: in.Body.Question, Draft: in.Body.Draft}
+}
+
+func toCheckEntryOutput(res quest.GrammarCheck) CheckEntryOutput {
+	out := CheckEntryOutput{OK: res.OK, Errors: make([]GrammarErrorOutput, 0, len(res.Errors))}
+	for _, e := range res.Errors {
+		out.Errors = append(out.Errors, GrammarErrorOutput{
+			Original:    e.Original,
+			Correction:  e.Correction,
+			Explanation: e.Explanation,
+			Type:        e.Type,
+		})
+	}
+	return out
 }
 
 func toListEntriesQuery(in *ListEntriesInput) usecases.ListEntriesQuery {
 	return usecases.ListEntriesQuery{Limit: in.Limit, Offset: in.Offset}
-}
-
-func toTrainerCheckCommand(in *TrainerCheckInput) (usecases.TrainerCheckCommand, error) {
-	level, err := diary.ParseTrainerLevel(in.Body.Level)
-	if err != nil {
-		return usecases.TrainerCheckCommand{}, err
-	}
-	return usecases.TrainerCheckCommand{Dialogue: in.Body.Dialogue, Draft: in.Body.Draft, Level: level}, nil
 }
 
 func toCorrections(items []diary.Correction) []CorrectionOutput {
@@ -40,6 +46,7 @@ func toEntryOutput(e diary.Entry) EntryOutput {
 		ID:           e.ID,
 		Date:         timex.FormatDate(e.Date),
 		Question:     e.Question,
+		Draft:        e.Draft,
 		Text:         e.Text,
 		Reply:        e.Reply,
 		NextQuestion: e.NextQuestion,
@@ -68,12 +75,4 @@ func toEntriesOutput(res usecases.ListEntriesResult, limit, offset int32) Entrie
 		items = append(items, toEntryOutput(e))
 	}
 	return EntriesOutput{Items: items, Total: res.Total, Limit: limit, Offset: offset}
-}
-
-func toTrainerCheckOutput(v diary.TrainerVerdict) TrainerCheckOutput {
-	issues := make([]TrainerIssueOutput, 0, len(v.Issues))
-	for _, i := range v.Issues {
-		issues = append(issues, TrainerIssueOutput{Fragment: i.Fragment, Severity: string(i.Severity), Hint: i.Hint})
-	}
-	return TrainerCheckOutput{Pass: v.Pass, Comment: v.Comment, Issues: issues}
 }

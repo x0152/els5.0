@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, ImageIcon, Loader2, Maximize2, RotateCcw, Trophy, TriangleAlert } from 'lucide-react'
-import { cn } from '@els/ui'
+import { Check, ImageIcon, Loader2, Maximize2, RotateCcw, Trophy, TriangleAlert, Volume2 } from 'lucide-react'
+import { cn, speak } from '@els/ui'
 import { avatarKey } from '../lib/helpers.ts'
 import type { Character, Mission, PartialWorld } from '../lib/types.ts'
 import { useRegenerateImage } from '../store/missions.ts'
@@ -28,9 +28,9 @@ export function Chat({ mission, optimisticText, playerAvatar, optimisticState }:
       {history.map((turn, i) => {
         const key = `${i}-${turn.speaker}`
         if (turn.speaker === 'system') return <SystemLine key={key} mission={mission} text={turn.text} scene={turn.scene} />
-        if (turn.speaker === 'narrator') return <Narration key={key} text={turn.text} />
+        if (turn.speaker === 'narrator') return <Narration key={key} text={turn.text} voice={turn.voice || mission.narratorVoice} />
         if (turn.speaker === 'player') return <PlayerBubble key={key} text={turn.text} avatar={playerAvatar} />
-        return <NpcBubble key={key} mission={mission} name={turn.speaker} text={turn.text} />
+        return <NpcBubble key={key} mission={mission} name={turn.speaker} text={turn.text} voice={turn.voice} />
       })}
 
       {optimisticText && <PlayerBubble text={optimisticText} avatar={playerAvatar} state={optimisticState} />}
@@ -259,11 +259,25 @@ function SceneImage({ mission, stage }: { mission: Mission; stage: number }) {
   return null
 }
 
-function Narration({ text, streaming, animate }: { text: string; streaming?: boolean; animate?: boolean }) {
+function SpeakButton({ text, voice, className }: { text: string; voice: string; className?: string }) {
   return (
-    <p className="border-l-2 border-brand-200 pl-4 text-sm italic leading-relaxed text-neutral-600">
+    <button
+      type="button"
+      title={`Listen (${voice})`}
+      onClick={() => speak(text, { voice })}
+      className={cn('text-neutral-300 transition-colors hover:text-brand-600', className)}
+    >
+      <Volume2 className="h-3.5 w-3.5" />
+    </button>
+  )
+}
+
+function Narration({ text, voice, streaming, animate }: { text: string; voice?: string; streaming?: boolean; animate?: boolean }) {
+  return (
+    <p className="group border-l-2 border-brand-200 pl-4 text-sm italic leading-relaxed text-neutral-600">
       {animate ? <StreamingText text={text} /> : text}
       {streaming && <StreamingCursor />}
+      {voice && !streaming && <SpeakButton text={text} voice={voice} className="ml-2 inline-flex align-middle opacity-0 group-hover:opacity-100" />}
     </p>
   )
 }
@@ -375,23 +389,27 @@ export function WorkingDots() {
   )
 }
 
-function NpcBubble({ mission, name, text, streaming, animate }: { mission: Mission; name: string; text: string; streaming?: boolean; animate?: boolean }) {
+function NpcBubble({ mission, name, text, voice, streaming, animate }: { mission: Mission; name: string; text: string; voice?: string; streaming?: boolean; animate?: boolean }) {
   const { openCharacter } = useOverlay()
   const url = mission.characterAvatars?.[avatarKey(name)]
   const character = findCharacter(mission, name)
   const open = character ? () => openCharacter(character, mission.id) : undefined
+  const lineVoice = voice || character?.voice
   return (
-    <div className="flex gap-2">
+    <div className="group flex gap-2">
       <Avatar url={url} name={name} size={36} onClick={open} />
       <div className="max-w-[80%]">
-        <button
-          type="button"
-          onClick={open}
-          disabled={!open}
-          className="mb-0.5 text-xs font-medium text-neutral-500 enabled:hover:text-brand-700"
-        >
-          {streaming ? `${name} is typing…` : name}
-        </button>
+        <span className="mb-0.5 flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={open}
+            disabled={!open}
+            className="text-xs font-medium text-neutral-500 enabled:hover:text-brand-700"
+          >
+            {streaming ? `${name} is typing…` : name}
+          </button>
+          {lineVoice && !streaming && <SpeakButton text={text} voice={lineVoice} className="opacity-0 group-hover:opacity-100" />}
+        </span>
         <div className="rounded-2xl rounded-tl-sm bg-white px-4 py-2.5 text-sm text-neutral-800 ring-1 ring-neutral-200">
           {animate ? <StreamingText text={text} /> : text}
           {streaming && <StreamingCursor />}

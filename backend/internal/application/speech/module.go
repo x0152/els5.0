@@ -16,6 +16,7 @@ import (
 	"github.com/els/backend/internal/infrastructure/adapters/providercfg"
 	"github.com/els/backend/internal/infrastructure/adapters/redissession"
 	"github.com/els/backend/internal/infrastructure/adapters/speechsvc"
+	"github.com/els/backend/internal/infrastructure/adapters/ttssvc"
 	iamrepo "github.com/els/backend/internal/infrastructure/repositories/iam"
 	settingsrepo "github.com/els/backend/internal/infrastructure/repositories/settings"
 	authx "github.com/els/backend/internal/utils/auth"
@@ -48,11 +49,14 @@ func Mount(humaAPI huma.API, cfg Config, pool *pgxpool.Pool, rdb *redis.Client, 
 	llmClient := llm.NewWithResolver(cfg.LLM.BaseURL, cfg.LLM.APIKey, cfg.LLM.Model, time.Duration(cfg.LLM.Timeout)*time.Second, resolver)
 
 	assessor := speechsvc.NewClient(cfg.ServiceURL)
+	synthesizer := ttssvc.NewClient(cfg.TTSURL)
 
 	api.Register(humaAPI, api.Deps{
-		Authenticator: authn,
-		Assess:        usecases.NewAssessUseCase(assessor),
-		Feedback:      usecases.NewFeedbackUseCase(llmClient),
-		ListPhonemes:  usecases.NewListPhonemesUseCase(),
+		Authenticator:    authn,
+		Assess:           usecases.NewAssessUseCase(assessor),
+		Feedback:         usecases.NewFeedbackUseCase(llmClient),
+		ListPhonemes:     usecases.NewListPhonemesUseCase(),
+		GeneratePractice: usecases.NewGeneratePracticeUseCase(llmClient),
+		Synthesize:       usecases.NewSynthesizeUseCase(synthesizer),
 	})
 }

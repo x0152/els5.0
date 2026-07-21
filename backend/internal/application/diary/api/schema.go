@@ -17,6 +17,7 @@ type EntryOutput struct {
 	ID           string             `json:"id"`
 	Date         string             `json:"date"`
 	Question     string             `json:"question,omitempty"`
+	Draft        string             `json:"draft,omitempty"`
 	Text         string             `json:"text"`
 	Reply        string             `json:"reply"`
 	NextQuestion string             `json:"next_question,omitempty"`
@@ -41,7 +42,27 @@ type SubmitEntryInput struct {
 	Body struct {
 		Text     string `json:"text" minLength:"1" maxLength:"5000" doc:"Diary entry text in English"`
 		Question string `json:"question,omitempty" maxLength:"500" doc:"The question the entry answers"`
+		Draft    string `json:"draft,omitempty" maxLength:"5000" doc:"The first version of the text, before error fixes"`
 	}
+}
+
+type CheckEntryInput struct {
+	authx.BearerInput
+	Body struct {
+		Text string `json:"text" minLength:"1" maxLength:"5000" doc:"Diary draft to check for grammar errors"`
+	}
+}
+
+type GrammarErrorOutput struct {
+	Original    string `json:"original"`
+	Correction  string `json:"correction"`
+	Explanation string `json:"explanation"`
+	Type        string `json:"type"`
+}
+
+type CheckEntryOutput struct {
+	OK     bool                 `json:"ok"`
+	Errors []GrammarErrorOutput `json:"errors"`
 }
 
 type ListEntriesInput struct {
@@ -62,24 +83,3 @@ type ResetHistoryInput struct {
 }
 
 type ResetHistoryOutput struct{}
-
-type TrainerCheckInput struct {
-	authx.BearerInput
-	Body struct {
-		Dialogue string `json:"dialogue,omitempty" maxLength:"3000" doc:"Dialogue context the draft replies to"`
-		Draft    string `json:"draft" minLength:"1" maxLength:"2000" doc:"Draft reply to check"`
-		Level    int    `json:"level" minimum:"1" maximum:"3" doc:"Strictness: 1 grammar, 2 natural, 3 native"`
-	}
-}
-
-type TrainerIssueOutput struct {
-	Fragment string `json:"fragment"`
-	Severity string `json:"severity" enum:"grammar,style,native"`
-	Hint     string `json:"hint"`
-}
-
-type TrainerCheckOutput struct {
-	Pass    bool                 `json:"pass"`
-	Comment string               `json:"comment"`
-	Issues  []TrainerIssueOutput `json:"issues"`
-}

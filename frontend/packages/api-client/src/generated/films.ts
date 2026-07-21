@@ -123,6 +123,7 @@ export interface components {
             error?: string;
             id: string;
             kind: string;
+            level: string;
             /** Format: int64 */
             position_ms: number;
             poster_url?: string;
@@ -142,6 +143,7 @@ export interface components {
             episode: number;
             id: string;
             kind: string;
+            level: string;
             /** Format: int64 */
             position_ms: number;
             poster_url?: string;

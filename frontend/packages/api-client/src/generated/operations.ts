@@ -11,11 +11,15 @@ import type {
   DiaryPaths,
   FilmsPaths,
   LearnPaths,
+  ListeningPaths,
   QuestPaths,
   ReaderPaths,
+  ReadingPaths,
   SettingsPaths,
   SpeechPaths,
   VocabPaths,
+  WorkoutPaths,
+  WritingPaths,
 } from './index.ts'
 
 export function createApi(options: ApiClientOptions) {
@@ -63,8 +67,8 @@ export function createApi(options: ApiClientOptions) {
       diaryListEntries: (init?: MaybeOptionalInit<DiaryPaths['/api/v1/diary/entries'], 'get'>) => unwrap(clients.diary.GET('/api/v1/diary/entries', init)),
       diarySubmitEntry: (init: MaybeOptionalInit<DiaryPaths['/api/v1/diary/entries'], 'post'>) => unwrap(clients.diary.POST('/api/v1/diary/entries', init)),
       diaryResetHistory: (init?: MaybeOptionalInit<DiaryPaths['/api/v1/diary/entries'], 'delete'>) => unwrap(clients.diary.DELETE('/api/v1/diary/entries', init)),
+      diaryCheckEntry: (init: MaybeOptionalInit<DiaryPaths['/api/v1/diary/entries/check'], 'post'>) => unwrap(clients.diary.POST('/api/v1/diary/entries/check', init)),
       diaryToday: (init?: MaybeOptionalInit<DiaryPaths['/api/v1/diary/today'], 'get'>) => unwrap(clients.diary.GET('/api/v1/diary/today', init)),
-      diaryTrainerCheck: (init: MaybeOptionalInit<DiaryPaths['/api/v1/diary/trainer/check'], 'post'>) => unwrap(clients.diary.POST('/api/v1/diary/trainer/check', init)),
     },
     films: {
       listFilms: (init?: MaybeOptionalInit<FilmsPaths['/api/v1/films'], 'get'>) => unwrap(clients.films.GET('/api/v1/films', init)),
@@ -93,6 +97,9 @@ export function createApi(options: ApiClientOptions) {
       listPracticeVariants: (init: MaybeOptionalInit<LearnPaths['/api/v1/practice/{kind}/{number}/variants'], 'get'>) => unwrap(clients.learn.GET('/api/v1/practice/{kind}/{number}/variants', init)),
       generatePracticeVariant: (init: MaybeOptionalInit<LearnPaths['/api/v1/practice/{kind}/{number}/variants'], 'post'>) => unwrap(clients.learn.POST('/api/v1/practice/{kind}/{number}/variants', init)),
     },
+    listening: {
+      listeningGenerateDictation: (init: MaybeOptionalInit<ListeningPaths['/api/v1/listening/dictations'], 'post'>) => unwrap(clients.listening.POST('/api/v1/listening/dictations', init)),
+    },
     quest: {
       listQuestMissions: (init?: MaybeOptionalInit<QuestPaths['/api/v1/quest/missions'], 'get'>) => unwrap(clients.quest.GET('/api/v1/quest/missions', init)),
       createQuestMission: (init: MaybeOptionalInit<QuestPaths['/api/v1/quest/missions'], 'post'>) => unwrap(clients.quest.POST('/api/v1/quest/missions', init)),
@@ -114,6 +121,9 @@ export function createApi(options: ApiClientOptions) {
       listCollections: (init?: MaybeOptionalInit<ReaderPaths['/api/v1/reader/collections'], 'get'>) => unwrap(clients.reader.GET('/api/v1/reader/collections', init)),
       updateCollection: (init: MaybeOptionalInit<ReaderPaths['/api/v1/reader/collections'], 'patch'>) => unwrap(clients.reader.PATCH('/api/v1/reader/collections', init)),
     },
+    reading: {
+      readingGenerateText: (init: MaybeOptionalInit<ReadingPaths['/api/v1/reading/texts'], 'post'>) => unwrap(clients.reading.POST('/api/v1/reading/texts', init)),
+    },
     settings: {
       listAIProviders: (init?: MaybeOptionalInit<SettingsPaths['/api/v1/settings/ai/providers'], 'get'>) => unwrap(clients.settings.GET('/api/v1/settings/ai/providers', init)),
       updateAIProvider: (init: MaybeOptionalInit<SettingsPaths['/api/v1/settings/ai/providers/{feature}'], 'put'>) => unwrap(clients.settings.PUT('/api/v1/settings/ai/providers/{feature}', init)),
@@ -127,6 +137,9 @@ export function createApi(options: ApiClientOptions) {
       assessSpeech: (init: MaybeOptionalInit<SpeechPaths['/api/v1/speech/assess'], 'post'>) => unwrap(clients.speech.POST('/api/v1/speech/assess', init)),
       speechFeedback: (init: MaybeOptionalInit<SpeechPaths['/api/v1/speech/feedback'], 'post'>) => unwrap(clients.speech.POST('/api/v1/speech/feedback', init)),
       listSpeechPhonemes: (init?: MaybeOptionalInit<SpeechPaths['/api/v1/speech/phonemes'], 'get'>) => unwrap(clients.speech.GET('/api/v1/speech/phonemes', init)),
+      speechGeneratePractice: (init: MaybeOptionalInit<SpeechPaths['/api/v1/speech/practice'], 'post'>) => unwrap(clients.speech.POST('/api/v1/speech/practice', init)),
+      speechSynthesize: (init: MaybeOptionalInit<SpeechPaths['/api/v1/speech/tts'], 'post'>) => unwrap(clients.speech.POST('/api/v1/speech/tts', init)),
+      listSpeechVoices: (init?: MaybeOptionalInit<SpeechPaths['/api/v1/speech/voices'], 'get'>) => unwrap(clients.speech.GET('/api/v1/speech/voices', init)),
     },
     vocab: {
       analyzeVocab: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/analyze'], 'post'>) => unwrap(clients.vocab.POST('/api/v1/vocab/analyze', init)),
@@ -142,6 +155,16 @@ export function createApi(options: ApiClientOptions) {
       addVocabUnit: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/units'], 'post'>) => unwrap(clients.vocab.POST('/api/v1/vocab/units', init)),
       deleteVocabUnit: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/units/{id}'], 'delete'>) => unwrap(clients.vocab.DELETE('/api/v1/vocab/units/{id}', init)),
       updateVocabUnitStatus: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/units/{id}/status'], 'patch'>) => unwrap(clients.vocab.PATCH('/api/v1/vocab/units/{id}/status', init)),
+    },
+    workout: {
+      workoutStartLesson: (init?: MaybeOptionalInit<WorkoutPaths['/api/v1/workout/lessons'], 'post'>) => unwrap(clients.workout.POST('/api/v1/workout/lessons', init)),
+      workoutGetLesson: (init: MaybeOptionalInit<WorkoutPaths['/api/v1/workout/lessons/{id}'], 'get'>) => unwrap(clients.workout.GET('/api/v1/workout/lessons/{id}', init)),
+      workoutSubmitStep: (init: MaybeOptionalInit<WorkoutPaths['/api/v1/workout/lessons/{id}/steps/{step}'], 'post'>) => unwrap(clients.workout.POST('/api/v1/workout/lessons/{id}/steps/{step}', init)),
+      workoutToday: (init?: MaybeOptionalInit<WorkoutPaths['/api/v1/workout/today'], 'get'>) => unwrap(clients.workout.GET('/api/v1/workout/today', init)),
+    },
+    writing: {
+      writingTrainerCheck: (init: MaybeOptionalInit<WritingPaths['/api/v1/writing/trainer/check'], 'post'>) => unwrap(clients.writing.POST('/api/v1/writing/trainer/check', init)),
+      writingGenerateSituation: (init: MaybeOptionalInit<WritingPaths['/api/v1/writing/trainer/situations'], 'post'>) => unwrap(clients.writing.POST('/api/v1/writing/trainer/situations', init)),
     },
   }
 }

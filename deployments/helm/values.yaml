@@ -271,6 +271,25 @@ speech:
       memory: 4Gi
       cpu: 2000m
 
+# KittenTTS speech synthesis service (FastAPI + ONNX, CPU-only). Backend
+# calls it via TTS_URL to voice listening/dictation/quest audio.
+tts:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: registry.example.com/els/expert-tts
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    port: 8000
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 2Gi
+      cpu: 2000m
+
 # Frontend: built Vite bundle served by nginx on :8080 inside the container.
 frontend:
   enabled: true

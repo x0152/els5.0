@@ -141,7 +141,12 @@ export interface components {
             base_url: string;
             feature: string;
             has_key: boolean;
+            /** @enum {string} */
+            kind: "openai" | "comfyui";
             model: string;
+            params: {
+                [key: string]: string;
+            };
         };
         ProviderResponse: {
             provider: components["schemas"]["ProviderOutput"];
@@ -194,10 +199,19 @@ export interface components {
         UpdateProviderInputBody: {
             /** @description API token; omit to keep the current one */
             api_key?: string;
-            /** @description Provider base URL (OpenAI-compatible) */
+            /** @description Provider base URL */
             base_url: string;
-            /** @description Model id from the provider /models list */
+            /**
+             * @description Engine: openai-compatible API (default) or a ComfyUI server
+             * @enum {string}
+             */
+            kind?: "" | "openai" | "comfyui";
+            /** @description Model id or ComfyUI checkpoint name */
             model: string;
+            /** @description Engine parameters, e.g. ComfyUI: steps, cfg, sampler, scheduler, width, height, negative_prompt */
+            params?: {
+                [key: string]: string;
+            };
         };
     };
     responses: never;
@@ -296,6 +310,8 @@ export interface operations {
     listAIProviderModels: {
         parameters: {
             query?: {
+                /** @description Override engine kind to query */
+                kind?: "" | "openai" | "comfyui";
                 /** @description Override base URL to query instead of the saved one */
                 base_url?: string;
                 /** @description Override API token; omit to reuse the saved one */

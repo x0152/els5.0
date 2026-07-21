@@ -130,13 +130,24 @@ components:
           type: string
         has_key:
           type: boolean
+        kind:
+          enum:
+            - openai
+            - comfyui
+          type: string
         model:
           type: string
+        params:
+          additionalProperties:
+            type: string
+          type: object
       required:
         - feature
+        - kind
         - base_url
         - model
         - has_key
+        - params
       type: object
     ProviderResponse:
       additionalProperties: false
@@ -275,13 +286,25 @@ components:
           maxLength: 500
           type: string
         base_url:
-          description: Provider base URL (OpenAI-compatible)
+          description: Provider base URL
           maxLength: 500
           type: string
+        kind:
+          description: "Engine: openai-compatible API (default) or a ComfyUI server"
+          enum:
+            - ""
+            - openai
+            - comfyui
+          type: string
         model:
-          description: Model id from the provider /models list
+          description: Model id or ComfyUI checkpoint name
           maxLength: 200
           type: string
+        params:
+          additionalProperties:
+            type: string
+          description: "Engine parameters, e.g. ComfyUI: steps, cfg, sampler, scheduler, width, height, negative_prompt"
+          type: object
       required:
         - base_url
         - model
@@ -378,6 +401,17 @@ paths:
               - analysis
               - vision
               - image
+            type: string
+        - description: Override engine kind to query
+          explode: false
+          in: query
+          name: kind
+          schema:
+            description: Override engine kind to query
+            enum:
+              - ""
+              - openai
+              - comfyui
             type: string
         - description: Override base URL to query instead of the saved one
           explode: false

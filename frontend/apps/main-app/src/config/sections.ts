@@ -1,6 +1,6 @@
 import type { AppIcon } from './appIcons'
 
-export type SectionGroup = 'personal' | 'practice' | 'books' | 'media' | 'admin'
+export type SectionGroup = 'personal' | 'practice' | 'trainers' | 'books' | 'media' | 'admin'
 
 export interface Section {
   id: string
@@ -11,11 +11,12 @@ export interface Section {
   disabled?: boolean
 }
 
-export const groupOrder: SectionGroup[] = ['personal', 'practice', 'books', 'media', 'admin']
+export const groupOrder: SectionGroup[] = ['personal', 'practice', 'trainers', 'books', 'media', 'admin']
 
 export const groupNames: Record<SectionGroup, string> = {
   personal: 'PERSONAL',
   practice: 'PRACTICE',
+  trainers: 'TRAINERS',
   books: 'BOOKS',
   media: 'MEDIA',
   admin: 'ADMIN',
@@ -25,6 +26,7 @@ export function isSectionGroup(value: string | undefined): value is SectionGroup
   return (
     value === 'personal' ||
     value === 'practice' ||
+    value === 'trainers' ||
     value === 'books' ||
     value === 'media' ||
     value === 'admin'

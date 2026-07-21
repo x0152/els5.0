@@ -20,6 +20,7 @@
 @source "../../chat-app/src/**/*.{ts,tsx}";
 @source "../../speaking-app/src/**/*.{ts,tsx}";
 @source "../../diary-app/src/**/*.{ts,tsx}";
+@source "../../workout-app/src/**/*.{ts,tsx}";
 
 @utility scrollbar-hide {
   scrollbar-width: none;

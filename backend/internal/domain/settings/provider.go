@@ -30,16 +30,38 @@ func ParseFeature(s string) (Feature, error) {
 	}
 }
 
+type Kind string
+
+const (
+	KindOpenAI  Kind = "openai"
+	KindComfyUI Kind = "comfyui"
+)
+
+func ParseKind(s string) (Kind, error) {
+	k := Kind(strings.ToLower(strings.TrimSpace(s)))
+	switch k {
+	case "":
+		return KindOpenAI, nil
+	case KindOpenAI, KindComfyUI:
+		return k, nil
+	default:
+		return "", shared.Validation(fmt.Errorf("kind: unknown %q", s))
+	}
+}
+
 type AIProvider struct {
 	Feature Feature
+	Kind    Kind
 	BaseURL string
 	APIKey  string
 	Model   string
+	Params  map[string]string
 }
 
 func NewAIProvider(feature Feature, baseURL, apiKey, model string) AIProvider {
 	return AIProvider{
 		Feature: feature,
+		Kind:    KindOpenAI,
 		BaseURL: strings.TrimSpace(baseURL),
 		APIKey:  strings.TrimSpace(apiKey),
 		Model:   strings.TrimSpace(model),

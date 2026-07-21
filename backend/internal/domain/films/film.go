@@ -20,6 +20,18 @@ const (
 	KindSeries = "series"
 )
 
+var Levels = []string{"A1", "A2", "B1", "B2", "C1", "C2"}
+
+func ParseLevel(s string) (string, error) {
+	s = strings.ToUpper(strings.TrimSpace(s))
+	for _, l := range Levels {
+		if s == l {
+			return l, nil
+		}
+	}
+	return "", fmt.Errorf("%w: film.level: must be one of %s", shared.ErrValidation, strings.Join(Levels, ", "))
+}
+
 type Cue struct {
 	Index   int    `json:"index"`
 	StartMs int    `json:"start_ms"`
@@ -54,6 +66,7 @@ type Film struct {
 	Status        string          `json:"status"`
 	Error         string          `json:"error"`
 	Kind          string          `json:"kind"`
+	Level         string          `json:"level"`
 	SeriesTitle   string          `json:"series_title"`
 	Season        int             `json:"season"`
 	Episode       int             `json:"episode"`
@@ -69,6 +82,9 @@ func (f Film) Validate() error {
 	}
 	if f.Kind == KindSeries && strings.TrimSpace(f.SeriesTitle) == "" {
 		errs = append(errs, fmt.Errorf("film.series_title: must not be empty for series"))
+	}
+	if _, err := ParseLevel(f.Level); err != nil {
+		errs = append(errs, fmt.Errorf("film.level: must be one of %s", strings.Join(Levels, ", ")))
 	}
 	return shared.Validation(errs...)
 }
