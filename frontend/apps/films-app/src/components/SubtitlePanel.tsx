@@ -1,9 +1,8 @@
 import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { BookPlus, MessageCircleQuestion } from 'lucide-react'
-import { cn } from '@els/ui'
+import { cn, CueText } from '@els/ui'
 import type { Cue } from '../lib/types.ts'
 import { requestAnalyze, requestAsk } from '../lib/events.ts'
-import { CueText } from './CueText.tsx'
 
 interface Props {
   cues: Cue[]

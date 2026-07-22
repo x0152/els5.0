@@ -47,7 +47,7 @@ Split the whole runtime into sequential watch blocks of roughly 4-8 minutes. Rul
 - Cut on scene boundaries. A block must END with dialogue-rich material; merge low-dialogue stretches (action, montage) into the neighbouring block instead of making them a block of their own.
 - "recap" = 1-2 English sentences reminding what happened BEFORE this block (empty string for the first block). No spoilers of the block itself.
 - "summary" = one English sentence about the block, no spoilers of later events.
-- "phrases" = 3-8 catchy natural spoken phrases from THIS block worth practising aloud: idioms, phrasal verbs, connected speech. Copy the phrase text verbatim from a single cue and give that cue index. Estimate each phrase's CEFR level (A2..C2).
+- "phrases" = 6-12 natural spoken phrases from THIS block worth practising aloud: idioms, phrasal verbs, colloquial expressions and functional chunks natives actually use. Prefer B1-C1 material; skip greetings, proper names and trivial literal lines a beginner already knows. Copy the phrase text verbatim from a single cue and give that cue index. Estimate each phrase's CEFR level (A2..C2).
 
 Return ONLY a JSON object:
 {"segments": [{"from_cue": 1, "to_cue": 120, "recap": "", "summary": "...", "phrases": [{"cue": 42, "text": "...", "level": "B1"}]}]}`
@@ -109,12 +109,55 @@ func ParseSegments(raw string, cues []films.Cue) ([]Segment, error) {
 				Level:   NormalizeLevel(p.Level),
 			})
 		}
-		segments = append(segments, seg)
+		for _, part := range splitLongSegment(seg, cues) {
+			part.Index = len(segments)
+			segments = append(segments, part)
+		}
 	}
 	if len(segments) == 0 {
 		return nil, fmt.Errorf("parse segments: no valid segments")
 	}
 	return segments, nil
+}
+
+// maxSegmentMs guards against LLM plans that ignore the 4-8 minute instruction:
+// anything longer is split at cue boundaries into ~splitTargetMs chunks.
+const (
+	maxSegmentMs  = 10 * 60 * 1000
+	splitTargetMs = 8 * 60 * 1000
+)
+
+func splitLongSegment(seg Segment, cues []films.Cue) []Segment {
+	if seg.EndMs-seg.StartMs <= maxSegmentMs {
+		return []Segment{seg}
+	}
+	out := []Segment{}
+	start := seg.StartMs
+	last := seg.StartMs
+	for _, c := range cues {
+		if c.StartMs < seg.StartMs || c.EndMs > seg.EndMs {
+			continue
+		}
+		if c.EndMs-start > splitTargetMs && last > start {
+			out = append(out, Segment{StartMs: start, EndMs: last, Summary: seg.Summary, Phrases: []KeyPhrase{}})
+			start = last
+		}
+		last = c.EndMs
+	}
+	if len(out) == 0 {
+		return []Segment{seg}
+	}
+	out = append(out, Segment{StartMs: start, EndMs: seg.EndMs, Summary: seg.Summary, Phrases: []KeyPhrase{}})
+	out[0].Recap = seg.Recap
+	for _, p := range seg.Phrases {
+		for i := range out {
+			if p.StartMs >= out[i].StartMs && p.StartMs < out[i].EndMs {
+				out[i].Phrases = append(out[i].Phrases, p)
+				break
+			}
+		}
+	}
+	return out
 }
 
 // CuesInRange returns the cues of a subtitle track that fall inside a watch block.

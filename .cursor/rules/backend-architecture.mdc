@@ -4,163 +4,218 @@ globs: backend/**/*.go
 alwaysApply: false
 ---
 
-# Backend: architecture and conventions
+Backend: architecture and conventions
 
-Mandatory ruleset for all code under `backend/`. Full rationale lives in `backend/docs/architecture/`. If a rule below conflicts with the code, the ruleset wins — bring the code in line.
+Rules for everything under backend/. Longer rationale lives in backend/docs/architecture/. When code and this file disagree, this file wins — change the code.
 
-## 1. Dependency rules (the core — never break these)
+How to change backend code
 
-```
-cmd             ──► application, infrastructure, utils, domain   (the only place for DI)
-application/**  ──► domain/**, utils/**          (NOT infrastructure, NOT cmd, NOT another application module)
-domain/**       ──► stdlib and domain/shared/** only   (NOT http, NOT pgx, NOT SDKs, NOT application/infrastructure/utils)
-infrastructure  ──► domain/**, utils/**          (implements ports/repositories from domain)
-utils/**        ──► stdlib, general-purpose libraries and domain/shared/errors.go only
-```
+Prefer the smallest change that actually fixes the right place. Before adding anything new: is this change needed, or does an existing path already cover it? Is the same helper, pattern, or module already in the repo — reuse it. Can stdlib or an existing util do it — use that. Can it stay in one place (shared function, one guard) instead of copies at every call site? Only then write the minimum that works.
 
-- **Domain knows about no one.** Importing `net/http`, `pgx` or an external SDK in `domain/**` is an architecture error — move it behind a port.
-- **Application does not import Infrastructure.** A use case receives an interface in its constructor; the implementation is wired in `cmd/<module>/main.go`.
-- **Infrastructure implements Domain interfaces but knows nothing about Application.**
-- **utils is always "at the bottom".** Everyone uses it; it uses no layer of ours. Narrow exception: `utils/httpx/errors.go` imports `domain/shared/errors.go` (sentinels only) to map them to HTTP codes. Nothing else from `domain` may reach `utils`.
-- `domain/shared/ports/*` may import `domain/shared/vo/*`, but **not** concrete bounded contexts.
+Read the request and follow the real call path end to end before picking where to edit. A tiny patch on the wrong layer is still wrong.
 
-## 2. Module structure (`internal/application/<module>/`)
+Fix the shared root, not each symptom. If a function is broken, grep its callers and put the guard once where the invariant belongs. Patching only the ticket’s path leaves the sibling path broken.
 
-Every module has the same shape:
+Do not invent abstractions, layers, or packages nobody asked for. Do not add a dependency if stdlib or an existing package is enough. Prefer deleting and reusing over adding. Prefer the boring obvious path. Touch as few files as possible once you know the right place. When two solutions are the same size, pick the one that handles edge cases correctly — short is not the same as fragile. If a request looks oversized, ask whether a thinner existing path already covers it. If you knowingly leave a known ceiling (global lock, O(n²) scan, naive heuristic), mark it with a short comment naming the ceiling and how to upgrade later.
 
-```
+Never skimp on: understanding the flow before editing, validation at trust boundaries (HTTP/API), errors that would lose data, security, and anything the task explicitly requires. Non-trivial logic needs one small runnable check that fails if the logic breaks (usually a domain or use-case test). Trivial one-liners need none.
+
+1. Dependency rules
+
+cmd → application, infrastructure, utils, domain (only place for DI).
+application/** → domain/**, utils/** (not infrastructure, not cmd, not another application module).
+domain/** → stdlib and domain/shared/** only.
+infrastructure → domain/**, utils/** (implements domain ports/repositories).
+utils/** → stdlib, general-purpose libs, and domain/shared/errors.go only.
+
+Domain imports nothing from HTTP, pgx, SDKs, application, infrastructure, or utils. Put external talk behind a port.
+
+Application never imports infrastructure. Use cases take interfaces in the constructor; cmd/<module>/main.go wires the implementations.
+
+Infrastructure implements domain interfaces and does not know about application.
+
+Utils sit at the bottom: everyone may use them; they use none of our layers. One narrow exception: utils/httpx/errors.go may import domain/shared/errors.go (sentinels only) to map them to HTTP codes. Nothing else from domain may enter utils.
+
+domain/shared/ports/* may use domain/shared/vo/*, but not concrete bounded contexts.
+
+Layer boundary — do not put code in the wrong place
+
+Each layer holds only its own job. If something feels convenient to drop “nearby”, stop and put it where the dependency rules say it belongs.
+
+Use case (Execute): orchestration and I/O only — load, call a port/repo, hand data to domain, persist, return. No SQL, no HTTP/JSON shaping, no prompt text, no business transforms (for/switch that builds domain meaning), no new external-system contracts. Ports for LLM, storage, email, payments and the like live in domain/shared/ports/; repository contracts live in domain/<ctx>/repository.go. The use case receives those interfaces in the constructor and calls them — it does not declare the port next to the use case.
+
+Domain: invariants, entities, policies, pure input→output functions, repository interfaces, domain errors, domain text (prompts). No utils (timex helpers beyond what domain/shared allows, httpx, database, pagination, auth wiring, logging packages — none of these). Domain imports stdlib and domain/shared only. If you need a clock or ID, pass now / use vo.NewID(); do not pull utils into domain to “make it easier”.
+
+Repository (infrastructure implementation): persistence only — SQL, mapping Model↔Entity inside the infra layer, transactions as storage mechanics. No business rules, no policies, no calling LLM/HTTP APIs, no scenario branching that belongs in a use case or domain.
+
+Common smells to reject on sight: a Port/Client interface defined inside use_cases/; import of internal/utils inside domain/**; domain logic or prompt building inside a repository; HTTP DTO fields or Huma tags leaking into domain or use-case commands.
+
+2. Module layout (internal/application/<module>/)
+
+Every module looks the same:
+
 internal/application/<module>/
-├── api/
-│   ├── endpoints.go   # Huma operation registration: one file for all routes
-│   ├── schema.go      # module Input/Output DTOs
-│   └── mapper.go      # api-mapper: DTO ↔ use-case command/result
-├── use_cases/         # package usecases, one file per scenario
-│   └── <action>.go    # <Action>UseCase with a single Execute method
-├── worker/            # background machinery (ticker/cron/consumer) — its OWN folder next to api
-├── config.go          # module settings (embed config.Global + its own env)
-└── module.go          # Mount/New: DI, use-case assembly, api.Register, middleware
-```
+  api/endpoints.go — Huma registration, all routes in one file
+  api/schema.go — Input/Output DTOs
+  api/mapper.go — DTO ↔ use-case command/result
+  use_cases/ — package usecases, one file per scenario; <action>.go is <Action>UseCase with a single Execute
+  worker/ — ticker / cron / consumer, own folder next to api
+  config.go
+  module.go — Mount/New: DI, use cases, api.Register, middleware
 
-- Packages: the module itself — `<module>`; the `api` subfolder — package `api`; `use_cases` — package `usecases`.
-- **Any new kind of machinery (scheduler, worker, consumer, subscriber) always goes in its own folder next to `api/`**, never inside a use case. The loop itself (ticker/loop, reacting to `ctx.Done()`) lives in `worker/`, and it calls the unit of work through a use case (`Execute`).
+Packages: module root is <module>, api/ is api, use_cases/ is usecases.
 
-## 3. Domain (`internal/domain/<ctx>/`)
+Any background loop (scheduler, worker, consumer, subscriber) lives in worker/, never inside a use case. The loop reacts to ctx.Done() and calls work through a use case Execute.
 
-The core. One bounded context = one folder = one package. Depends only on stdlib and `domain/shared`.
+3. Domain (internal/domain/<ctx>/)
 
-What lives inside:
-- **Entities** — objects with an ID and behavior. State changes only through verb methods (`UpdateInfo`, `Cancel`). Setters like `SetName` are an anti-pattern (they don't validate the invariant).
-- **Aggregates** — roots that guarantee consistency of the graph. Inner objects change only through the root's methods.
-- **Value Objects** — values without identity (`Money`, `Email`); validation is hidden in the constructor (an invalid value can't be created). Shared VOs — `domain/shared/vo/`, context-specific ones — inside the context.
-- **Policies** — pure functions answering "is this allowed?" (`RequireGlobalAdmin`, `client.RequireWrite`). They don't mutate state.
-- **Pure Functions** — see the dedicated rule below.
-- **Repository interface** — `repository.go` in the same package: the data-access contract for THIS context.
-- **Errors** — `errors.go`: domain errors wrapping a base sentinel via `%w`.
-- **Domain text** — e.g. LLM prompts — is part of describing the domain and lives in `domain`, not in `utils`.
+One bounded context = one folder = one package. Depends only on stdlib and domain/shared.
 
-`domain/shared/`: `vo/` (shared VOs), `ports/` (external-system interfaces: `LLMClient`, `ObjectStorage`, `EmailSender`), `errors.go` (base sentinels).
+Entities — identity plus behavior. Change state through verb methods (UpdateInfo, Cancel), not bare setters that skip invariants.
 
-**Repository vs Port:** a repository is data access for a single context and lives in `domain/<ctx>/`. A port is an external system / cross-cutting abstraction, lives in `domain/shared/ports/`, with the implementation in `infrastructure/adapters/`. An interface to an external service (LLM, payment, S3) is always a port, even if only one module uses it.
+Aggregates — roots that keep the graph consistent; change children only through the root.
 
-**Domain vs Use Case rule:** Domain holds what is *always* true for the entity (invariants). A Use Case holds what is true only for a *specific scenario*. Self-check: "if tomorrow the same operation is invoked from an admin panel / import / integration — must the rule still fire there?" Yes → Domain. No → use case.
+Value objects — no identity (Money, Email); validation lives in the constructor so an invalid value cannot exist. Shared VOs in domain/shared/vo/, context-specific ones inside the context.
 
-**Pure functions in domain (prefer these).** Any logic that is `input → output` with no I/O belongs in `domain/<ctx>/` as a pure function, not inside a use case or in `utils`. A pure function:
-- takes domain types (and `time.Time` when it needs "now") and returns domain types / values / a parse error — **no `context.Context`, no repositories, no DB, no network, no reading the clock or env**;
-- is deterministic and trivially unit-testable in isolation;
-- examples here: building an LLM prompt from domain events (`BuildExtractionPrompt`), parsing an LLM response into domain `Extraction`s (`ParseExtractions`), turning raw events + extractions into domain `Event`s (`StructuredEvent`, `EventsFromExtractions`), calculations across entities (`CalcProjectTotalCost`).
-- ID/`now` generation: builders may mint IDs via `vo.NewID()` (domain factory) and accept `now` as a parameter — don't import external SDKs (`google/uuid`) or call `time.Now()` directly in domain.
+Policies — pure “is this allowed?” functions (RequireGlobalAdmin, client.RequireWrite). No mutation.
 
-The use case keeps only orchestration + I/O (load via repo → call port/LLM → hand raw output to the domain pure function → persist). If you catch yourself writing a `for`/`switch` that transforms data inside `Execute`, that's a pure function that should move to domain. Prompts and other domain text live next to these functions in `domain`, never in `utils` (utils may not import `domain/<ctx>`).
+Pure functions — see below.
 
-## 4. Use case (`use_cases/<action>.go`, package `usecases`)
+Repository interface — repository.go in the same package: data access for this context.
 
-- **Exactly one public method — `Execute`.** One scenario = one `<Action>UseCase` type = one `Execute`. No `Ingest`/`List`/`Process` exposed. If you want a second public method, that's a second use case in its own file. Supporting machinery (loops, tickers) goes to `worker/`; pure helpers go to domain/utils.
-- **Each scenario step gets a numbered comment** (`// 1. ...`, `// 2. ...`). See section 11.
-- **Input is ONLY domain types.** `Command`/`Query` fields never have `string ID`, `string Status`, `string Email` — only `vo.ID`, `client.ID`, `project.Status`, `time.Time`, `[]expert.ID`. The api-mapper parses raw strings BEFORE `Execute` is called.
-- **All talk with the outside world uses domain types.** Every repository and adapter call takes and returns domain types. Any conversion happens in mappers, never inside the use case.
-- **Returns domain entities/result**, not DTOs — the api-mapper flattens them into DTOs.
-- **Authorization via domain policies** (`iam.RequireGlobalAdmin(actor)`, `client.RequireWrite(actor, id)`), not `if role == ...`. Omit `actor *iam.Actor` only in pre-authorization scenarios (login, forgot-password).
-- **Don't re-check `if actor == nil`.** Routes registered with `authx.Authed` already authenticate the request and guarantee a non-nil `actor` before `Execute` runs — a nil check inside the use case is dead code. Authenticate at the API boundary; inside the use case only apply domain policies for finer-grained authorization.
-- **Scenario validation** via `shared.ErrValidation`. If a check is true for *any* way to create the entity, move it to Domain.
-- **Transactions belong to application:** the use case begins/commits via `utils/database/` (`TxRunner`), without seeing pgx.
-- **Time comes from `timex.Clock`** in the constructor (see section 9).
-- Constructor: `New<Action>UseCase(deps...) *<Action>UseCase`. Dependencies are interfaces (repositories, ports, clock).
-- A background unit of work is also a use case with `Execute(ctx) error`, driven by `worker/`.
+Errors — errors.go, wrapping a shared sentinel with %w.
 
-## 5. API (`api/`, package `api`) — thin HTTP layer
+Domain text (e.g. LLM prompts) — part of the domain, not utils.
 
-- **`schema.go`** — DTOs only. Fields carry Huma tags for syntactic validation: `format:"email"`, `minLength`, `maxLength`, `maximum`, `enum`, `default`. DTOs never overlap with domain entities (we don't accept/return `domain.Entity`).
-- **`endpoints.go`** — `type Deps struct{...}` (use cases, config, logger) + `func Register(api huma.API, deps Deps)` + one `register<Action>` function per route. The handler shape is always the same: **mapper → use case → mapper**.
-  - Public routes: `httpx.Handle(api, huma.Operation{...}, func(ctx, in) (Out, error) {...})`.
-  - Authorized routes: `authx.Authed(...)` (pulls `actor *iam.Actor` and passes it into `Execute`) or `authx.Bearer(...)` (token only).
-  - Even if a route has only primitives, call the mapper explicitly (`toLoginCommand`) so the shape stays uniform.
-  - No business rules in the handler (`if role==...` → policy/middleware/use case). Don't parse/encode JSON by hand, don't set statuses by hand (need 201/204 → `huma.Operation{DefaultStatus: ...}`), don't log input/output (`AccessLog` already does).
-- **OpenAPI:** the module registers in the `utils/openapi` registry via `init()` in `register.go`; `cmd/openapi-dump` pulls it in with a side-effect import. Generated specs are the source of truth for the frontend (codegen).
+domain/shared/: vo/, ports/ (external systems: LLMClient, ObjectStorage, EmailSender), errors.go (base sentinels).
 
-The response is a single envelope (see section 7), assembled by helpers — never built by hand.
+Repository vs port: a repository is data access for one context and lives in domain/<ctx>/. A port is an external or cross-cutting system and lives in domain/shared/ports/, implemented under infrastructure/adapters/. An LLM, payment, or S3 client is always a port, even if only one module uses it.
 
-## 6. Mappers (there are TWO — don't confuse them)
+Domain vs use case: domain holds what is always true for the entity. A use case holds what is true only for one scenario. Check: if the same operation later runs from an admin panel, import, or integration, must the rule still apply? Yes → domain. No → use case.
 
-**api-mapper — `application/<module>/api/mapper.go`:**
-- **Input:** `to<Action>Command(in *XxxInput) (XxxCommand, error)` / `to<Action>Query(...)` — turns the raw DTO (`string`, `int64`) into a typed domain command. String→domain parsing (UUID→`vo.ID`, `"in_progress"`→`Status`, date→`time.Time`), normalization and slice dedup, optional fields (`""` → no value) — all here.
-- **Output:** `to<Action>Output(res XxxResult) XxxOutput` — domain types → flat DTO.
-- Parsing errors are wrapped in `shared.ErrValidation` **with the field name** (`client_id`, `parent_id`) → middleware returns `422 VALIDATION_ERROR`.
-- A mapper is a **pure function**: args → result, no repositories/context/DB. If it starts "loading more", it's already a use case.
-- Don't make domain types Huma-aware (`Schema()`/`UnmarshalText` on a VO).
+Pure functions in domain (prefer these). Any input → output logic with no I/O belongs in domain/<ctx>/, not in a use case or utils. A pure function takes domain types (and time.Time when it needs “now”) and returns domain types, values, or a parse error; has no context.Context, repositories, DB, network, clock reads, or env; is deterministic and easy to unit-test alone.
 
-**infra-mapper — `infrastructure/mappers/`:** pure `Model ↔ Entity` functions. They take only the model and the entity; if they need anything else, that's business logic and belongs in Domain.
+Examples: build a prompt from domain events, parse an LLM reply into domain types, turn raw data into domain events, compute totals across entities.
 
-## 7. Output and envelope
+Builders may mint IDs with vo.NewID() and take now as a parameter. Do not import UUID SDKs or call time.Now() inside domain.
 
-Every response (success and error) is one shape: `{ok, data?|error?, meta}`. The handler returns a bare `Out`/`error`; `httpx`/`authx` helpers wrap it into the envelope, and middleware sets `meta.request_id`.
+The use case only orchestrates I/O: load → call port → hand raw output to a domain pure function → persist. A for/switch that transforms data inside Execute usually belongs in domain. Prompts and domain text stay next to those functions; utils must not import domain/<ctx>.
 
-Response DTO structures:
-- **Single entity** — `<Entity>Output`: flat, `json:"snake_case"`. IDs and enums as strings (`id.String()`, `string(status)`), dates as `apidate.Date`, optional ones as `*apidate.Date` via `apidate.Optional(...)`, optional fields with `omitempty`.
-- **List** — `<Entity>sOutput{ Items []T; Total int64; Limit int32; Offset int32 }`. `Items` is always `make([]T, 0, n)` (return `[]`, not `null`).
-- **Empty success** — `<Action>Output struct{}` + `DefaultStatus: http.StatusNoContent`.
+4. Use case (use_cases/<action>.go, package usecases)
 
-Error codes are a public contract — never silently rename them. No parallel `Respond*` helpers: there is exactly one response shape.
+One public method: Execute. One scenario = one <Action>UseCase = one Execute. A second public method is a second use case in its own file. Loops go to worker/; pure helpers go to domain or utils.
 
-## 8. Errors
+Number each scenario step in Execute (// 1. ..., // 2. ...). See section 11.
 
-- A use case returns a plain Go error; the HTTP layer decides the code. Base sentinels — `domain/shared/errors.go`; context-specific domain errors — `domain/<ctx>/errors.go`, wrapping a base via `%w` (`fmt.Errorf("...: %w", shared.ErrConflict)`).
-- Mapping — the table in `utils/httpx/errors.go`: `ErrNotFound→404 NOT_FOUND`, `ErrConflict→409 CONFLICT`, `ErrValidation→422 VALIDATION_ERROR`, `ErrUnauthorized→401`, `ErrForbidden→403`, everything else→`500 INTERNAL_ERROR`.
-- Assert and branch via `errors.Is(err, shared.ErrXxx)`, not by text. Stack traces never go to the client (logs only).
+Input is only domain types. Command/Query fields are vo.ID, status enums, time.Time, typed IDs — never raw string ID / string Status. The api-mapper parses strings before Execute.
 
-## 9. Time
+Repositories and adapters speak domain types in and out. Mapping stays in mappers, never in the use case.
 
-- **The only timezone is `Europe/Moscow` (`timex.MSK`).** No cross-zone conversions in the code.
-- **`time.Now()` directly is forbidden** (the only exception is the `timex.SystemClock` implementation). Use `timex.Now()` or `Clock.Now()` from the constructor.
-- Construct time only via `timex.Date(...)`; no `time.Date(..., time.UTC/Local)` in business code.
-- Use cases that build a timestamp (audit, tokens, `expires_at`) take a `timex.Clock`; `nil` → falls back to `timex.System()`. Inside Domain, `timex.Now()` is fine in `Touch`-style methods.
-- In the DB — `timestamptz`/`date`, not `text`. API format — RFC 3339 / `YYYY-MM-DD` via `timex`.
+Return domain entities/results, not DTOs. The api-mapper flattens to DTOs.
 
-## 10. Infrastructure and utils
+Authorize through domain policies (iam.RequireGlobalAdmin(actor), client.RequireWrite(...)), not if role == .... Omit actor only for pre-auth flows (login, forgot-password).
 
-**Infrastructure (`internal/infrastructure/`):**
-- `models/` — DB row structs (sql tags, nullable); never leave infrastructure.
-- `mappers/` — `Model ↔ Entity`, pure functions.
-- `repositories/<ctx>/` — implementation of `domain/<ctx>/repository.go`: SQL, transactions.
-- `adapters/<provider>/` — implementation of ports from `domain/shared/ports/`.
-- The layer boundary works in domain types: domain entities in/out, mapping to infrastructure models and back happens inside the layer.
+Do not re-check actor == nil inside Execute. authx.Authed already guarantees a non-nil actor. Auth at the API boundary; policies inside for finer checks.
 
-**utils (`internal/utils/`):** technical plumbing only, independent of `domain` (except `shared/errors`). Put cross-module reusable helpers here (`httpx`, `timex`, `reqctx`, `database`, `pagination`, `probes`, `auth`, `logger`). Domain-specific things (prompts, entity construction) do NOT go in utils — they go in `domain`.
+Scenario-only validation uses shared.ErrValidation. If the check must hold for every way to create the entity, put it in domain.
 
-## 11. Comments in code (strict)
+Transactions belong to application: begin/commit via utils/database/ (TxRunner), without seeing pgx.
 
-**Code is self-documenting. There are no explanatory comments in code.** Clarity comes from type, function and variable names, not from comments. Exactly three exceptions are allowed:
+Time comes from timex.Clock in the constructor (section 9).
 
-1. **Numbered steps in a use case `Execute`** — `// 1. ...`, `// 2. ...`. This is the only place where comments are *mandatory*: they turn the scenario into a readable story and immediately reveal whether parsing/HTTP/SQL leaked into the use case.
-2. **SQL queries** — inside the query string a comment explaining a non-obvious part is allowed (a tricky `JOIN`, `FOR UPDATE SKIP LOCKED`, a special index).
-3. **`// arrange` / `// act` / `// assert` in tests** — the only comments allowed in test files (see section 12).
+Constructor: New<Action>UseCase(deps...). Deps are interfaces (repos, ports, clock).
 
-Forbidden (remove on sight):
-- Narrating the code: `// increment the counter`, `// import the package`, `// return the result`, `// constructor`.
-- Section-header comments, commented-out code, `// TODO` without a ticket.
-- Doc-comments that just restate an obvious function/field. If it's unclear without a comment, rename it instead of commenting.
+Background work is also a use case with Execute(ctx) error, driven by worker/.
 
-```go
-// BAD
+5. API (api/, package api)
+
+Thin HTTP only.
+
+schema.go — DTOs with Huma tags for syntax (format:"email", minLength, enum, default, …). DTOs are not domain entities; do not accept or return domain.Entity.
+
+endpoints.go — Deps (use cases, config, logger) + Register + one register<Action> per route. Handler shape is always mapper → use case → mapper.
+
+Public: httpx.Handle(...). Authed: authx.Authed(...) (passes actor) or authx.Bearer(...) (token only). Always call the mapper explicitly, even for primitive-only routes, so the shape stays uniform. No business rules, hand-rolled JSON, hand-set statuses (use DefaultStatus for 201/204), or input/output logging (AccessLog already covers it).
+
+OpenAPI: register in utils/openapi via init() in register.go; cmd/openapi-dump imports the module for side effects. Generated specs drive frontend codegen.
+
+Responses go through one envelope (section 7), built by helpers, never by hand.
+
+6. Two mappers
+
+Api-mapper — application/<module>/api/mapper.go.
+
+Input: to<Action>Command / to<Action>Query — raw DTO → typed domain command (UUID→vo.ID, string→status, date→time.Time, normalize, dedup, empty optional → absent).
+
+Output: to<Action>Output — domain → flat DTO.
+
+Parse failures: shared.ErrValidation with the field name → 422 VALIDATION_ERROR.
+
+Pure: args → result, no repo/context/DB. If it starts loading data, it is already a use case.
+
+Do not make domain types Huma-aware (Schema / UnmarshalText on a VO).
+
+Infra-mapper — infrastructure/mappers/: pure Model ↔ Entity. If it needs more than the model and the entity, that logic belongs in domain.
+
+7. Output envelope
+
+Every response is {ok, data?|error?, meta}. The handler returns bare Out/error; httpx/authx wrap it; middleware sets meta.request_id.
+
+Single entity: <Entity>Output, flat json:"snake_case", IDs/enums as strings, dates via apidate, optionals with omitempty / apidate.Optional.
+
+List: <Entity>sOutput{ Items, Total, Limit, Offset }. Always make([]T, 0, n) so Items is [], not null.
+
+Empty success: empty struct + DefaultStatus: http.StatusNoContent.
+
+Error codes are a public contract — do not rename them quietly. One response shape only; no parallel Respond* helpers.
+
+8. Errors
+
+Use cases return plain error. HTTP maps the code.
+
+Base sentinels: domain/shared/errors.go. Context errors: domain/<ctx>/errors.go, wrap a base with %w.
+
+Mapping table in utils/httpx/errors.go: NotFound→404, Conflict→409, Validation→422, Unauthorized→401, Forbidden→403, else→500.
+
+Branch with errors.Is, not error text. Stack traces stay in logs, never in the client body.
+
+9. Time
+
+Only timezone: Europe/Moscow (timex.MSK). No cross-zone conversion in business code.
+
+Do not call time.Now() directly (exception: timex.SystemClock). Use timex.Now() or Clock.Now() from the constructor.
+
+Build calendar times with timex.Date(...), not time.Date(..., UTC/Local).
+
+Use cases that stamp time (audit, tokens, expires_at) take timex.Clock; nil falls back to timex.System(). In domain, timex.Now() is fine for Touch-style methods.
+
+DB: timestamptz / date, not text. API: RFC 3339 / YYYY-MM-DD via timex.
+
+10. Infrastructure and utils
+
+Infrastructure (internal/infrastructure/): models/ — DB rows, stay inside infrastructure. mappers/ — Model ↔ Entity, pure. repositories/<ctx>/ — implements domain/<ctx>/repository.go. adapters/<provider>/ — implements domain/shared/ports/. Boundary in domain types: entities in/out; model mapping stays inside the layer.
+
+Utils (internal/utils/): technical plumbing only, shared across modules and independent of any bounded context. Examples already here: httpx, timex, reqctx, database, pagination, probes, auth, logger, config, redisx, openapi.
+
+What belongs in utils: cross-cutting technical helpers that would make sense in another product with a different domain (HTTP envelope, clocks, DB tx helpers, pagination, auth middleware wiring, logging). They must not import domain/<ctx> or know about business entities, prompts, policies, or scenario rules. The only allowed domain import is domain/shared/errors.go for sentinel→HTTP mapping.
+
+What does not belong in utils: prompts, entity construction, parsing of domain-shaped LLM replies, calculations over business entities, anything that would break if the product’s domain changed. That goes in domain/<ctx>/ as a pure function or entity method. If a helper is only useful inside one application module and is not general plumbing, keep it next to that module (or in domain) instead of promoting it to utils.
+
+Self-check before adding to utils: “could this live in a greenfield service with a totally different business?” Yes → utils. No → domain or the module that needs it.
+
+11. Comments
+
+Code should read without narration. Names carry meaning. Only three comment kinds are allowed:
+
+Numbered steps in use case Execute — mandatory (// 1. ..., // 2. ...). They make the scenario readable and show if HTTP/SQL/parsing leaked in.
+
+Non-obvious SQL inside the query string (tricky JOIN, FOR UPDATE SKIP LOCKED, special index).
+
+// arrange / // act / // assert in tests.
+
+Remove on sight: comments that restate the next line, section banners, commented-out code, TODOs without a ticket, doc comments that only echo the name. If a name is unclear, rename instead of commenting.
+
+Bad:
 func (uc *X) Execute(ctx context.Context, cmd Cmd) (Res, error) {
     user, err := uc.repo.Get(ctx, cmd.ID) // get the user
     if err != nil {
@@ -170,7 +225,7 @@ func (uc *X) Execute(ctx context.Context, cmd Cmd) (Res, error) {
     ...
 }
 
-// GOOD — numbered steps; the rest speaks for itself
+Good:
 func (uc *X) Execute(ctx context.Context, cmd Cmd) (Res, error) {
     // 1. Load the user.
     user, err := uc.repo.Get(ctx, cmd.ID)
@@ -183,13 +238,19 @@ func (uc *X) Execute(ctx context.Context, cmd Cmd) (Res, error) {
     }
     ...
 }
-```
 
-## 12. Tests (brief; details in docs/development/testing.md)
+12. Tests
 
-- Scope: the bulk is `domain/**` and `use_cases/**`. Infrastructure and Huma handlers are not unit-tested (mappers are tested as pure functions).
-- Style: `stdlib testing` only (no testify/mockgen); black-box (`<pkg>_test`); table-driven with meaningful case names; the only comments are `// arrange`/`// act`/`// assert`.
-- Hand-written mocks in `mocks_test.go` (record calls, not expectation chains). If an interface bloats, split the interface instead of adding codegen.
-- `timex.Clock` → `timex.NewFrozen(...)`; `database.TxRunner` → `database.Noop()`; no `time.Now` or network in unit tests.
-- Assert errors via `errors.Is(err, shared.ErrXxx)`.
-- Per-use-case target: ~6 baseline tests by branch (forbidden / parse-error / not-found / domain validation / happy / repository failure).
+Details: docs/development/testing.md.
+
+Focus unit tests on domain/** and use_cases/**. Skip unit-testing infrastructure and Huma handlers; mappers are fine as pure functions.
+
+Stdlib testing only (no testify/mockgen). Black-box <pkg>_test. Table-driven with clear case names. Only arrange/act/assert comments.
+
+Hand-written mocks in mocks_test.go that record calls. If an interface grows too fat, split it instead of adding codegen.
+
+Freeze time with timex.NewFrozen(...). Use database.Noop() for TxRunner. No live time.Now or network in unit tests.
+
+Assert with errors.Is(err, shared.ErrXxx).
+
+Per use case, aim for roughly six branches: forbidden, parse error, not found, domain validation, happy path, repository failure.

@@ -81,14 +81,14 @@ func TestWatchRange(t *testing.T) {
 	t.Run("long film goes in chunks", func(t *testing.T) {
 		// arrange
 		film := readyFilm("m1", films.KindFilm, "", 0, 0, 120*60*1000, "B1")
-		plan := workout.FilmPlan{Segments: segs(5, 5, 5, 5)}
+		plan := workout.FilmPlan{Segments: segs(8, 8, 8, 8)}
 		// act
 		picked, pos := workout.WatchRange(film, plan, workout.Position{Title: "film:m1", FilmID: "m1"}, []films.Film{film})
 		// assert
-		if len(picked) != 1 {
-			t.Fatalf("got %d segments, want 1 within the 9-minute budget", len(picked))
+		if len(picked) != 2 {
+			t.Fatalf("got %d segments, want 2 within the 20-minute budget", len(picked))
 		}
-		if pos.NextSegment != 1 || pos.FilmID != "m1" {
+		if pos.NextSegment != 2 || pos.FilmID != "m1" {
 			t.Fatalf("position wrong: %+v", pos)
 		}
 	})

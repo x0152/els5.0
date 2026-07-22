@@ -177,7 +177,7 @@ func (uc *GenerateLessonUseCase) buildRegularSteps(ctx context.Context, lesson *
 	if err := uc.appendStep(lesson, workout.StepQuestions, "Did you get it?", workout.QuestionsPayload{Questions: questions}); err != nil {
 		return err
 	}
-	phrases := workout.LevelPhrases(segments, level, 4)
+	phrases := workout.LevelPhrases(segments, level, 6)
 	if len(phrases) > 0 {
 		if err := uc.appendStep(lesson, workout.StepSpeak, "Say it like them", speakPayload(phrases, film.ID)); err != nil {
 			return err

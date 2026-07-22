@@ -20,7 +20,7 @@ type Position struct {
 const sitcomMaxMs = 26 * 60 * 1000
 
 // watchBudgetMs: for longer films a lesson covers consecutive segments up to this runtime.
-const watchBudgetMs = 9 * 60 * 1000
+const watchBudgetMs = 20 * 60 * 1000
 
 var slotPool = []string{StepReading, StepWriting, StepGrammar, StepVocab, StepDictation}
 

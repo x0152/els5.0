@@ -3,42 +3,31 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import {
   ArrowLeft,
   BookPlus,
-  Captions,
-  CaptionsOff,
-  Maximize,
   MessageCircleQuestion,
-  Minimize,
   PanelRightClose,
   PanelRightOpen,
-  Pause,
   PictureInPicture2,
-  Play,
   SkipBack,
   SkipForward,
-  Volume2,
-  VolumeX,
 } from 'lucide-react'
-import { Button, cn, ErrorState, LoadingState, Select, Spinner, useAgentView, useMiniPlayer } from '@els/ui'
+import {
+  Button,
+  cn,
+  CueText,
+  ErrorState,
+  FilmPlayer,
+  LoadingState,
+  Select,
+  Spinner,
+  useAgentView,
+  useMiniPlayer,
+} from '@els/ui'
 import { saveProgress, useFilm, useFilms } from '../lib/films.ts'
 import { emitListening, emitUnclear, requestAnalyze, requestAsk } from '../lib/events.ts'
 import { seriesLastKey } from './Series.tsx'
 import { SubtitlePanel } from '../components/SubtitlePanel.tsx'
-import { CueText } from '../components/CueText.tsx'
 
 const prefsKey = (id: string) => `els.films.prefs.${id}`
-
-function formatTime(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000))
-  const s = total % 60
-  const m = Math.floor(total / 60) % 60
-  const h = Math.floor(total / 3600)
-  const mm = `${m}`.padStart(h > 0 ? 2 : 1, '0')
-  const ss = `${s}`.padStart(2, '0')
-  return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`
-}
-
-const darkSelectClass =
-  'w-auto rounded-md border-white/20 bg-white/10 px-2 py-1 text-xs text-white focus:border-white/40 focus:ring-white/20 [&>option]:text-neutral-900'
 
 export function Watch() {
   const { id = '' } = useParams()
@@ -54,7 +43,6 @@ function WatchInner({ id }: { id: string }) {
   const { data: allFilms } = useFilms()
 
   const videoRef = useRef<HTMLVideoElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
   const resumeRef = useRef<{ ms: number; play: boolean } | null>(null)
   const initialSeek = Number(searchParams.get('t'))
   const pendingSeekRef = useRef<number | null>(
@@ -67,11 +55,7 @@ function WatchInner({ id }: { id: string }) {
 
   const [currentMs, setCurrentMs] = useState(0)
   const [durationMs, setDurationMs] = useState(0)
-  const [paused, setPaused] = useState(true)
-  const [volume, setVolume] = useState(1)
-  const [muted, setMuted] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
-  const [showOverlay, setShowOverlay] = useState(true)
   const [showPanel, setShowPanel] = useState(true)
   const [autoScroll, setAutoScroll] = useState(true)
   const [audioIdx, setAudioIdx] = useState(0)
@@ -137,12 +121,12 @@ function WatchInner({ id }: { id: string }) {
       : null,
   )
 
-  const markUnclear = () => {
-    if (!activeCue || !emitEnabled) return
-    emittedRef.current.add(activeCue.index)
-    emitUnclear(activeCue.text, { app: 'films', film_id: id, lang: subLang })
-    setMarkedCue(activeCue.index)
-    setTimeout(() => setMarkedCue((c) => (c === activeCue.index ? null : c)), 1200)
+  const markUnclear = (cue: { index: number; text: string }) => {
+    if (!emitEnabled) return
+    emittedRef.current.add(cue.index)
+    emitUnclear(cue.text, { app: 'films', film_id: id, lang: subLang })
+    setMarkedCue(cue.index)
+    setTimeout(() => setMarkedCue((c) => (c === cue.index ? null : c)), 1200)
   }
 
   useEffect(() => {
@@ -170,18 +154,6 @@ function WatchInner({ id }: { id: string }) {
 
   const seekTo = useCallback((ms: number) => {
     if (videoRef.current) videoRef.current.currentTime = ms / 1000
-  }, [])
-
-  const togglePlay = useCallback(() => {
-    const v = videoRef.current
-    if (!v) return
-    if (v.paused) void v.play()
-    else v.pause()
-  }, [])
-
-  const toggleFullscreen = useCallback(() => {
-    if (document.fullscreenElement) void document.exitFullscreen()
-    else void containerRef.current?.requestFullscreen()
   }, [])
 
   const savePrefs = useCallback(
@@ -260,40 +232,7 @@ function WatchInner({ id }: { id: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
-      switch (e.key.toLowerCase()) {
-        case ' ':
-          e.preventDefault()
-          togglePlay()
-          break
-        case 'f':
-          e.preventDefault()
-          toggleFullscreen()
-          break
-        case 'c':
-          e.preventDefault()
-          setShowOverlay((v) => !v)
-          break
-        case 'arrowleft':
-          e.preventDefault()
-          if (videoRef.current) videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime - 5)
-          break
-        case 'arrowright':
-          e.preventDefault()
-          if (videoRef.current) videoRef.current.currentTime += 5
-          break
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [togglePlay, toggleFullscreen])
-
-  const onLoadedMetadata = () => {
-    const v = videoRef.current
-    if (!v) return
+  const onLoadedMetadata = (v: HTMLVideoElement) => {
     setDurationMs(Math.round(v.duration * 1000))
     if (resumeRef.current) {
       v.currentTime = resumeRef.current.ms / 1000
@@ -377,7 +316,7 @@ function WatchInner({ id }: { id: string }) {
   }
 
   return (
-    <div ref={containerRef} className={cn('flex min-h-0 flex-col overflow-hidden bg-neutral-50', isFullscreen ? 'h-screen' : 'h-full')}>
+    <div className={cn('flex min-h-0 flex-col overflow-hidden bg-neutral-50', isFullscreen ? 'h-screen' : 'h-full')}>
       {!isFullscreen && (
         <header className="flex items-center gap-3 border-b border-neutral-200 bg-white px-4 py-3">
           <button
@@ -436,84 +375,68 @@ function WatchInner({ id }: { id: string }) {
       )}
 
       <div className={cn('flex min-h-0 flex-1', panelVisible ? 'flex-col lg:flex-row' : 'flex-col')}>
-        <div className="group relative flex min-h-0 flex-1 items-center justify-center bg-black">
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            playsInline
-            className="max-h-full w-full"
-            onClick={togglePlay}
-            onTimeUpdate={(e) => setCurrentMs(Math.round(e.currentTarget.currentTime * 1000))}
-            onLoadedMetadata={onLoadedMetadata}
-            onPlay={() => setPaused(false)}
-            onPause={() => setPaused(true)}
-            onVolumeChange={(e) => {
-              setVolume(e.currentTarget.volume)
-              setMuted(e.currentTarget.muted)
-            }}
-          />
-
-          {showOverlay && activeCue && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-20 flex justify-center px-6">
-              <div className="group/cue relative max-w-3xl">
-                <span
-                  role={emitEnabled ? 'button' : undefined}
-                  title={emitEnabled ? "Mark as not understood" : undefined}
+        <FilmPlayer
+          videoUrl={videoUrl}
+          audioTracks={audioTracks}
+          subtitleTracks={subtitleTracks}
+          audioIdx={audioIdx}
+          subIdx={subIdx}
+          onAudioChange={changeAudio}
+          onSubChange={changeSub}
+          onTimeChange={setCurrentMs}
+          onLoadedMetadata={onLoadedMetadata}
+          durationMs={film.duration_ms}
+          videoRef={videoRef}
+          renderCueOverlay={(cue) => (
+            <div className="group/cue relative max-w-3xl">
+              <span
+                role={emitEnabled ? 'button' : undefined}
+                title={emitEnabled ? 'Mark as not understood' : undefined}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (window.getSelection()?.isCollapsed !== false) markUnclear(cue)
+                }}
+                className={cn(
+                  'pointer-events-auto block select-text rounded-xl px-4 py-2 text-center text-lg font-medium leading-snug text-white shadow-lg backdrop-blur-sm transition-colors',
+                  emitEnabled && 'cursor-pointer',
+                  markedCue === cue.index
+                    ? 'bg-rose-600/80 ring-2 ring-rose-300'
+                    : flashCue
+                      ? 'bg-black/70 ring-2 ring-amber-300'
+                      : 'bg-black/70',
+                )}
+              >
+                <CueText text={cue.text} />
+              </span>
+              <div className="pointer-events-auto absolute -right-3 -top-3 flex gap-1.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/cue:opacity-100 [@media(hover:none)]:opacity-100">
+                <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (window.getSelection()?.isCollapsed !== false) markUnclear()
+                    requestAnalyze(cue.text)
                   }}
-                  className={cn(
-                    'pointer-events-auto block select-text rounded-xl px-4 py-2 text-center text-lg font-medium leading-snug text-white shadow-lg backdrop-blur-sm transition-colors',
-                    emitEnabled && 'cursor-pointer',
-                    markedCue === activeCue.index
-                      ? 'bg-rose-600/80 ring-2 ring-rose-300'
-                      : flashCue
-                        ? 'bg-black/70 ring-2 ring-amber-300'
-                        : 'bg-black/70',
-                  )}
+                  title="Analyze this line"
+                  className="rounded-full bg-black/70 p-1.5 text-white shadow-lg transition-colors hover:text-brand-400"
                 >
-                  <CueText text={activeCue.text} />
-                </span>
-                <div className="pointer-events-auto absolute -right-3 -top-3 flex gap-1.5 opacity-0 transition-opacity focus-within:opacity-100 group-hover/cue:opacity-100 [@media(hover:none)]:opacity-100">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      requestAnalyze(activeCue.text)
-                    }}
-                    title="Analyze this line"
-                    className="rounded-full bg-black/70 p-1.5 text-white shadow-lg transition-colors hover:text-brand-400"
-                  >
-                    <BookPlus size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      requestAsk(activeCue.text)
-                    }}
-                    title="Ask the assistant"
-                    className="rounded-full bg-black/70 p-1.5 text-white shadow-lg transition-colors hover:text-brand-400"
-                  >
-                    <MessageCircleQuestion size={14} />
-                  </button>
-                </div>
+                  <BookPlus size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    requestAsk(cue.text)
+                  }}
+                  title="Ask the assistant"
+                  className="rounded-full bg-black/70 p-1.5 text-white shadow-lg transition-colors hover:text-brand-400"
+                >
+                  <MessageCircleQuestion size={14} />
+                </button>
               </div>
             </div>
           )}
-
-          <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 bg-gradient-to-t from-black/80 to-transparent px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-10 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
-            <input
-              type="range"
-              min={0}
-              max={durationMs || film.duration_ms || 0}
-              value={currentMs}
-              onChange={(e) => seekTo(Number(e.target.value))}
-              className="h-1 w-full cursor-pointer accent-brand-500"
-            />
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-white">
-              {episodes.length > 1 && (
+          controlsStart={
+            episodes.length > 1 && (
+              <>
                 <button
                   type="button"
                   onClick={() => prevEp && goEpisode(prevEp.id)}
@@ -523,11 +446,6 @@ function WatchInner({ id }: { id: string }) {
                 >
                   <SkipBack size={18} />
                 </button>
-              )}
-              <button type="button" onClick={togglePlay} className="transition-colors hover:text-brand-400">
-                {paused ? <Play size={20} /> : <Pause size={20} />}
-              </button>
-              {episodes.length > 1 && (
                 <button
                   type="button"
                   onClick={() => nextEp && goEpisode(nextEp.id)}
@@ -537,82 +455,27 @@ function WatchInner({ id }: { id: string }) {
                 >
                   <SkipForward size={18} />
                 </button>
+              </>
+            )
+          }
+          controlsEnd={
+            <>
+              {hasSubtitles && (
+                <button type="button" onClick={() => setShowPanel((v) => !v)} className="transition-colors hover:text-brand-400">
+                  {showPanel ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
+                </button>
               )}
               <button
                 type="button"
-                onClick={() => videoRef.current && (videoRef.current.muted = !videoRef.current.muted)}
+                onClick={popOut}
+                title="Pop out (floating window)"
                 className="transition-colors hover:text-brand-400"
               >
-                {muted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+                <PictureInPicture2 size={18} />
               </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={muted ? 0 : volume}
-                onChange={(e) => videoRef.current && (videoRef.current.volume = Number(e.target.value))}
-                className="hidden h-1 w-20 cursor-pointer accent-brand-500 sm:block"
-              />
-              <span className="text-xs tabular-nums text-neutral-300">
-                {formatTime(currentMs)} / {formatTime(durationMs || film.duration_ms)}
-              </span>
-              <div className="ml-auto flex items-center gap-3">
-                {audioTracks.length > 1 && (
-                  <Select
-                    value={audioIdx}
-                    onChange={(e) => changeAudio(Number(e.target.value))}
-                    className={darkSelectClass}
-                    title="Audio track"
-                  >
-                    {audioTracks.map((t, i) => (
-                      <option key={i} value={i}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-                {subtitleTracks.length > 0 && (
-                  <Select
-                    value={subIdx}
-                    onChange={(e) => changeSub(Number(e.target.value))}
-                    className={darkSelectClass}
-                    title="Subtitles"
-                  >
-                    {subtitleTracks.map((t, i) => (
-                      <option key={i} value={i}>
-                        {t.label}
-                      </option>
-                    ))}
-                  </Select>
-                )}
-                {hasSubtitles && (
-                  <button type="button" onClick={() => setShowOverlay((v) => !v)} className="transition-colors hover:text-brand-400">
-                    {showOverlay ? <Captions size={18} /> : <CaptionsOff size={18} />}
-                  </button>
-                )}
-                {hasSubtitles && !isFullscreen && (
-                  <button type="button" onClick={() => setShowPanel((v) => !v)} className="transition-colors hover:text-brand-400">
-                    {showPanel ? <PanelRightClose size={18} /> : <PanelRightOpen size={18} />}
-                  </button>
-                )}
-                {!isFullscreen && (
-                  <button
-                    type="button"
-                    onClick={popOut}
-                    title="Pop out (floating window)"
-                    className="transition-colors hover:text-brand-400"
-                  >
-                    <PictureInPicture2 size={18} />
-                  </button>
-                )}
-                <button type="button" onClick={toggleFullscreen} className="transition-colors hover:text-brand-400">
-                  {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        />
 
         {panelVisible && (
           <SubtitlePanel
