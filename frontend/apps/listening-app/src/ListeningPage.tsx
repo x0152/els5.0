@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { isApiError } from '@els/api-client'
 import { emitTargetedEvents, emitTextEvents } from '@els/core-events'
-import { Button, Input, Spinner, Textarea, VOICES, cn, speak, useAgentView } from '@els/ui'
+import { AppInfoButton, Button, Input, Select, SpeakButton, Spinner, Textarea, VOICES, cn, speak, useAgentView } from '@els/ui'
 import { CheckCheck, Headphones, Lightbulb, Play, RotateCcw, Sparkles, Turtle } from 'lucide-react'
 import { api } from './lib/api'
 import { alignWords, tokenize } from './diff'
@@ -158,6 +158,8 @@ export function ListeningPage() {
     ? [...new Set(sentences.flatMap((s, i) => tokenize(s).filter((_, j) => !results[i]!.heard[j])))]
     : []
 
+  const showSetup = sentences.length === 0 || done
+
   return (
     <div className="h-full w-full overflow-y-auto bg-neutral-50">
       <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-8">
@@ -166,63 +168,12 @@ export function ListeningPage() {
             <Headphones className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Listening</h1>
+            <h1 className="flex items-center gap-1.5 text-2xl font-bold text-neutral-900">
+              Listening <AppInfoButton />
+            </h1>
             <p className="text-sm text-neutral-500">Listen to the sentence and type exactly what you hear.</p>
           </div>
         </header>
-
-        <section className="flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white p-5">
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <Input
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="Topic (optional) — e.g. travel, work, small talk…"
-              className="flex-1"
-            />
-            <Button variant="brand" onClick={() => generate.mutate()} disabled={generate.isPending}>
-              {generate.isPending ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-              {sentences.length ? 'New dictation' : 'Generate dictation'}
-            </Button>
-          </div>
-          <div className="flex flex-wrap items-center gap-4 text-sm">
-            <div className="flex gap-1">
-              {LEVELS.map((l) => (
-                <button
-                  key={l.id}
-                  onClick={() => setLevel(l.id)}
-                  className={cn(
-                    'rounded-full px-3 py-1 text-xs font-medium ring-1 transition-colors',
-                    level === l.id ? 'bg-brand-600 text-white ring-brand-600' : 'bg-white text-neutral-600 ring-neutral-200 hover:bg-neutral-50',
-                  )}
-                >
-                  {l.label}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-1">
-              {COUNTS.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => setCount(c)}
-                  className={cn(
-                    'rounded-full px-2.5 py-1 text-xs font-medium ring-1 transition-colors',
-                    count === c ? 'bg-neutral-900 text-white ring-neutral-900' : 'bg-white text-neutral-600 ring-neutral-200 hover:bg-neutral-50',
-                  )}
-                >
-                  {c}
-                </button>
-              ))}
-              <span className="ml-1 text-xs text-neutral-400">clips</span>
-            </div>
-            <label className="flex items-center gap-2 text-sm text-neutral-600">
-              <input type="checkbox" checked={useVocab} onChange={(e) => setUseVocab(e.target.checked)} />
-              Use words I'm learning
-            </label>
-          </div>
-          {generate.isError && (
-            <p className="text-sm text-red-600">{isApiError(generate.error) ? generate.error.message : 'Generation failed'}</p>
-          )}
-        </section>
 
         {sentences.length > 0 && (
           <div className="flex items-center gap-1.5">
@@ -244,35 +195,47 @@ export function ListeningPage() {
               <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
                 Clip {current + 1} of {sentences.length}
               </h2>
-              <div className="flex items-center gap-2">
-                <select
-                  value={voice}
-                  onChange={(e) => setVoice(e.target.value)}
-                  className="rounded-md border border-neutral-200 bg-white px-2 py-1 text-xs text-neutral-600 outline-none"
-                  title="Voice"
-                >
-                  <option value="">Random voice</option>
-                  {VOICES.map((v) => (
-                    <option key={v} value={v}>
-                      {v}
-                    </option>
-                  ))}
-                </select>
-                <Button variant="secondary" size="sm" onClick={() => play(sentence)}>
-                  <Play className="h-4 w-4" /> Play
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => play(sentence, 0.7)}>
-                  <Turtle className="h-4 w-4" /> Slow
-                </Button>
+              <Select
+                value={voice}
+                onChange={setVoice}
+                options={[
+                  { value: '', label: 'Random voice' },
+                  ...VOICES.map((v) => ({ value: v, label: v })),
+                ]}
+                className="w-auto rounded-md px-2 py-1 text-xs text-neutral-600"
+                title="Voice"
+              />
+            </div>
+
+            <div className="flex items-center gap-4">
+              <SpeakButton variant="round" title="Play the sentence" onPlay={() => play(sentence)} />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-neutral-800">
+                  {result ? 'Here is how you did:' : 'Tap to listen, then type what you hear.'}
+                </p>
                 {!result && (
-                  <Button variant="ghost" size="sm" onClick={() => setHint(true)} disabled={hint}>
-                    <Lightbulb className="h-4 w-4" /> Hint
-                  </Button>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setHint(true)} disabled={hint}>
+                      <Lightbulb className="h-4 w-4" /> Hint
+                    </Button>
+                    <SpeakButton
+                      variant="button"
+                      className="h-8 px-3"
+                      icon={<Turtle className="h-4 w-4" />}
+                      onPlay={() => play(sentence, 0.7)}
+                    >
+                      Slow
+                    </SpeakButton>
+                  </div>
                 )}
               </div>
             </div>
 
-            {hint && !result && <HintSkeleton sentence={sentence} />}
+            {hint && !result && (
+              <div className="rounded-xl bg-neutral-50 px-4 py-3 ring-1 ring-neutral-100">
+                <HintSkeleton sentence={sentence} />
+              </div>
+            )}
 
             <Textarea
               ref={inputRef}
@@ -330,9 +293,12 @@ export function ListeningPage() {
                   <div className="min-w-0 flex-1">
                     <RevealedSentence sentence={s} heard={results[i]!.heard} />
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => play(s)}>
-                    <Play className="h-4 w-4" />
-                  </Button>
+                  <SpeakButton
+                    variant="ghost"
+                    className="h-9 w-9 px-0"
+                    icon={<Play className="h-4 w-4" />}
+                    onPlay={() => play(s)}
+                  />
                 </div>
               ))}
             </div>
@@ -343,14 +309,90 @@ export function ListeningPage() {
               </p>
             )}
 
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={restart}>
-                <RotateCcw className="h-4 w-4" /> Repeat this dictation
-              </Button>
-              <Button variant="brand" onClick={() => generate.mutate()} disabled={generate.isPending}>
-                {generate.isPending ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-                New dictation
-              </Button>
+            <Button variant="secondary" className="self-start" onClick={restart}>
+              <RotateCcw className="h-4 w-4" /> Repeat this dictation
+            </Button>
+          </section>
+        )}
+
+        {showSetup && (
+          <section className="relative overflow-hidden rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-6 shadow-sm">
+            <Headphones className="absolute -right-5 -top-5 h-32 w-32 text-brand-100" />
+            <div className="relative flex flex-col gap-5">
+              <div>
+                <h2 className="text-lg font-bold text-neutral-900">{done ? 'Another round?' : 'New dictation'}</h2>
+                <p className="mt-0.5 text-sm text-neutral-500">
+                  AI writes fresh sentences and reads them aloud — you type what you hear.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-x-8 gap-y-4">
+                <div>
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-400">Difficulty</p>
+                  <div className="flex gap-1.5">
+                    {LEVELS.map((l) => (
+                      <button
+                        key={l.id}
+                        onClick={() => setLevel(l.id)}
+                        className={cn(
+                          'rounded-full px-3.5 py-1.5 text-sm font-medium ring-1 transition-colors',
+                          level === l.id
+                            ? 'bg-brand-600 text-white ring-brand-600 shadow-sm shadow-brand-600/25'
+                            : 'bg-white text-neutral-600 ring-neutral-200 hover:bg-neutral-50',
+                        )}
+                      >
+                        {l.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-400">Sentences</p>
+                  <div className="flex gap-1.5">
+                    {COUNTS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setCount(c)}
+                        className={cn(
+                          'rounded-full px-3.5 py-1.5 text-sm font-medium ring-1 transition-colors',
+                          count === c
+                            ? 'bg-brand-600 text-white ring-brand-600 shadow-sm shadow-brand-600/25'
+                            : 'bg-white text-neutral-600 ring-neutral-200 hover:bg-neutral-50',
+                        )}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-400">Topic</p>
+                <Input
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                  placeholder="Optional — e.g. travel, work, small talk…"
+                  className="max-w-sm"
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-4">
+                <Button variant="brand" size="lg" onClick={() => generate.mutate()} disabled={generate.isPending}>
+                  {generate.isPending ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                  {generate.isPending ? 'Preparing…' : 'Generate dictation'}
+                </Button>
+                {generate.isPending ? (
+                  <p className="text-sm text-neutral-500">
+                    Usually takes 10–30 seconds. Stay on this page — leaving will cancel the generation.
+                  </p>
+                ) : (
+                  <label className="flex items-center gap-2 text-sm text-neutral-600">
+                    <input type="checkbox" checked={useVocab} onChange={(e) => setUseVocab(e.target.checked)} />
+                    Use words I'm learning
+                  </label>
+                )}
+              </div>
+              {generate.isError && (
+                <p className="text-sm text-red-600">{isApiError(generate.error) ? generate.error.message : 'Generation failed'}</p>
+              )}
             </div>
           </section>
         )}

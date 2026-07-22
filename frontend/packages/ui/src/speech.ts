@@ -45,18 +45,21 @@ function speakNative(text: string, opts?: { rate?: number; onEnd?: () => void })
   speechSynthesis.speak(utterance)
 }
 
-export function speak(text: string, opts?: { rate?: number; voice?: string; onEnd?: () => void }) {
+// Resolves with the audio element when playback starts (TTS generation can take a while).
+export function speak(text: string, opts?: { rate?: number; voice?: string; onEnd?: () => void }): Promise<HTMLAudioElement | null> {
   const id = ++seq
   stop()
-  fetchAudio(text, opts?.voice ?? pickVoice(text), opts?.rate ?? 1)
+  return fetchAudio(text, opts?.voice ?? pickVoice(text), opts?.rate ?? 1)
     .then((url) => {
-      if (id !== seq) return
+      if (id !== seq) return null
       const audio = new Audio(url)
       current = audio
       if (opts?.onEnd) audio.onended = opts.onEnd
-      return audio.play()
+      return audio.play().then(() => audio)
     })
-    .catch(() => {
+    .catch((err) => {
+      console.warn('tts failed, falling back to browser voice', err)
       if (id === seq) speakNative(text, opts)
+      return null
     })
 }

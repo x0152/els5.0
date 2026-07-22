@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BookOpen, CheckCircle2, ChevronRight, GraduationCap, ListChecks, Loader2, Play, Sparkles, Trash2, TriangleAlert } from 'lucide-react'
 import { parseExercises } from '@els/blocks'
-import { Badge, Button, Input, useAgentView } from '@els/ui'
+import { AppInfoButton, Badge, Button, Input, useAgentView } from '@els/ui'
 import { setActiveBook, useActiveBook, useBooks, useDeleteLesson, useGenerateLesson, useLessons, useMainCompletion } from '../lib/lessons.ts'
 
 const countSections = (theory: string) => theory.split('\n').filter((l) => l.startsWith('## ')).length
@@ -48,7 +48,10 @@ export function LessonsList() {
                 <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold">{current.level}</span>
               )}
             </div>
-            <h1 className="mt-1 text-2xl font-bold">{current?.title ?? 'Collocations in Use'}</h1>
+            <h1 className="mt-1 flex items-center gap-1.5 text-2xl font-bold">
+              {current?.title ?? 'Collocations in Use'}
+              <AppInfoButton className="text-white/50 hover:bg-white/15 hover:text-white" />
+            </h1>
             {current?.description && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/75">{current.description}</p>}
             {books.length > 1 && (
               <div className="mt-4 flex flex-wrap gap-2">

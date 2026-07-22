@@ -4,8 +4,12 @@ import { isApiError } from '@els/api-client'
 import { cn, MiniPlayerProvider } from '@els/ui'
 import { VocabLookupProvider } from '@els/lookup'
 import { ChatDock } from '@els/chat-app'
+import { AchievementToaster } from '@els/profile-app'
 import { api } from '../lib/api'
 import { useApps } from '../hooks/useApps'
+import { AppTour } from '../onboarding/AppTour'
+import { OnboardingWizard } from '../onboarding/OnboardingWizard'
+import { ONBOARDING_RESET_EVENT, isWizardDone } from '../onboarding/storage'
 import { ErrorPage } from './ErrorPage'
 import { ImpersonationBanner } from './ImpersonationBanner'
 import { Sidebar } from './Sidebar'
@@ -13,12 +17,18 @@ import { Sidebar } from './Sidebar'
 export function AppShell() {
   const { isError, error, refetch } = useApps()
   const [chatOpen, setChatOpen] = useState(false)
+  const [wizardOpen, setWizardOpen] = useState(() => !isWizardDone())
   const navigate = useNavigate()
 
   useEffect(() => {
     const onAsk = () => setChatOpen(true)
+    const onReset = () => setWizardOpen(true)
     document.addEventListener('els:ask', onAsk)
-    return () => document.removeEventListener('els:ask', onAsk)
+    window.addEventListener(ONBOARDING_RESET_EVENT, onReset)
+    return () => {
+      document.removeEventListener('els:ask', onAsk)
+      window.removeEventListener(ONBOARDING_RESET_EVENT, onReset)
+    }
   }, [])
 
   if (isError) {
@@ -53,6 +63,9 @@ export function AppShell() {
         </div>
         <ChatDock open={chatOpen} onOpen={() => setChatOpen(true)} onClose={() => setChatOpen(false)} />
         <VocabLookupProvider api={api} />
+        {wizardOpen && <OnboardingWizard onDone={() => setWizardOpen(false)} />}
+        <AppTour suspended={wizardOpen} />
+        {!wizardOpen && <AchievementToaster />}
       </div>
     </MiniPlayerProvider>
   )

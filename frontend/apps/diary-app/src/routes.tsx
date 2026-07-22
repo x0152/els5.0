@@ -14,7 +14,7 @@ function useBasePath(): string {
 function Layout() {
   const base = useBasePath()
   const link = ({ isActive }: { isActive: boolean }) =>
-    `rounded-md px-3 py-1.5 text-sm font-medium ${isActive ? 'bg-brand-600 text-white' : 'text-neutral-600 hover:bg-neutral-100'}`
+    `rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${isActive ? 'bg-brand-600 text-white shadow-sm shadow-brand-600/25' : 'text-neutral-600 hover:bg-neutral-100'}`
   return (
     <div className="flex h-full flex-col">
       <nav className="flex shrink-0 gap-1 border-b border-neutral-200 bg-white px-6 py-2">

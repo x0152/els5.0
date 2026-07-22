@@ -32,8 +32,13 @@ export interface PlayerSubtitleTrack {
   cues: PlayerCue[]
 }
 
-const darkSelectClass =
-  'w-auto rounded-md border-white/20 bg-white/10 px-2 py-1 text-xs text-white focus:border-white/40 focus:ring-white/20 [&>option]:text-neutral-900'
+export function englishTrackIdx(tracks: { lang: string; label: string }[]): number {
+  let idx = tracks.findIndex((t) => t.lang.toLowerCase().startsWith('en'))
+  if (idx < 0) idx = tracks.findIndex((t) => /english|orig/i.test(t.label))
+  return idx >= 0 ? idx : 0
+}
+
+const darkSelectClass = 'w-auto rounded-md px-2 py-1 text-xs'
 
 function formatTime(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000))
@@ -259,31 +264,23 @@ export function FilmPlayer({
           <div className="ml-auto flex items-center gap-3">
             {audioTracks.length > 1 && (
               <Select
-                value={audioIdx}
-                onChange={(e) => onAudioChange?.(Number(e.target.value))}
+                dark
+                value={String(audioIdx)}
+                onChange={(v) => onAudioChange?.(Number(v))}
+                options={audioTracks.map((t, i) => ({ value: String(i), label: t.label }))}
                 className={darkSelectClass}
                 title="Audio track"
-              >
-                {audioTracks.map((t, i) => (
-                  <option key={i} value={i}>
-                    {t.label}
-                  </option>
-                ))}
-              </Select>
+              />
             )}
             {subtitleTracks.length > 0 && (
               <Select
-                value={subIdx}
-                onChange={(e) => onSubChange?.(Number(e.target.value))}
+                dark
+                value={String(subIdx)}
+                onChange={(v) => onSubChange?.(Number(v))}
+                options={subtitleTracks.map((t, i) => ({ value: String(i), label: t.label }))}
                 className={darkSelectClass}
                 title="Subtitles"
-              >
-                {subtitleTracks.map((t, i) => (
-                  <option key={i} value={i}>
-                    {t.label}
-                  </option>
-                ))}
-              </Select>
+              />
             )}
             {hasSubtitles && (
               <button type="button" onClick={() => setShowOverlay((v) => !v)} className="transition-colors hover:text-brand-400">

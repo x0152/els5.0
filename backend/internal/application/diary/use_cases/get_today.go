@@ -18,15 +18,16 @@ type TodayResult struct {
 }
 
 type GetTodayUseCase struct {
-	repo  diary.Repository
-	clock timex.Clock
+	repo   diary.Repository
+	worker *ReplyWorker
+	clock  timex.Clock
 }
 
-func NewGetTodayUseCase(repo diary.Repository, clock timex.Clock) *GetTodayUseCase {
+func NewGetTodayUseCase(repo diary.Repository, worker *ReplyWorker, clock timex.Clock) *GetTodayUseCase {
 	if clock == nil {
 		clock = timex.System()
 	}
-	return &GetTodayUseCase{repo: repo, clock: clock}
+	return &GetTodayUseCase{repo: repo, worker: worker, clock: clock}
 }
 
 func (uc *GetTodayUseCase) Execute(ctx context.Context, actor *iam.Actor) (TodayResult, error) {
@@ -39,6 +40,10 @@ func (uc *GetTodayUseCase) Execute(ctx context.Context, actor *iam.Actor) (Today
 	var entry *diary.Entry
 	if e, err := uc.repo.GetByDate(ctx, accountID, today); err == nil {
 		entry = &e
+		// Retry a reply that failed or was lost on a server restart.
+		if e.Status == diary.StatusPending && uc.worker != nil {
+			uc.worker.Kick(e, actor.Account().NativeLanguage())
+		}
 	} else if !errors.Is(err, shared.ErrNotFound) {
 		return TodayResult{}, err
 	}

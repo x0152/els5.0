@@ -43,7 +43,10 @@ export function ImageField({
 
   return (
     <div
-      onClick={() => inputRef.current?.click()}
+      onClick={(e) => {
+        e.preventDefault()
+        inputRef.current?.click()
+      }}
       onDragOver={(e) => {
         e.preventDefault()
         setDrag(true)
@@ -79,7 +82,14 @@ export function ImageField({
           <X className="h-3.5 w-3.5" />
         </button>
       )}
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => onChange(e.target.files?.[0] ?? null)}
+      />
     </div>
   )
 }

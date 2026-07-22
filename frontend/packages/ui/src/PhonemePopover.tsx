@@ -1,8 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { Volume2 } from 'lucide-react'
 import { phonemeImage, type PhonemeGuideInfo } from './phonemes.ts'
-import { speak } from './speech.ts'
+import { SpeakButton } from './SpeakButton.tsx'
 
 export interface PhonemeAnchor {
   top: number
@@ -78,14 +77,11 @@ export function PhonemePopover({ symbol, info, anchor, onClose }: PhonemePopover
           <span className="rounded-full bg-brand-50 px-1.5 py-0.5 text-[10px] font-medium text-brand-700">{info.kind}</span>
         )}
         {exampleWord && (
-          <button
-            type="button"
-            onClick={() => speak(exampleWord)}
+          <SpeakButton
             title={`Hear “${exampleWord}”`}
-            className="ml-auto rounded-lg p-1.5 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600"
-          >
-            <Volume2 className="h-4 w-4" />
-          </button>
+            className="ml-auto rounded-lg p-1.5 hover:text-neutral-600"
+            text={exampleWord}
+          />
         )}
       </div>
       {image && <img src={image} alt={`Tongue and lip position for /${symbol}/`} className="mx-auto my-1.5 h-28 w-auto" />}

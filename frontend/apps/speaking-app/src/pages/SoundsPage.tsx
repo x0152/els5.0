@@ -37,14 +37,16 @@ export function SoundsPage() {
         >
           <ArrowLeft className="h-4 w-4" /> Back to practice
         </button>
-        <header>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-neutral-900">
-            <BookOpen className="h-6 w-6 text-brand-600" />
-            Sounds of English
-          </h1>
-          <p className="mt-1 text-sm text-neutral-500">
-            Every sound with its mouth position and a short how-to. Tap a sound for details.
-          </p>
+        <header className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
+            <BookOpen className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-neutral-900">Sounds of English</h1>
+            <p className="text-sm text-neutral-500">
+              Every sound with its mouth position and a short how-to. Tap a sound for details.
+            </p>
+          </div>
         </header>
 
         {guideQ.isLoading ? (
@@ -64,7 +66,7 @@ export function SoundsPage() {
                         key={p.symbol}
                         type="button"
                         onClick={(e) => setSelected({ info: p, anchor: anchorOf(e.currentTarget) })}
-                        className="rounded-2xl bg-white p-4 text-left ring-1 ring-neutral-200 transition hover:ring-brand-400"
+                        className="rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-neutral-200 transition hover:shadow-md hover:ring-brand-400"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-mono text-2xl font-bold text-neutral-900">/{p.symbol}/</span>

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isApiError } from '@els/api-client'
-import { Badge, Button, ErrorState, LoadingState, Spinner, Textarea, cn } from '@els/ui'
-import { Eye, Flame, GitCompareArrows, MessageCircleHeart, NotebookPen, TriangleAlert } from 'lucide-react'
+import { AppInfoButton, Button, ErrorState, LoadingState, Spinner, Textarea, cn } from '@els/ui'
+import { CheckCircle2, Eye, Flame, GitCompareArrows, MessageCircleHeart, NotebookPen, Quote, TriangleAlert } from 'lucide-react'
 import { api } from './lib/api'
 import { diffWords } from './lib/diff'
 import type { Correction, GrammarError } from './lib/types'
@@ -12,14 +12,18 @@ import { WarmupCard } from './components/WarmupCard'
 function GrammarErrorCard({ error }: { error: GrammarError }) {
   const [revealed, setRevealed] = useState(false)
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
-      <p className="font-medium text-amber-900">
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
+      <p className="font-medium leading-relaxed text-amber-900">
         <span className="rounded bg-red-100 px-1 text-red-700 line-through decoration-2">{error.original}</span>
         {revealed && <span className="ml-2 rounded bg-emerald-100 px-1 font-medium text-emerald-700">{error.correction}</span>}
       </p>
-      <p className="mt-1 text-amber-800">{error.explanation}</p>
+      <p className="mt-1.5 text-amber-800">{error.explanation}</p>
       {!revealed && (
-        <button type="button" onClick={() => setRevealed(true)} className="mt-1.5 flex items-center gap-1 text-xs text-amber-700 hover:underline">
+        <button
+          type="button"
+          onClick={() => setRevealed(true)}
+          className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 transition-colors hover:bg-amber-100"
+        >
           <Eye className="h-3.5 w-3.5" /> Show the fix
         </button>
       )}
@@ -30,11 +34,14 @@ function GrammarErrorCard({ error }: { error: GrammarError }) {
 function EntryDiff({ draft, text }: { draft: string; text: string }) {
   const tokens = diffWords(draft, text)
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white p-4">
-      <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
-        <GitCompareArrows className="h-4 w-4 text-brand-600" /> What you fixed
+    <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+          <GitCompareArrows className="h-4 w-4" />
+        </div>
+        <span className="text-sm font-semibold text-neutral-900">What you fixed</span>
       </div>
-      <p className="mt-2 leading-relaxed text-neutral-800">
+      <p className="mt-3 leading-relaxed text-neutral-800">
         {tokens.map((t, i) => (
           <span
             key={i}
@@ -61,6 +68,7 @@ export function DiaryAppPage() {
   const today = useQuery({
     queryKey: ['diary', 'today'],
     queryFn: () => api.diary.diaryToday(),
+    refetchInterval: (q) => (q.state.data?.entry?.status === 'pending' ? 3000 : false),
   })
 
   const submit = useMutation({
@@ -88,6 +96,7 @@ export function DiaryAppPage() {
   })
 
   const busy = check.isPending || submit.isPending
+  const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0
 
   if (today.isError) {
     return (
@@ -108,19 +117,24 @@ export function DiaryAppPage() {
   return (
     <div className="h-full w-full overflow-y-auto bg-neutral-50">
       <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-8">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold text-neutral-900">
-              <NotebookPen className="h-6 w-6 text-brand-600" /> Diary
-            </h1>
-            <p className="text-sm text-neutral-500">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
+        <header className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
+              <NotebookPen className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="flex items-center gap-1.5 text-2xl font-bold text-neutral-900">
+                Diary <AppInfoButton />
+              </h1>
+              <p className="text-sm text-neutral-500">
+                {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+            </div>
           </div>
           {streak > 0 && (
-            <Badge tone="warning" className="gap-1">
-              <Flame className="h-3.5 w-3.5" /> {streak}-day streak
-            </Badge>
+            <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3.5 py-1.5 text-sm font-semibold text-white shadow-sm shadow-orange-500/25">
+              <Flame className="h-4 w-4" /> {streak}-day streak
+            </div>
           )}
         </header>
 
@@ -134,17 +148,18 @@ export function DiaryAppPage() {
         )}
 
         <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Question of the day</h2>
-          <div className="rounded-lg border border-brand-200 bg-brand-50 p-4">
-            <p className="font-medium text-neutral-900">{entry?.question || question}</p>
+          <div className="relative overflow-hidden rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-5 shadow-sm">
+            <Quote className="absolute -right-1 -top-1 h-16 w-16 -scale-x-100 text-brand-100" />
+            <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">Question of the day</p>
+            <p className="relative mt-1.5 text-lg font-medium leading-snug text-neutral-900">{entry?.question || question}</p>
           </div>
 
           {!entry ? (
-            <>
+            <div className="flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
               <Textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                rows={6}
+                rows={7}
                 placeholder="Write 3–5 sentences in English. Fix any real grammar slips before sending — typos and commas don't count."
                 disabled={busy}
               />
@@ -169,45 +184,69 @@ export function DiaryAppPage() {
                       : 'Failed to submit the entry'}
                 </p>
               )}
-              <div className="flex items-center justify-end gap-3">
-                {check.isPending && (
-                  <span className="flex items-center gap-2 text-sm text-neutral-500">
-                    <Spinner className="h-4 w-4" /> Checking your grammar…
-                  </span>
-                )}
-                {submit.isPending && (
-                  <span className="flex items-center gap-2 text-sm text-neutral-500">
-                    <Spinner className="h-4 w-4" /> Your friend is reading your entry…
-                  </span>
-                )}
-                <Button variant="brand" onClick={() => check.mutate(text)} disabled={busy || text.trim().length < 10}>
-                  {errors ? 'Check again & send' : 'Send'}
-                </Button>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-neutral-400">{wordCount > 0 && `${wordCount} ${wordCount === 1 ? 'word' : 'words'}`}</span>
+                <div className="flex items-center gap-3">
+                  {check.isPending && (
+                    <span className="flex items-center gap-2 text-sm text-neutral-500">
+                      <Spinner className="h-4 w-4" /> Checking your grammar…
+                    </span>
+                  )}
+                  {submit.isPending && (
+                    <span className="flex items-center gap-2 text-sm text-neutral-500">
+                      <Spinner className="h-4 w-4" /> Your friend is reading your entry…
+                    </span>
+                  )}
+                  <Button variant="brand" onClick={() => check.mutate(text)} disabled={busy || text.trim().length < 10}>
+                    {errors ? 'Check again & send' : 'Send'}
+                  </Button>
+                </div>
               </div>
-            </>
+            </div>
           ) : (
-            <div className="whitespace-pre-wrap rounded-lg border border-neutral-200 bg-white p-4 leading-relaxed text-neutral-800">
+            <div className="whitespace-pre-wrap rounded-2xl border border-neutral-200 bg-white p-5 leading-relaxed text-neutral-800 shadow-sm">
               {entry.text}
             </div>
           )}
         </section>
 
-        {entry && (
+        {entry && entry.status === 'pending' && (
+          <section className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+              <MessageCircleHeart className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
+                <Spinner className="h-4 w-4" /> Your friend is reading your entry…
+              </p>
+              <p className="mt-0.5 text-sm text-neutral-500">
+                Feel free to close the app — the reply will be waiting here when you come back.
+              </p>
+            </div>
+          </section>
+        )}
+
+        {entry && entry.status !== 'pending' && (
           <section className="flex flex-col gap-3">
             {entry.draft && entry.draft !== entry.text && <EntryDiff draft={entry.draft} text={entry.text} />}
-            <div className="rounded-lg border border-neutral-200 bg-white p-4">
-              <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
-                <MessageCircleHeart className="h-4 w-4 text-rose-500" /> Friend's reply
+            <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+                  <MessageCircleHeart className="h-4 w-4" />
+                </div>
+                <span className="text-sm font-semibold text-neutral-900">Friend's reply</span>
               </div>
-              <p className="mt-2 whitespace-pre-wrap leading-relaxed text-neutral-800">{entry.reply}</p>
+              <p className="mt-3 whitespace-pre-wrap leading-relaxed text-neutral-800">{entry.reply}</p>
               {entry.next_question && (
-                <p className="mt-3 rounded-md bg-neutral-50 px-3 py-2 text-sm text-neutral-600">
-                  Question for tomorrow: <span className="font-medium text-neutral-800">{entry.next_question}</span>
+                <p className="mt-4 rounded-xl bg-brand-50 px-3.5 py-2.5 text-sm text-brand-800">
+                  Question for tomorrow: <span className="font-medium">{entry.next_question}</span>
                 </p>
               )}
             </div>
             <NotesSection notes={entry.corrections ?? []} nativeSample={entry.native_sample} />
-            <p className="text-center text-sm text-neutral-400">Today's entry is done — come back tomorrow.</p>
+            <p className="flex items-center justify-center gap-1.5 py-2 text-sm text-neutral-400">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Today's entry is done — come back tomorrow.
+            </p>
           </section>
         )}
       </div>

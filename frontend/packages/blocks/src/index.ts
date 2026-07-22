@@ -7,6 +7,7 @@ export type { PracticeSessionProps } from './PracticeSession.tsx'
 export { BookSpread } from './BookSpread.tsx'
 export type { BookSpreadProps } from './BookSpread.tsx'
 export { mockCheckAnswer, checkLocal } from './check.ts'
+export { iconify } from './emoji.tsx'
 export type { CheckFn, CheckResult } from './check.ts'
 export { DeferredBlocks } from './Deferred.tsx'
 export type { DeferredResult } from './Deferred.tsx'
@@ -16,6 +17,8 @@ export {
   parseExercises,
   parseGap,
   gapPrompt,
+  indexGaps,
+  fillGap,
 } from './parse.ts'
 export type { Node, Size, Gap, TheorySection, Exercise } from './parse.ts'
 export type { ImageApi, IllustrationStatus, ImageAspect } from './images.ts'
@@ -32,4 +35,5 @@ export type {
   CheckFreeResult,
   CheckFreeFn,
   ProduceEvent,
+  FillEvent,
 } from './state.ts'

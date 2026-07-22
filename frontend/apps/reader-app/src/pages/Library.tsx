@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BookOpen, Check, CheckCheck, FileText, FileUp, Layers, Library as LibraryIcon, Loader2, Pencil, Plus, Trash2, Upload } from 'lucide-react'
 import {
+  AppInfoButton,
   Badge,
   Button,
   ConfirmDialog,
@@ -75,7 +76,7 @@ export function Library() {
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-bold text-neutral-900">
               <LibraryIcon className="h-6 w-6 text-brand-600" />
-              Reader
+              Reader <AppInfoButton />
             </h1>
             <p className="mt-1 text-sm text-neutral-500">Upload books and articles and read with saved position</p>
           </div>

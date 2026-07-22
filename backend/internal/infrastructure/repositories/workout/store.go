@@ -12,6 +12,7 @@ import (
 
 	"github.com/els/backend/internal/domain/shared"
 	"github.com/els/backend/internal/domain/workout"
+	"github.com/els/backend/internal/infrastructure/postgres"
 )
 
 type Store struct {
@@ -94,6 +95,12 @@ func (s *Store) CurrentLesson(ctx context.Context, accountID string) (workout.Le
 		WHERE account_id = $1 AND status = $2 ORDER BY number DESC LIMIT 1`, accountID, workout.LessonStatusActive))
 }
 
+func (s *Store) PendingLesson(ctx context.Context, accountID string) (workout.Lesson, error) {
+	return scanLesson(s.pool.QueryRow(ctx, `SELECT `+lessonColumns+` FROM workout_lessons
+		WHERE account_id = $1 AND status IN ($2, $3) ORDER BY created_at DESC LIMIT 1`,
+		accountID, workout.LessonStatusGenerating, workout.LessonStatusFailed))
+}
+
 func (s *Store) GetLesson(ctx context.Context, accountID, id string) (workout.Lesson, error) {
 	return scanLesson(s.pool.QueryRow(ctx, `SELECT `+lessonColumns+` FROM workout_lessons
 		WHERE account_id = $1 AND id = $2`, accountID, id))
@@ -101,7 +108,7 @@ func (s *Store) GetLesson(ctx context.Context, accountID, id string) (workout.Le
 
 func (s *Store) ListRecentLessons(ctx context.Context, accountID string, limit int) ([]workout.Lesson, error) {
 	rows, err := s.pool.Query(ctx, `SELECT `+lessonColumns+` FROM workout_lessons
-		WHERE account_id = $1 ORDER BY number DESC LIMIT $2`, accountID, limit)
+		WHERE account_id = $1 AND status IN ('active','completed') ORDER BY number DESC LIMIT $2`, accountID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("list lessons: %w", err)
 	}
@@ -138,18 +145,34 @@ func scanLesson(row scannable) (workout.Lesson, error) {
 	return lesson, nil
 }
 
-func (s *Store) InsertLesson(ctx context.Context, lesson workout.Lesson) error {
+func (s *Store) ClaimGeneration(ctx context.Context, lesson workout.Lesson, staleBefore time.Time) error {
 	steps, err := json.Marshal(lesson.Steps)
 	if err != nil {
 		return fmt.Errorf("marshal steps: %w", err)
 	}
-	_, err = s.pool.Exec(ctx, `INSERT INTO workout_lessons (id, account_id, number, film_id, start_ms, end_ms, status, steps, created_at, completed_at)
-		VALUES ($1,$2,$3,NULLIF($4,'')::uuid,$5,$6,$7,$8,$9,$10)`,
-		lesson.ID, lesson.AccountID, lesson.Number, lesson.FilmID, lesson.StartMs, lesson.EndMs, lesson.Status, steps, lesson.CreatedAt, lesson.CompletedAt)
+	// Reclaim failed/abandoned rows first, then insert; both in one transaction
+	// (a CTE would not work: INSERT does not see the DELETE within one statement).
+	// A live claim still hits UNIQUE (account_id, number) and surfaces as a conflict.
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("insert lesson: %w", err)
+		return fmt.Errorf("claim generation: begin: %w", err)
 	}
-	return nil
+	defer func() { _ = tx.Rollback(ctx) }()
+	if _, err := tx.Exec(ctx, `DELETE FROM workout_lessons
+		WHERE account_id = $1 AND (status = 'failed' OR (status = 'generating' AND created_at < $2))`,
+		lesson.AccountID, staleBefore); err != nil {
+		return fmt.Errorf("claim generation: reclaim: %w", err)
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO workout_lessons (id, account_id, number, film_id, start_ms, end_ms, status, steps, created_at)
+		VALUES ($1,$2,$3,NULLIF($4,'')::uuid,$5,$6,$7,$8,$9)`,
+		lesson.ID, lesson.AccountID, lesson.Number, lesson.FilmID, lesson.StartMs, lesson.EndMs, lesson.Status, steps, lesson.CreatedAt)
+	if postgres.IsUniqueViolation(err) {
+		return fmt.Errorf("lesson generation already in progress: %w", shared.ErrConflict)
+	}
+	if err != nil {
+		return fmt.Errorf("claim generation: %w", err)
+	}
+	return tx.Commit(ctx)
 }
 
 func (s *Store) UpdateLesson(ctx context.Context, lesson workout.Lesson) error {
@@ -157,8 +180,10 @@ func (s *Store) UpdateLesson(ctx context.Context, lesson workout.Lesson) error {
 	if err != nil {
 		return fmt.Errorf("marshal steps: %w", err)
 	}
-	ct, err := s.pool.Exec(ctx, `UPDATE workout_lessons SET status = $3, steps = $4, completed_at = $5
-		WHERE account_id = $1 AND id = $2`, lesson.AccountID, lesson.ID, lesson.Status, steps, lesson.CompletedAt)
+	ct, err := s.pool.Exec(ctx, `UPDATE workout_lessons SET status = $3, steps = $4, completed_at = $5,
+		film_id = NULLIF($6,'')::uuid, start_ms = $7, end_ms = $8
+		WHERE account_id = $1 AND id = $2`,
+		lesson.AccountID, lesson.ID, lesson.Status, steps, lesson.CompletedAt, lesson.FilmID, lesson.StartMs, lesson.EndMs)
 	if err != nil {
 		return fmt.Errorf("update lesson: %w", err)
 	}
@@ -187,9 +212,12 @@ func (s *Store) ListCompletedDates(ctx context.Context, accountID string, since 
 	return out, rows.Err()
 }
 
-func (s *Store) ListAccountsNeedingLesson(ctx context.Context) ([]string, error) {
+func (s *Store) ListAccountsNeedingLesson(ctx context.Context, staleBefore time.Time) ([]string, error) {
+	// Every row is either completed or a dead claim: accounts with an active
+	// lesson or a live generation claim are excluded.
 	rows, err := s.pool.Query(ctx, `SELECT account_id FROM workout_lessons
-		GROUP BY account_id HAVING bool_and(status = 'completed')`)
+		GROUP BY account_id
+		HAVING bool_and(status = 'completed' OR status = 'failed' OR (status = 'generating' AND created_at < $1))`, staleBefore)
 	if err != nil {
 		return nil, fmt.Errorf("list accounts needing lesson: %w", err)
 	}
@@ -273,6 +301,29 @@ func (s *Store) SavePosition(ctx context.Context, pos workout.Position) error {
 		pos.AccountID, pos.Title, pos.FilmID, pos.NextSegment, pos.UsedAt)
 	if err != nil {
 		return fmt.Errorf("save position: %w", err)
+	}
+	return nil
+}
+
+// FailStaleGenerating marks lessons left mid-generation (e.g. after a restart)
+// as failed, so the UI stops showing an eternal spinner and allows a retry.
+func (s *Store) FailStaleGenerating(ctx context.Context) error {
+	_, err := s.pool.Exec(ctx, `UPDATE workout_lessons SET status = 'failed' WHERE status = 'generating'`)
+	if err != nil {
+		return fmt.Errorf("fail stale generating lessons: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) DeleteAccountData(ctx context.Context, accountID string) error {
+	for _, q := range []string{
+		`DELETE FROM workout_lessons WHERE account_id = $1`,
+		`DELETE FROM workout_items WHERE account_id = $1`,
+		`DELETE FROM workout_positions WHERE account_id = $1`,
+	} {
+		if _, err := s.pool.Exec(ctx, q, accountID); err != nil {
+			return fmt.Errorf("reset workout data: %w", err)
+		}
 	}
 	return nil
 }

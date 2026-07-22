@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Bot, ChevronRight, Maximize2, RotateCcw, Trash2 } from 'lucide-react'
-import { cn, ConfirmDialog, Select } from '@els/ui'
+import { AppInfoButton, cn, ConfirmDialog, Select } from '@els/ui'
 import { useChat } from '../hooks/useChat'
 import { ChatMessages } from './ChatMessages'
 import { ChatComposer } from './ChatComposer'
@@ -12,16 +12,13 @@ function ModelSelect({ chat }: { chat: Chat }) {
   return (
     <Select
       value={chat.model}
-      onChange={(e) => void chat.selectModel(e.target.value)}
-      className="max-w-[140px] truncate px-2 py-1 text-xs text-neutral-600 hover:border-neutral-300"
-    >
-      {chat.model && !chat.models.includes(chat.model) && <option value={chat.model}>{chat.model}</option>}
-      {chat.models.map((m) => (
-        <option key={m} value={m}>
-          {m}
-        </option>
-      ))}
-    </Select>
+      onChange={(v) => void chat.selectModel(v)}
+      options={(chat.model && !chat.models.includes(chat.model)
+        ? [chat.model, ...chat.models]
+        : chat.models
+      ).map((m) => ({ value: m, label: m }))}
+      className="max-w-[140px] px-2 py-1 text-xs text-neutral-600 hover:border-neutral-300"
+    />
   )
 }
 
@@ -79,7 +76,9 @@ export function ChatConversation({
               <Bot className="h-4 w-4" />
             </span>
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-sm font-semibold leading-tight text-neutral-900">Assistant</h2>
+              <h2 className="flex items-center gap-1 truncate text-sm font-semibold leading-tight text-neutral-900">
+                Assistant {page && <AppInfoButton className="p-0.5" />}
+              </h2>
               {page && <p className="text-xs text-neutral-400">Your personal English tutor</p>}
             </div>
             <ModelSelect chat={chat} />
@@ -115,6 +114,7 @@ export function ChatConversation({
           streaming={chat.streaming}
           onRegenerate={() => void chat.regenerate()}
           onPickSuggestion={chat.send}
+          onFill={chat.fill}
           variant={variant}
         />
         <ChatComposer streaming={chat.streaming} onSend={chat.send} onStop={chat.stop} variant={variant} />

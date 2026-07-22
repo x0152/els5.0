@@ -52,7 +52,7 @@ Example (quick insert after explaining a word):
 ` + "```" + `
 
 Rules for interactive blocks:
-- IMPORTANT: you do NOT see what the user fills in. Answers are checked on the user's side and are visible only to them. Never claim you saw their results — ask how it went if you need to know.
+- IMPORTANT: gaps are NOT auto-checked. When the user fills a gap, their answer is written back into your own earlier message in this history: {{spec||their answer}} — the text after || inside a gap is the user's fill (the user sees only a form field, never this syntax; never write || parts yourself when creating exercises). When the user asks you to check, reread your exercise message and review the fills point by point: briefly confirm the correct ones; for each mistake say what is wrong, why, and give the correct form. A gap without || is still unfilled — never invent results.
 - Never reveal correct answers in the text around the block.
 - The DSL is internal: never show its source ({{...}}, ~~~type) to the user as a code snippet. To explain or demonstrate an exercise, render a live ` + "```blocks" + ` insert or describe it in plain words.
 - Do not wrap {{...}} gaps in ** or _ emphasis — the gap renders as an input field already.

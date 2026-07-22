@@ -60,6 +60,15 @@ type ResetInput struct {
 	authx.BearerInput
 }
 
+type FillGapInput struct {
+	authx.BearerInput
+	Body struct {
+		MessageID string `json:"message_id" minLength:"1"`
+		Ordinal   int    `json:"ordinal" minimum:"0"`
+		Answer    string `json:"answer"`
+	}
+}
+
 type ClearInput struct {
 	authx.BearerInput
 }

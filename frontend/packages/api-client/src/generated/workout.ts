@@ -1,4 +1,21 @@
 export interface paths {
+    "/api/v1/workout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete all workout progress and generated lessons of the account */
+        delete: operations["workoutReset"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workout/lessons": {
         parameters: {
             query?: never;
@@ -8,7 +25,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Return the active lesson, generating one if none is ready */
+        /** Return the active lesson or start background generation */
         post: operations["workoutStartLesson"];
         delete?: never;
         options?: never;
@@ -172,6 +189,11 @@ export interface components {
             /** Format: date-time */
             time: string;
         };
+        ResetOutput: Record<string, never>;
+        StartLessonOutput: {
+            generating: boolean;
+            lesson?: components["schemas"]["LessonOutput"];
+        };
         StepOutput: {
             done: boolean;
             grammar?: components["schemas"]["GrammarOutput"];
@@ -209,17 +231,20 @@ export interface components {
             meta?: components["schemas"]["Meta"];
             ok: boolean;
         };
-        SuccessBodyTodayOutput: {
-            data: components["schemas"]["TodayOutput"];
+        SuccessBodyResetOutput: {
+            data: components["schemas"]["ResetOutput"];
             meta?: components["schemas"]["Meta"];
             ok: boolean;
         };
-        TodayOutput: {
-            completed: boolean;
-            days: string[] | null;
-            lesson?: components["schemas"]["LessonOutput"];
-            /** Format: int64 */
-            streak: number;
+        SuccessBodyStartLessonOutput: {
+            data: components["schemas"]["StartLessonOutput"];
+            meta?: components["schemas"]["Meta"];
+            ok: boolean;
+        };
+        SuccessBodyWorkoutTodayOutput: {
+            data: components["schemas"]["WorkoutTodayOutput"];
+            meta?: components["schemas"]["Meta"];
+            ok: boolean;
         };
         VocabWordOutput: {
             definition?: string;
@@ -247,6 +272,16 @@ export interface components {
             summary?: string;
             title: string;
         };
+        WorkoutTodayOutput: {
+            completed: boolean;
+            days: string[] | null;
+            generating?: boolean;
+            generating_since?: string;
+            generation_failed?: boolean;
+            lesson?: components["schemas"]["LessonOutput"];
+            /** Format: int64 */
+            streak: number;
+        };
         WritingOutput: {
             dialogue: string;
             scenario: string;
@@ -272,19 +307,52 @@ export type SchemaPhraseOutput = components['schemas']['PhraseOutput'];
 export type SchemaQuestionOutput = components['schemas']['QuestionOutput'];
 export type SchemaReadingOutput = components['schemas']['ReadingOutput'];
 export type SchemaReadyOutput = components['schemas']['ReadyOutput'];
+export type SchemaResetOutput = components['schemas']['ResetOutput'];
+export type SchemaStartLessonOutput = components['schemas']['StartLessonOutput'];
 export type SchemaStepOutput = components['schemas']['StepOutput'];
 export type SchemaSubmitStepInputBody = components['schemas']['SubmitStepInputBody'];
 export type SchemaSuccessBodyHealthOutput = components['schemas']['SuccessBodyHealthOutput'];
 export type SchemaSuccessBodyLessonOutput = components['schemas']['SuccessBodyLessonOutput'];
 export type SchemaSuccessBodyReadyOutput = components['schemas']['SuccessBodyReadyOutput'];
-export type SchemaSuccessBodyTodayOutput = components['schemas']['SuccessBodyTodayOutput'];
-export type SchemaTodayOutput = components['schemas']['TodayOutput'];
+export type SchemaSuccessBodyResetOutput = components['schemas']['SuccessBodyResetOutput'];
+export type SchemaSuccessBodyStartLessonOutput = components['schemas']['SuccessBodyStartLessonOutput'];
+export type SchemaSuccessBodyWorkoutTodayOutput = components['schemas']['SuccessBodyWorkoutTodayOutput'];
 export type SchemaVocabWordOutput = components['schemas']['VocabWordOutput'];
 export type SchemaWarmupItemOutput = components['schemas']['WarmupItemOutput'];
 export type SchemaWatchOutput = components['schemas']['WatchOutput'];
+export type SchemaWorkoutTodayOutput = components['schemas']['WorkoutTodayOutput'];
 export type SchemaWritingOutput = components['schemas']['WritingOutput'];
 export type $defs = Record<string, never>;
 export interface operations {
+    workoutReset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessBodyResetOutput"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     workoutStartLesson: {
         parameters: {
             query?: never;
@@ -300,7 +368,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuccessBodyLessonOutput"];
+                    "application/json": components["schemas"]["SuccessBodyStartLessonOutput"];
                 };
             };
             /** @description Error */
@@ -396,7 +464,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SuccessBodyTodayOutput"];
+                    "application/json": components["schemas"]["SuccessBodyWorkoutTodayOutput"];
                 };
             };
             /** @description Error */

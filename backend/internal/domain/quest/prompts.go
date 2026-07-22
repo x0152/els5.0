@@ -759,6 +759,8 @@ ALWAYS flag errors that show the player doesn't know how a construction works, e
 - Broken word order that makes the sentence hard to understand
 - Serious spelling mistakes where the intended word is unclear
 
+Be EXHAUSTIVE: re-read the whole text sentence by sentence and list EVERY error of the types above in this single response. Never stop after the first few — the user will fix exactly what you list and must not discover new errors in unchanged sentences on the next check.
+
 Every explanation MUST be written in English only.
 
 If the text contains NONE of the error types above, return EXACTLY this and nothing else:

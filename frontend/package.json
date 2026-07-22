@@ -24,6 +24,7 @@
     "dev:reading": "pnpm --filter @els/reading-app dev",
     "dev:settings": "pnpm --filter @els/settings-app dev",
     "dev:speaking": "pnpm --filter @els/speaking-app dev",
+    "dev:studio": "pnpm --filter @els/studio-app dev",
     "dev:vocab": "pnpm --filter @els/vocab-app dev",
     "dev:wordbook": "pnpm --filter @els/wordbook-app dev",
     "dev:workout": "pnpm --filter @els/workout-app dev",

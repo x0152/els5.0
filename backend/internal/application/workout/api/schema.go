@@ -91,10 +91,18 @@ type TodayInput struct {
 }
 
 type WorkoutTodayOutput struct {
-	Streak    int           `json:"streak"`
-	Days      []string      `json:"days"`
-	Completed bool          `json:"completed"`
-	Lesson    *LessonOutput `json:"lesson,omitempty"`
+	Streak           int           `json:"streak"`
+	Days             []string      `json:"days"`
+	Completed        bool          `json:"completed"`
+	Lesson           *LessonOutput `json:"lesson,omitempty"`
+	Generating       bool          `json:"generating,omitempty"`
+	GeneratingSince  string        `json:"generating_since,omitempty"`
+	GenerationFailed bool          `json:"generation_failed,omitempty"`
+}
+
+type StartLessonOutput struct {
+	Generating bool          `json:"generating"`
+	Lesson     *LessonOutput `json:"lesson,omitempty"`
 }
 
 type StartLessonInput struct {
@@ -124,3 +132,9 @@ type SubmitStepInput struct {
 		Results []ItemResultInput `json:"results,omitempty" maxItems:"30"`
 	}
 }
+
+type ResetInput struct {
+	authx.BearerInput
+}
+
+type ResetOutput struct{}

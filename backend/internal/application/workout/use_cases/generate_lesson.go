@@ -86,35 +86,65 @@ func (uc *GenerateLessonUseCase) Execute(ctx context.Context, accountID string) 
 		number = recent[0].Number + 1
 	}
 
-	// 3. The 7th lesson of a cycle reviews the weakest material instead of new content.
+	// 3. Adopt the live claim made by the start endpoint, or claim the slot with a
+	// "generating" row — concurrent callers back off with a conflict. The UI reads
+	// generation progress from this row.
 	now := uc.clock.Now().In(timex.MSK)
 	lesson := workout.Lesson{
 		ID:        uuid.NewString(),
 		AccountID: accountID,
 		Number:    number,
-		Status:    workout.LessonStatusActive,
+		Status:    workout.LessonStatusGenerating,
+		Steps:     []workout.Step{},
 		CreatedAt: now,
 	}
-	if workout.IsReviewNumber(number) {
-		if err := uc.buildReviewSteps(ctx, &lesson, level); err != nil {
+	pending, err := uc.repo.PendingLesson(ctx, accountID)
+	switch {
+	case err == nil && pending.GenerationInFlight(now):
+		lesson.ID, lesson.Number, lesson.CreatedAt = pending.ID, pending.Number, pending.CreatedAt
+	case err != nil && !errors.Is(err, shared.ErrNotFound):
+		return workout.Lesson{}, err
+	default:
+		if err := uc.repo.ClaimGeneration(ctx, lesson, now.Add(-workout.GenerationStaleAfter)); err != nil {
 			return workout.Lesson{}, err
 		}
-	}
-	// A review with nothing to review (or a regular number) gets a fresh lesson.
-	if len(lesson.Steps) == 0 {
-		if err := uc.buildRegularSteps(ctx, &lesson, level, recent, now); err != nil {
-			return workout.Lesson{}, err
-		}
-	}
-	if len(lesson.Steps) == 0 {
-		return workout.Lesson{}, fmt.Errorf("no material for a lesson: %w", shared.ErrValidation)
 	}
 
-	// 4. Persist the ready lesson.
-	if err := uc.repo.InsertLesson(ctx, lesson); err != nil {
+	// 4. Build the steps; a failure is recorded on the claim so the UI can report it.
+	if err := uc.buildSteps(ctx, &lesson, level, recent, now); err != nil {
+		lesson.Status = workout.LessonStatusFailed
+		lesson.Steps = []workout.Step{}
+		if markErr := uc.repo.UpdateLesson(context.WithoutCancel(ctx), lesson); markErr != nil {
+			err = errors.Join(err, markErr)
+		}
+		return workout.Lesson{}, err
+	}
+
+	// 5. Promote the claim row into the ready lesson.
+	lesson.Status = workout.LessonStatusActive
+	if err := uc.repo.UpdateLesson(ctx, lesson); err != nil {
 		return workout.Lesson{}, err
 	}
 	return lesson, nil
+}
+
+func (uc *GenerateLessonUseCase) buildSteps(ctx context.Context, lesson *workout.Lesson, level string, recent []workout.Lesson, now time.Time) error {
+	// The 7th lesson of a cycle reviews the weakest material instead of new content;
+	// a review with nothing to review (or a regular number) gets a fresh lesson.
+	if workout.IsReviewNumber(lesson.Number) {
+		if err := uc.buildReviewSteps(ctx, lesson, level); err != nil {
+			return err
+		}
+	}
+	if len(lesson.Steps) == 0 {
+		if err := uc.buildRegularSteps(ctx, lesson, level, recent, now); err != nil {
+			return err
+		}
+	}
+	if len(lesson.Steps) == 0 {
+		return fmt.Errorf("no material for a lesson: %w", shared.ErrValidation)
+	}
+	return nil
 }
 
 func (uc *GenerateLessonUseCase) buildRegularSteps(ctx context.Context, lesson *workout.Lesson, level string, recent []workout.Lesson, now time.Time) error {

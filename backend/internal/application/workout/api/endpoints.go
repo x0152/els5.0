@@ -12,11 +12,12 @@ import (
 )
 
 type Deps struct {
-	Authenticator  *authx.Authenticator
-	GetToday       *usecases.GetTodayUseCase
-	GenerateLesson *usecases.GenerateLessonUseCase
-	GetLesson      *usecases.GetLessonUseCase
-	SubmitStep     *usecases.SubmitStepUseCase
+	Authenticator *authx.Authenticator
+	GetToday      *usecases.GetTodayUseCase
+	StartLesson   *usecases.StartLessonUseCase
+	GetLesson     *usecases.GetLessonUseCase
+	SubmitStep    *usecases.SubmitStepUseCase
+	Reset         *usecases.ResetUseCase
 }
 
 func Register(api huma.API, deps Deps) {
@@ -38,14 +39,14 @@ func Register(api huma.API, deps Deps) {
 		OperationID: "workoutStartLesson",
 		Method:      http.MethodPost,
 		Path:        "/api/v1/workout/lessons",
-		Summary:     "Return the active lesson, generating one if none is ready",
+		Summary:     "Return the active lesson or start background generation",
 		Tags:        []string{"workout"},
-	}, func(ctx context.Context, actor *iam.Actor, _ *StartLessonInput) (LessonOutput, error) {
-		lesson, err := deps.GenerateLesson.Execute(ctx, actor.AccountID().String())
+	}, func(ctx context.Context, actor *iam.Actor, _ *StartLessonInput) (StartLessonOutput, error) {
+		res, err := deps.StartLesson.Execute(ctx, actor.AccountID().String())
 		if err != nil {
-			return LessonOutput{}, err
+			return StartLessonOutput{}, err
 		}
-		return toLessonOutput(lesson), nil
+		return toStartLessonOutput(res), nil
 	})
 
 	authx.Authed(api, deps.Authenticator, huma.Operation{
@@ -74,5 +75,16 @@ func Register(api huma.API, deps Deps) {
 			return LessonOutput{}, err
 		}
 		return toLessonOutput(lesson), nil
+	})
+
+	authx.Authed(api, deps.Authenticator, huma.Operation{
+		OperationID:   "workoutReset",
+		Method:        http.MethodDelete,
+		Path:          "/api/v1/workout",
+		Summary:       "Delete all workout progress and generated lessons of the account",
+		Tags:          []string{"workout"},
+		DefaultStatus: http.StatusNoContent,
+	}, func(ctx context.Context, actor *iam.Actor, _ *ResetInput) (ResetOutput, error) {
+		return ResetOutput{}, deps.Reset.Execute(ctx, actor)
 	})
 }

@@ -19,7 +19,7 @@ type Store struct {
 
 func NewStore(pool *pgxpool.Pool) *Store { return &Store{pool: pool} }
 
-const entryColumns = `id, account_id, entry_date, question, draft, text, reply, next_question, native_sample, corrections, created_at`
+const entryColumns = `id, account_id, entry_date, question, draft, text, reply, next_question, native_sample, corrections, status, created_at`
 
 func (s *Store) Insert(ctx context.Context, e diary.Entry) error {
 	corrections, err := json.Marshal(e.Corrections)
@@ -27,11 +27,25 @@ func (s *Store) Insert(ctx context.Context, e diary.Entry) error {
 		return fmt.Errorf("marshal corrections: %w", err)
 	}
 	_, err = s.pool.Exec(ctx,
-		`INSERT INTO diary_entries (id, account_id, entry_date, question, draft, text, reply, next_question, native_sample, corrections, created_at)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
-		e.ID, e.AccountID, e.Date, e.Question, e.Draft, e.Text, e.Reply, e.NextQuestion, e.NativeSample, corrections, e.CreatedAt)
+		`INSERT INTO diary_entries (id, account_id, entry_date, question, draft, text, reply, next_question, native_sample, corrections, status, created_at)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+		e.ID, e.AccountID, e.Date, e.Question, e.Draft, e.Text, e.Reply, e.NextQuestion, e.NativeSample, corrections, e.Status, e.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("insert diary entry: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) UpdateReply(ctx context.Context, e diary.Entry) error {
+	corrections, err := json.Marshal(e.Corrections)
+	if err != nil {
+		return fmt.Errorf("marshal corrections: %w", err)
+	}
+	_, err = s.pool.Exec(ctx,
+		`UPDATE diary_entries SET reply=$2, next_question=$3, native_sample=$4, corrections=$5, status=$6 WHERE id = $1`,
+		e.ID, e.Reply, e.NextQuestion, e.NativeSample, corrections, e.Status)
+	if err != nil {
+		return fmt.Errorf("update diary reply: %w", err)
 	}
 	return nil
 }
@@ -102,7 +116,7 @@ func (s *Store) DeleteAll(ctx context.Context, accountID string) error {
 func scanEntry(row pgx.Row) (diary.Entry, error) {
 	var e diary.Entry
 	var corrections []byte
-	err := row.Scan(&e.ID, &e.AccountID, &e.Date, &e.Question, &e.Draft, &e.Text, &e.Reply, &e.NextQuestion, &e.NativeSample, &corrections, &e.CreatedAt)
+	err := row.Scan(&e.ID, &e.AccountID, &e.Date, &e.Question, &e.Draft, &e.Text, &e.Reply, &e.NextQuestion, &e.NativeSample, &corrections, &e.Status, &e.CreatedAt)
 	if err == pgx.ErrNoRows {
 		return diary.Entry{}, shared.ErrNotFound
 	}

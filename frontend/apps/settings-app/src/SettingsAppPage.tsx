@@ -5,6 +5,8 @@ import { api } from './lib/api'
 import { FEATURES, type Provider } from './lib/types'
 import { ProviderCard } from './components/ProviderCard'
 import { FlagCard } from './components/FlagCard'
+import { OnboardingResetCard } from './components/OnboardingResetCard'
+import { WorkoutResetCard } from './components/WorkoutResetCard'
 
 export function SettingsAppPage() {
   const [providers, setProviders] = useState<Provider[] | null>(null)
@@ -47,6 +49,10 @@ export function SettingsAppPage() {
           load={() => api.settings.getAutoWordImages()}
           save={(enabled) => api.settings.setAutoWordImages({ body: { enabled } })}
         />
+
+        <OnboardingResetCard />
+
+        <WorkoutResetCard />
 
         <section className="space-y-4">
           <div>

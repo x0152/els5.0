@@ -21,6 +21,8 @@ type Repository interface {
 	DeleteMessages(ctx context.Context, sessionID string) error
 	DeleteMessagesFrom(ctx context.Context, sessionID string, from time.Time) error
 	InsertMessage(ctx context.Context, m Message) error
+	GetMessage(ctx context.Context, id string) (Message, error)
+	UpdateMessageContent(ctx context.Context, id, content string) error
 	ListMessages(ctx context.Context, sessionID string) ([]Message, error)
 	ListMessagesSince(ctx context.Context, sessionID string, since time.Time) ([]Message, error)
 }

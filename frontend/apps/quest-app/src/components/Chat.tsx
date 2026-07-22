@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, ImageIcon, Loader2, Maximize2, RotateCcw, Trophy, TriangleAlert, Volume2 } from 'lucide-react'
-import { cn, speak } from '@els/ui'
+import { Check, ImageIcon, Loader2, Maximize2, RotateCcw, Trophy, TriangleAlert } from 'lucide-react'
+import { SpeakButton as UiSpeakButton, cn } from '@els/ui'
 import { avatarKey } from '../lib/helpers.ts'
 import type { Character, Mission, PartialWorld } from '../lib/types.ts'
 import { useRegenerateImage } from '../store/missions.ts'
@@ -261,14 +261,13 @@ function SceneImage({ mission, stage }: { mission: Mission; stage: number }) {
 
 function SpeakButton({ text, voice, className }: { text: string; voice: string; className?: string }) {
   return (
-    <button
-      type="button"
+    <UiSpeakButton
       title={`Listen (${voice})`}
-      onClick={() => speak(text, { voice })}
-      className={cn('text-neutral-300 transition-colors hover:text-brand-600', className)}
-    >
-      <Volume2 className="h-3.5 w-3.5" />
-    </button>
+      text={text}
+      voice={voice}
+      className={cn('p-0 text-neutral-300 hover:bg-transparent hover:text-brand-600', className)}
+      iconClassName="h-3.5 w-3.5"
+    />
   )
 }
 

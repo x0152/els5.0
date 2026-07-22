@@ -11,27 +11,34 @@ function EntryCard({ entry }: { entry: Entry }) {
   const [open, setOpen] = useState(false)
   const corrections = entry.corrections ?? []
   return (
-    <div className="rounded-lg border border-neutral-200 bg-white">
-      <button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left">
+    <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+      <button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between gap-3 rounded-2xl px-5 py-4 text-left">
         <div className="min-w-0">
-          <p className="text-sm font-medium capitalize text-neutral-500">{formatDay(entry.date)}</p>
-          <p className="mt-0.5 truncate text-neutral-800">{entry.text}</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand-700">{formatDay(entry.date)}</p>
+          <p className="mt-1 truncate text-neutral-800">{entry.text}</p>
         </div>
         <span className="flex shrink-0 items-center gap-2">
-          {corrections.length > 0 && <Badge>{corrections.length}</Badge>}
+          {corrections.length > 0 && <Badge tone="brand">{corrections.length}</Badge>}
           <ChevronDown className={`h-4 w-4 text-neutral-400 transition-transform ${open ? 'rotate-180' : ''}`} />
         </span>
       </button>
       {open && (
-        <div className="flex flex-col gap-3 border-t border-neutral-100 px-4 py-4">
-          {entry.question && <p className="text-sm italic text-neutral-500">{entry.question}</p>}
+        <div className="flex flex-col gap-3 border-t border-neutral-100 px-5 py-4">
+          {entry.question && (
+            <p className="rounded-xl bg-brand-50 px-3.5 py-2.5 text-sm font-medium text-brand-800">{entry.question}</p>
+          )}
           <p className="whitespace-pre-wrap leading-relaxed text-neutral-800">{entry.text}</p>
-          <div className="rounded-md bg-neutral-50 p-3">
-            <div className="flex items-center gap-2 text-sm font-medium text-neutral-500">
-              <MessageCircleHeart className="h-4 w-4 text-rose-500" /> Friend's reply
+          {entry.reply && (
+          <div className="rounded-xl bg-neutral-50 p-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-neutral-900">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+                <MessageCircleHeart className="h-3.5 w-3.5" />
+              </span>
+              Friend's reply
             </div>
-            <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-neutral-700">{entry.reply}</p>
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-neutral-700">{entry.reply}</p>
           </div>
+          )}
           <NotesSection notes={corrections} nativeSample={entry.native_sample} />
         </div>
       )}
@@ -68,14 +75,17 @@ export function HistoryPage() {
   return (
     <div className="h-full w-full overflow-y-auto bg-neutral-50">
       <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-8">
-        <header className="flex items-start justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold text-neutral-900">
-              <BookOpen className="h-6 w-6 text-brand-600" /> History
-            </h1>
-            <p className="text-sm text-neutral-500">
-              {items.length === 0 ? 'No entries yet' : `Entries: ${entries.data.total}`}
-            </p>
+        <header className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
+              <BookOpen className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-neutral-900">History</h1>
+              <p className="text-sm text-neutral-500">
+                {items.length === 0 ? 'No entries yet' : `Entries: ${entries.data.total}`}
+              </p>
+            </div>
           </div>
           {items.length > 0 && (
             <Button variant="ghost" size="sm" className="text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setConfirming(true)} disabled={reset.isPending}>
@@ -84,7 +94,11 @@ export function HistoryPage() {
           )}
         </header>
         {items.length === 0 ? (
-          <EmptyState title="The diary is empty" description="Write your first entry — it will appear here." />
+          <EmptyState
+            icon={<BookOpen className="h-8 w-8" />}
+            title="The diary is empty"
+            description="Write your first entry — it will appear here."
+          />
         ) : (
           <div className="flex flex-col gap-3">
             {items.map((e) => (

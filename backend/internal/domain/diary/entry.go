@@ -15,6 +15,11 @@ type Correction struct {
 	Description string `json:"description"`
 }
 
+const (
+	StatusPending = "pending"
+	StatusDone    = "done"
+)
+
 type Entry struct {
 	ID           string
 	AccountID    string
@@ -26,6 +31,7 @@ type Entry struct {
 	NextQuestion string
 	NativeSample string
 	Corrections  []Correction
+	Status       string
 	CreatedAt    time.Time
 }
 

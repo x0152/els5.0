@@ -99,6 +99,16 @@ func TestSubmitStep(t *testing.T) {
 	})
 }
 
+func TestGenerationInFlight(t *testing.T) {
+	now := time.Now()
+	fresh := workout.Lesson{Status: workout.LessonStatusGenerating, CreatedAt: now.Add(-time.Minute)}
+	stale := workout.Lesson{Status: workout.LessonStatusGenerating, CreatedAt: now.Add(-workout.GenerationStaleAfter - time.Minute)}
+	failed := workout.Lesson{Status: workout.LessonStatusFailed, CreatedAt: now}
+	if !fresh.GenerationInFlight(now) || stale.GenerationInFlight(now) || failed.GenerationInFlight(now) {
+		t.Fatal("generation in-flight wrong")
+	}
+}
+
 func TestCycle(t *testing.T) {
 	if (workout.Lesson{Number: 7}).CycleIndex() != 7 || (workout.Lesson{Number: 8}).CycleIndex() != 1 {
 		t.Fatal("cycle index wrong")

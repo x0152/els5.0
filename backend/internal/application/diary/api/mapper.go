@@ -52,6 +52,7 @@ func toEntryOutput(e diary.Entry) EntryOutput {
 		NextQuestion: e.NextQuestion,
 		NativeSample: e.NativeSample,
 		Corrections:  toCorrections(e.Corrections),
+		Status:       e.Status,
 		CreatedAt:    e.CreatedAt,
 	}
 }

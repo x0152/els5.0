@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { BookOpen, Check, Eye, Lightbulb, Loader2, TriangleAlert, X } from 'lucide-react'
 import { parseGap, gapPrompt } from '../parse.ts'
 import { checkLocal, type CheckResult } from '../check.ts'
-import { useProgress, useProduce } from '../state.ts'
+import { useProgress, useProduce, useFill } from '../state.ts'
 import { DeferredCtx } from '../Deferred.tsx'
 import { Inline } from '../markdown.tsx'
 import { BlockCtx } from './context.ts'
@@ -100,10 +100,12 @@ function Gap({ gap, prompt, narrow, gapKey }: { gap: ReturnType<typeof parseGap>
   const deferred = useContext(DeferredCtx)
   const progress = useProgress()
   const produce = useProduce()
+  const onFill = useFill()
+  const [filled, setFilled] = useState(!!gap.fill)
   const produced = useRef(false)
   const persist = !!gapKey && progress.enabled
   const saved = persist ? progress.get(gapKey!) : undefined
-  const [answer, setAnswer] = useState(saved?.answer ?? '')
+  const [answer, setAnswer] = useState(saved?.answer ?? gap.fill ?? '')
   const [hints, setHints] = useState(false)
   const [dismissed, setDismissed] = useState(!!saved)
   const rootRef = useRef<HTMLSpanElement>(null)
@@ -185,6 +187,11 @@ function Gap({ gap, prompt, narrow, gapKey }: { gap: ReturnType<typeof parseGap>
   function submit(value: string) {
     const text = value.trim()
     if (!text || pending || deferred) return
+    if (onFill) {
+      if (gap.ordinal !== undefined && text !== gap.fill) onFill({ ordinal: gap.ordinal, answer: text })
+      setFilled(true)
+      return
+    }
     submitted.current = text
     check.mutate({ prompt, answers: gap.answers, answer: text })
   }
@@ -193,11 +200,15 @@ function Gap({ gap, prompt, narrow, gapKey }: { gap: ReturnType<typeof parseGap>
   const width = narrow ? '2.5rem' : `${Math.min(len + 2, 40)}ch`
   const center = !inline
 
-  const stateCls = ok
-    ? 'border-emerald-500 text-emerald-600'
-    : done
-      ? 'border-rose-400 text-rose-500'
+  const stateCls = onFill
+    ? filled
+      ? 'border-brand-500 text-brand-700'
       : 'border-neutral-400 text-brand-700 focus:border-brand-500'
+    : ok
+      ? 'border-emerald-500 text-emerald-600'
+      : done
+        ? 'border-rose-400 text-rose-500'
+        : 'border-neutral-400 text-brand-700 focus:border-brand-500'
 
   const inputRow = (
     <span className="inline-flex items-center gap-1">
@@ -206,8 +217,12 @@ function Gap({ gap, prompt, narrow, gapKey }: { gap: ReturnType<typeof parseGap>
           disabled={ok || pending}
           onChange={(e) => {
             setAnswer(e.target.value)
+            if (onFill) setFilled(false)
             if (deferred && done && !ok) setResult(undefined)
           }}
+        onBlur={() => {
+          if (onFill && !filled) submit(answer)
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.preventDefault()
@@ -221,6 +236,7 @@ function Gap({ gap, prompt, narrow, gapKey }: { gap: ReturnType<typeof parseGap>
       />
       {pending && <Loader2 className="h-4 w-4 shrink-0 animate-spin text-neutral-400" />}
       {ok && <Check className="h-4 w-4 shrink-0 text-emerald-500" />}
+      {onFill && filled && <Check className="h-4 w-4 shrink-0 text-brand-500" />}
       {gap.type === 'choice' && !ok && !pending && (
         <button
           type="button"

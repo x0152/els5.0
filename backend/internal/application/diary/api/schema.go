@@ -23,6 +23,7 @@ type EntryOutput struct {
 	NextQuestion string             `json:"next_question,omitempty"`
 	NativeSample string             `json:"native_sample,omitempty"`
 	Corrections  []CorrectionOutput `json:"corrections"`
+	Status       string             `json:"status" enum:"pending,done" doc:"pending while the friend reply is being generated"`
 	CreatedAt    time.Time          `json:"created_at"`
 }
 

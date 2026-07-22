@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowRight, BookMarked, Dumbbell, Layers, Loader2, Plus, Search } from 'lucide-react'
 import { api } from '../lib/api.ts'
-import { Button, cn, ConfirmDialog, EmptyState, Input, LoadingState, useAgentView } from '@els/ui'
+import { AppInfoButton, Button, cn, ConfirmDialog, EmptyState, Input, LoadingState, useAgentView } from '@els/ui'
 import { AddWordModal } from '../components/AddWordModal.tsx'
 import { WordCard } from '../components/WordCard.tsx'
 import { WordDetailModal } from '../components/WordDetailModal.tsx'
@@ -69,7 +69,7 @@ export function VocabCatalog() {
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-bold text-neutral-900">
               <BookMarked className="h-6 w-6 text-brand-600" />
-              My Vocabulary
+              My Vocabulary <AppInfoButton />
             </h1>
             <p className="mt-1 text-sm text-neutral-500">
               {total > 0 ? `${total} item${total === 1 ? '' : 's'} to memorize` : 'Build your personal word collection'}

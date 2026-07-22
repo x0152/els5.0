@@ -86,6 +86,10 @@ const WorkoutAppRoutes = lazy(() =>
   import('@els/workout-app').then((m) => ({ default: m.WorkoutAppRoutes })),
 )
 
+const StudioAppRoutes = lazy(() =>
+  import('@els/studio-app').then((m) => ({ default: m.StudioAppRoutes })),
+)
+
 function AppLoader() {
   return (
     <div className="flex items-center justify-center h-full w-full py-16 text-neutral-500">
@@ -261,6 +265,14 @@ export default function App() {
               element={
                 <Suspense fallback={<AppLoader />}>
                   <WorkoutAppRoutes />
+                </Suspense>
+              }
+            />
+            <Route
+              path="v1/studio/*"
+              element={
+                <Suspense fallback={<AppLoader />}>
+                  <StudioAppRoutes />
                 </Suspense>
               }
             />

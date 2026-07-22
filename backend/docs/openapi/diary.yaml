@@ -108,6 +108,12 @@ components:
           type: string
         reply:
           type: string
+        status:
+          description: pending while the friend reply is being generated
+          enum:
+            - pending
+            - done
+          type: string
         text:
           type: string
       required:
@@ -116,6 +122,7 @@ components:
         - text
         - reply
         - corrections
+        - status
         - created_at
       type: object
     ErrorBody:

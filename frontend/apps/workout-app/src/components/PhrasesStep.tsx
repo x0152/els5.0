@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import type { SpeechComponents } from '@els/api-client'
 import { emitTextEvents } from '@els/core-events'
-import { Button, Spinner, cn, useRecorder } from '@els/ui'
-import { Check, Mic, Snail, Square, Volume2 } from 'lucide-react'
+import { Button, SpeakButton, Spinner, cn, useRecorder } from '@els/ui'
+import { Check, Mic, Play, Snail, Square } from 'lucide-react'
 import { api } from '../lib/api.ts'
 import { playPhrase, stopClip, useFilmUrl } from '../lib/audio.ts'
 import { accuracy } from '../lib/diff.ts'
@@ -152,9 +152,9 @@ function SpeakTask({ item, onScore }: { item: PhraseTask; onScore: (score: numbe
     <div className="flex flex-1 flex-col items-center justify-center gap-5 py-4">
       <p className="max-w-2xl text-center text-xl font-semibold text-neutral-900 sm:text-2xl">“{item.text}”</p>
       <div className="flex items-center gap-2">
-        <Button variant="secondary" onClick={() => playPhrase(videoUrl, item)}>
-          <Volume2 className="h-4 w-4" /> Listen
-        </Button>
+        <SpeakButton variant="button" onPlay={() => playPhrase(videoUrl, item)}>
+          Listen
+        </SpeakButton>
         <Button
           variant={recording ? 'danger' : 'brand'}
           onClick={() => (recording ? recorder.stop() : recorder.start())}
@@ -209,12 +209,12 @@ function DictationTask({ item, onScore }: { item: PhraseTask; onScore: (score: n
   return (
     <div className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center gap-4 py-2">
       <div className="flex items-center gap-2">
-        <Button variant="secondary" onClick={() => playPhrase(videoUrl, item)}>
-          <Volume2 className="h-4 w-4" /> Play
-        </Button>
-        <Button variant="secondary" onClick={() => playPhrase(videoUrl, item, 0.7)}>
-          <Snail className="h-4 w-4" /> Slow
-        </Button>
+        <SpeakButton variant="button" icon={<Play className="h-4 w-4" />} onPlay={() => playPhrase(videoUrl, item)}>
+          Play
+        </SpeakButton>
+        <SpeakButton variant="button" icon={<Snail className="h-4 w-4" />} onPlay={() => playPhrase(videoUrl, item, 0.7)}>
+          Slow
+        </SpeakButton>
       </div>
       {!checked ? (
         <div className="flex gap-2">

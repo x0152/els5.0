@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, ArrowRight, Check, CirclePlay, Image, Loader2, Mic, RotateCcw, Square, Volume2, X } from 'lucide-react'
-import { Badge, Button, cn, Input, IpaText, PhonemePopover, canonicalPhoneme, speak, useAgentView, useRecorder, type PhonemeAnchor } from '@els/ui'
+import { ArrowLeft, ArrowRight, Check, CirclePlay, Image, Loader2, Mic, RotateCcw, Square, X } from 'lucide-react'
+import { Badge, Button, cn, Input, IpaText, PhonemePopover, SpeakButton, canonicalPhoneme, useAgentView, useRecorder, type PhonemeAnchor } from '@els/ui'
 import { isApiError } from '@els/api-client'
 import { KindGlyph } from '../components/KindGlyph.tsx'
 import { PronunciationResult } from '../components/PronunciationResult.tsx'
@@ -339,14 +339,11 @@ export function Cards() {
                   ? 'Correct!'
                   : `Correct answer: ${card.direction === 'translation' ? feedback.unit.translation : feedback.unit.text}`}
               </span>
-              <button
-                type="button"
-                onClick={() => speak(feedback.unit.text)}
+              <SpeakButton
                 title="Pronounce"
-                className="rounded-full p-1.5 text-neutral-500 transition hover:bg-white hover:text-neutral-800"
-              >
-                <Volume2 className="h-4 w-4" />
-              </button>
+                className="rounded-full p-1.5 text-neutral-500 hover:bg-white hover:text-neutral-800"
+                text={feedback.unit.text}
+              />
               <button
                 type="button"
                 onClick={recorder.state === 'recording' ? recorder.stop : recorder.start}

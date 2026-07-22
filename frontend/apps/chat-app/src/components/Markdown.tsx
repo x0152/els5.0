@@ -1,15 +1,13 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Maximize2 } from 'lucide-react'
-import { Blocks, PracticeSheet, type BlocksAdapters, type ImageApi, type IllustrationStatus } from '@els/blocks'
+import { Blocks, PracticeSheet, indexGaps, iconify, type BlocksAdapters, type ImageApi, type IllustrationStatus } from '@els/blocks'
 import { api } from '../lib/api'
 import { useImageViewer } from './imageViewerContext'
 
 const imageApi: ImageApi = async (prompt, trigger, aspect) =>
   (await api.learn.ensureIllustration({ body: { prompt, trigger, aspect } })) as IllustrationStatus
-
-const adapters: BlocksAdapters = { images: imageApi }
 
 function ChatImage({ src, alt }: { src?: string; alt?: string }) {
   const open = useImageViewer()
@@ -29,7 +27,9 @@ function ChatImage({ src, alt }: { src?: string; alt?: string }) {
 }
 
 const COMPONENTS: Components = {
-  p: ({ children }) => <p className="my-1.5 first:mt-0 last:mb-0 leading-relaxed">{children}</p>,
+  p: ({ children }) => <p className="my-1.5 first:mt-0 last:mb-0 leading-relaxed">{iconify(children)}</p>,
+  strong: ({ children }) => <strong>{iconify(children)}</strong>,
+  em: ({ children }) => <em>{iconify(children)}</em>,
   a: ({ href, children }) => (
     <a
       href={href}
@@ -42,22 +42,22 @@ const COMPONENTS: Components = {
   ),
   ul: ({ children }) => <ul className="my-2 ml-5 list-disc space-y-1">{children}</ul>,
   ol: ({ children }) => <ol className="my-2 ml-5 list-decimal space-y-1">{children}</ol>,
-  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+  li: ({ children }) => <li className="leading-relaxed">{iconify(children)}</li>,
   blockquote: ({ children }) => (
     <blockquote className="my-2 border-l-2 border-neutral-300 pl-3 text-neutral-600 italic">{children}</blockquote>
   ),
-  h1: ({ children }) => <h1 className="my-2 text-base font-semibold">{children}</h1>,
-  h2: ({ children }) => <h2 className="my-2 text-[15px] font-semibold">{children}</h2>,
-  h3: ({ children }) => <h3 className="my-2 text-sm font-semibold">{children}</h3>,
+  h1: ({ children }) => <h1 className="my-2 text-base font-semibold">{iconify(children)}</h1>,
+  h2: ({ children }) => <h2 className="my-2 text-[15px] font-semibold">{iconify(children)}</h2>,
+  h3: ({ children }) => <h3 className="my-2 text-sm font-semibold">{iconify(children)}</h3>,
   table: ({ children }) => (
     <div className="my-2 overflow-x-auto">
       <table className="border-collapse text-sm">{children}</table>
     </div>
   ),
   th: ({ children }) => (
-    <th className="border border-neutral-200 bg-neutral-50 px-2 py-1 text-left font-semibold">{children}</th>
+    <th className="border border-neutral-200 bg-neutral-50 px-2 py-1 text-left font-semibold">{iconify(children)}</th>
   ),
-  td: ({ children }) => <td className="border border-neutral-200 px-2 py-1 align-top">{children}</td>,
+  td: ({ children }) => <td className="border border-neutral-200 px-2 py-1 align-top">{iconify(children)}</td>,
   hr: () => <hr className="my-3 border-neutral-200" />,
   img: ({ src, alt }) => <ChatImage src={typeof src === 'string' ? src : undefined} alt={alt} />,
   code: ({ className, children }) => {
@@ -143,11 +143,27 @@ function GapsPending() {
   )
 }
 
-export const Markdown = memo(function Markdown({ text }: { text: string }) {
-  const parts =
-    text.includes('```gaps') || text.includes('```blocks') || /^~~~\w/m.test(text)
-      ? splitGapBlocks(text)
-      : [{ type: 'md' as const, content: text }]
+export const Markdown = memo(function Markdown({
+  text,
+  messageId,
+  onFill,
+}: {
+  text: string
+  messageId?: string
+  onFill?: (messageId: string, ordinal: number, answer: string) => void
+}) {
+  const fillable = !!(messageId && onFill)
+  const adapters = useMemo<BlocksAdapters>(
+    () => ({
+      images: imageApi,
+      ...(fillable ? { onFill: (e: { ordinal: number; answer: string }) => onFill!(messageId!, e.ordinal, e.answer) } : {}),
+    }),
+    [fillable, messageId, onFill],
+  )
+  const interactive = text.includes('```gaps') || text.includes('```blocks') || /^~~~\w/m.test(text)
+  const parts = interactive
+    ? splitGapBlocks(fillable ? indexGaps(text) : text)
+    : [{ type: 'md' as const, content: text }]
   return (
     <div className="text-sm text-neutral-800 min-w-0 break-words [overflow-wrap:anywhere]">
       {parts.map((p, i) => {
@@ -162,7 +178,7 @@ export const Markdown = memo(function Markdown({ text }: { text: string }) {
         if (p.type === 'pending') return <GapsPending key={i} />
         return (
           <ReactMarkdown key={i} remarkPlugins={[remarkGfm]} components={COMPONENTS}>
-            {p.content}
+            {p.content.replace(/\{\{\d+\u2063/g, '{{')}
           </ReactMarkdown>
         )
       })}

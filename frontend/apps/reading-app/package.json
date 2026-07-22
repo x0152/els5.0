@@ -18,6 +18,7 @@
     "@els/blocks": "workspace:*",
     "@els/core-events": "workspace:*",
     "@els/dev-harness": "workspace:*",
+    "@els/lookup": "workspace:*",
     "@els/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "lucide-react": "catalog:",

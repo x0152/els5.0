@@ -16,12 +16,14 @@
     "react-markdown": "^10.1.0"
   },
   "peerDependencies": {
+    "@tanstack/react-query": "catalog:",
     "lucide-react": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",
+    "@tanstack/react-query": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "eslint": "catalog:",

@@ -12,12 +12,13 @@ type Repository interface {
 	ListStaleFailedPlanFilmIDs(ctx context.Context, before time.Time) ([]string, error)
 
 	CurrentLesson(ctx context.Context, accountID string) (Lesson, error)
+	PendingLesson(ctx context.Context, accountID string) (Lesson, error)
 	GetLesson(ctx context.Context, accountID, id string) (Lesson, error)
 	ListRecentLessons(ctx context.Context, accountID string, limit int) ([]Lesson, error)
-	InsertLesson(ctx context.Context, lesson Lesson) error
+	ClaimGeneration(ctx context.Context, lesson Lesson, staleBefore time.Time) error
 	UpdateLesson(ctx context.Context, lesson Lesson) error
 	ListCompletedDates(ctx context.Context, accountID string, since time.Time) ([]time.Time, error)
-	ListAccountsNeedingLesson(ctx context.Context) ([]string, error)
+	ListAccountsNeedingLesson(ctx context.Context, staleBefore time.Time) ([]string, error)
 
 	ListItems(ctx context.Context, accountID string, sinceLesson int) ([]Item, error)
 	UpsertItems(ctx context.Context, accountID string, lessonNumber int, results []ItemResult, now time.Time) error
@@ -25,4 +26,6 @@ type Repository interface {
 
 	ListPositions(ctx context.Context, accountID string) ([]Position, error)
 	SavePosition(ctx context.Context, pos Position) error
+
+	DeleteAccountData(ctx context.Context, accountID string) error
 }

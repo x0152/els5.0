@@ -25,11 +25,13 @@ import (
 	"github.com/els/backend/internal/application/learn"
 	listeningapp "github.com/els/backend/internal/application/listening"
 	mediaapp "github.com/els/backend/internal/application/media"
+	onboardingapp "github.com/els/backend/internal/application/onboarding"
 	"github.com/els/backend/internal/application/quest"
 	"github.com/els/backend/internal/application/reader"
 	readingapp "github.com/els/backend/internal/application/reading"
 	settingsapp "github.com/els/backend/internal/application/settings"
 	speechapp "github.com/els/backend/internal/application/speech"
+	studioapp "github.com/els/backend/internal/application/studio"
 	"github.com/els/backend/internal/application/vocab"
 	workoutapp "github.com/els/backend/internal/application/workout"
 	writingapp "github.com/els/backend/internal/application/writing"
@@ -193,6 +195,9 @@ func main() {
 		diaryapp.Name: func(a huma.API, p *pgxpool.Pool, r *redis.Client, l *slog.Logger) {
 			diaryapp.Mount(a, diaryapp.LoadConfig(), p, r, l)
 		},
+		studioapp.Name: func(a huma.API, p *pgxpool.Pool, r *redis.Client, l *slog.Logger) {
+			studioapp.Mount(a, studioapp.LoadConfig(), p, r, l)
+		},
 		writingapp.Name: func(a huma.API, p *pgxpool.Pool, r *redis.Client, l *slog.Logger) {
 			writingapp.Mount(a, writingapp.LoadConfig(), p, r, l)
 		},
@@ -204,6 +209,9 @@ func main() {
 		},
 		workoutapp.Name: func(a huma.API, p *pgxpool.Pool, r *redis.Client, l *slog.Logger) {
 			workoutapp.Mount(ctx, a, workoutapp.LoadConfig(), p, r, l)
+		},
+		onboardingapp.Name: func(a huma.API, p *pgxpool.Pool, r *redis.Client, l *slog.Logger) {
+			onboardingapp.Mount(a, onboardingapp.LoadConfig(), p, r, l)
 		},
 	}
 

@@ -46,10 +46,10 @@ export function stopClip() {
   clipStop?.()
 }
 
-export function playPhrase(videoUrl: string, phrase: { text: string; start_ms?: number; end_ms?: number }, rate = 1) {
+export function playPhrase(videoUrl: string, phrase: { text: string; start_ms?: number; end_ms?: number }, rate = 1): Promise<HTMLAudioElement | null> {
   if (videoUrl && phrase.start_ms !== undefined && phrase.end_ms) {
     playClip(videoUrl, phrase.start_ms, phrase.end_ms, { rate })
-  } else {
-    speak(phrase.text, rate < 1 ? { rate } : undefined)
+    return Promise.resolve(null)
   }
+  return speak(phrase.text, rate < 1 ? { rate } : undefined)
 }

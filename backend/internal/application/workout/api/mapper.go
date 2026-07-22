@@ -99,7 +99,19 @@ func toTodayOutput(res usecases.TodayResult) WorkoutTodayOutput {
 	for _, d := range res.Days {
 		days = append(days, d.In(timex.MSK).Format("2006-01-02"))
 	}
-	out := WorkoutTodayOutput{Streak: res.Streak, Days: days, Completed: res.Completed}
+	out := WorkoutTodayOutput{Streak: res.Streak, Days: days, Completed: res.Completed, Generating: res.Generating, GenerationFailed: res.GenerationFailed}
+	if res.Generating {
+		out.GeneratingSince = res.GeneratingSince.Format(time.RFC3339)
+	}
+	if res.Lesson != nil {
+		lesson := toLessonOutput(*res.Lesson)
+		out.Lesson = &lesson
+	}
+	return out
+}
+
+func toStartLessonOutput(res usecases.StartLessonResult) StartLessonOutput {
+	out := StartLessonOutput{Generating: res.Generating}
 	if res.Lesson != nil {
 		lesson := toLessonOutput(*res.Lesson)
 		out.Lesson = &lesson

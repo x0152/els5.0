@@ -77,3 +77,11 @@ export type ProduceEvent = (e: { skill: 'writing'; text: string; context?: strin
 export const ProduceCtx = createContext<ProduceEvent | null>(null)
 
 export const useProduce = () => useContext(ProduceCtx)
+
+// Review mode: gaps are not checked locally, fills are written back into the source
+// text by the host app (ordinal = gap's source-order index, see indexGaps/fillGap).
+export type FillEvent = (e: { ordinal: number; answer: string }) => void
+
+export const FillCtx = createContext<FillEvent | null>(null)
+
+export const useFill = () => useContext(FillCtx)

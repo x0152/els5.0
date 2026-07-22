@@ -1,73 +1,99 @@
 import type { SVGProps } from 'react'
 
-const FONT = "ui-rounded, 'Segoe UI', system-ui, -apple-system, sans-serif"
+const FONT = "ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif"
+const COLORS = ['#065f46', '#047857', '#059669', '#10b981', '#34d399']
+const CHARS = ['a', 'e', 't', 'h', 's', 'o', 'w', 'ə', 'ʃ', 'ŋ']
+const N = CHARS.length
+
+const CYCLE = '16s'
+const KEY_TIMES = '0;0.26;0.34;0.58;0.66;0.92;1'
+const SPLINES = Array(6).fill('0.4 0 0.2 1').join(';')
+
+function scatter(i: number, rot: number): [number, number] {
+  const a = i * 2.39996 + rot
+  const r = 32 + 38 * Math.sqrt((i + 0.5) / N)
+  return [r * Math.cos(a), r * Math.sin(a)]
+}
+
+function wave(i: number, phase: number): [number, number] {
+  const x = -78 + (156 * i) / (N - 1)
+  return [x, 16 * Math.sin(x / 26 + phase) + (i % 2 ? 16 : -16)]
+}
+
+function ring(i: number, rot: number): [number, number] {
+  const a = (Math.PI * 2 * i) / N - Math.PI / 2 + rot
+  return [62 * Math.cos(a), 62 * Math.sin(a)]
+}
+
+const fmt = ([x, y]: [number, number]) => `${x.toFixed(1)} ${y.toFixed(1)}`
+
+const GLYPHS = CHARS.map((ch, i) => ({
+  ch,
+  travel: [
+    scatter(i, 0),
+    scatter(i, 0.7),
+    wave(i, 0),
+    wave(i, Math.PI),
+    ring(i, 0),
+    ring(i, 0.55),
+    scatter(i, 0),
+  ]
+    .map(fmt)
+    .join(';'),
+  color: COLORS[(i * 2) % COLORS.length],
+  size: [24, 30, 25, 32, 26, 28][i % 6],
+  tilt: ((i * 53) % 28) - 14,
+  floatAmp: 2 + (i % 3),
+  floatDur: `${(2.2 + (i % 5) * 0.35).toFixed(2)}s`,
+  floatBegin: `-${((i * 0.37) % 2).toFixed(2)}s`,
+  twinkleDur: `${(2.6 + (i % 4) * 0.5).toFixed(2)}s`,
+  twinkleBegin: `-${((i * 0.61) % 3).toFixed(2)}s`,
+}))
 
 export function Mascot(props: SVGProps<SVGSVGElement>) {
   return (
-    <svg
-      viewBox="0 0 200 190"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-      {...props}
-    >
-      <g fontFamily={FONT} fontWeight="800">
-        <text x="52" y="48" fontSize="30" fill="#059669">
-          A
-          <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" />
-          <animateTransform attributeName="transform" type="translate" values="0 8; 0 -10" dur="3s" repeatCount="indefinite" />
-        </text>
-        <text x="96" y="36" fontSize="26" fill="#10b981">
-          a
-          <animate attributeName="opacity" values="0;1;1;0" dur="3.4s" begin="0.6s" repeatCount="indefinite" />
-          <animateTransform attributeName="transform" type="translate" values="0 8; 0 -12" dur="3.4s" begin="0.6s" repeatCount="indefinite" />
-        </text>
-        <text x="138" y="50" fontSize="28" fill="#047857">
-          B
-          <animate attributeName="opacity" values="0;1;1;0" dur="3.8s" begin="1.2s" repeatCount="indefinite" />
-          <animateTransform attributeName="transform" type="translate" values="0 8; 0 -10" dur="3.8s" begin="1.2s" repeatCount="indefinite" />
-        </text>
-      </g>
-
-      <g>
-        <animateTransform
-          attributeName="transform"
-          type="translate"
-          values="0 0; 0 -8; 0 0"
-          dur="2.8s"
-          repeatCount="indefinite"
-          calcMode="spline"
-          keyTimes="0;0.5;1"
-          keySplines="0.45 0 0.55 1;0.45 0 0.55 1"
-        />
-
-        <path d="M100 70 L30 78 Q20 120 30 156 L100 166 Z" fill="#047857" />
-        <path d="M100 70 L170 78 Q180 120 170 156 L100 166 Z" fill="#059669" />
-
-        <path d="M100 72 L34 80 Q26 120 34 152 L100 162 Z" fill="#ecfdf5" />
-        <path d="M100 72 L166 80 Q174 120 166 152 L100 162 Z" fill="#ffffff" />
-
-        <g stroke="#6ee7b7" strokeWidth="3" strokeLinecap="round">
-          <line x1="48" y1="96" x2="90" y2="92" />
-          <line x1="44" y1="110" x2="90" y2="106" />
-          <line x1="44" y1="124" x2="90" y2="120" />
-          <line x1="46" y1="138" x2="88" y2="134" />
-          <line x1="110" y1="92" x2="152" y2="96" />
-          <line x1="110" y1="106" x2="156" y2="110" />
-          <line x1="110" y1="120" x2="156" y2="124" />
-          <line x1="112" y1="134" x2="154" y2="138" />
-        </g>
-
-        <line x1="100" y1="74" x2="100" y2="160" stroke="#065f46" strokeWidth="3" strokeLinecap="round" />
-        <path d="M94 72 L94 116 L100 108 L106 116 L106 72 Z" fill="#34d399" />
-      </g>
-
-      <g fill="#34d399">
-        <path d="M168 70 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2 Z">
-          <animate attributeName="opacity" values="0.2;1;0.2" dur="2.2s" repeatCount="indefinite" />
-        </path>
-        <path d="M28 60 l1.6 5 5 1.6 -5 1.6 -1.6 5 -1.6 -5 -5 -1.6 5 -1.6 Z">
-          <animate attributeName="opacity" values="1;0.2;1" dur="2.6s" repeatCount="indefinite" />
-        </path>
+    <svg viewBox="0 0 200 190" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" {...props}>
+      <g transform="translate(100 95)" fontFamily={FONT} fontWeight="800">
+        {GLYPHS.map((g, i) => (
+          <g key={i}>
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              values={g.travel}
+              keyTimes={KEY_TIMES}
+              keySplines={SPLINES}
+              calcMode="spline"
+              dur={CYCLE}
+              repeatCount="indefinite"
+            />
+            <g>
+              <animateTransform
+                attributeName="transform"
+                type="translate"
+                values={`0 0;0 -${g.floatAmp};0 0`}
+                dur={g.floatDur}
+                begin={g.floatBegin}
+                repeatCount="indefinite"
+              />
+              <text
+                transform={`rotate(${g.tilt})`}
+                fontSize={g.size}
+                fill={g.color}
+                textAnchor="middle"
+                dominantBaseline="central"
+              >
+                <animate
+                  attributeName="opacity"
+                  values="0.75;1;0.75"
+                  dur={g.twinkleDur}
+                  begin={g.twinkleBegin}
+                  repeatCount="indefinite"
+                />
+                {g.ch}
+              </text>
+            </g>
+          </g>
+        ))}
       </g>
     </svg>
   )

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Mail, ShieldCheck, UserCircle2 } from 'lucide-react'
-import { Avatar, Badge } from '@els/ui'
+import { AppInfoButton, Avatar, Badge } from '@els/ui'
 import { useMe, useUploadMyPicture } from '../store/me'
 
 const ROLE_LABEL: Record<string, string> = {
@@ -70,8 +70,8 @@ export function ProfileHeader() {
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">
-              {me.displayName}
+            <h1 className="flex items-center gap-1.5 text-2xl font-semibold text-neutral-900 tracking-tight">
+              {me.displayName} <AppInfoButton />
             </h1>
             <Badge tone={st.tone} className="text-[11px] font-semibold uppercase tracking-wider">
               {st.label}

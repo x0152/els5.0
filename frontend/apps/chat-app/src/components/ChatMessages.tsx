@@ -81,12 +81,14 @@ export function ChatMessages({
   streaming,
   onRegenerate,
   onPickSuggestion,
+  onFill,
   variant = 'panel',
 }: {
   items: ChatItem[]
   streaming: boolean
   onRegenerate: () => void
   onPickSuggestion?: (text: string) => void
+  onFill?: (messageId: string, ordinal: number, answer: string) => void
   variant?: 'panel' | 'page'
 }) {
   const endRef = useRef<HTMLDivElement>(null)
@@ -130,7 +132,7 @@ export function ChatMessages({
                 <div className="flex flex-col gap-2 rounded-2xl rounded-tl-sm border border-neutral-200 bg-white px-3.5 py-2.5 shadow-sm">
                   {item.segments.map((seg) => (
                     <div key={seg.id} className="flex flex-col gap-1.5">
-                      {seg.text && <Markdown text={seg.text} />}
+                      {seg.text && <Markdown text={seg.text} messageId={seg.id} onFill={onFill} />}
                       {seg.steps.map((s) => (
                         <StepBadge key={s.id} step={s} />
                       ))}

@@ -72,6 +72,10 @@ export function CreateMissionModal({ submitting, error, onClose, onCreate }: Pro
 
       {error && <p className="mb-3 text-sm text-rose-600">{error}</p>}
 
+      <p className="mb-3 text-xs text-neutral-400">
+        Generation usually takes 5–10 minutes — the adventure will appear on the shelf when it’s ready.
+      </p>
+
       <div className="flex gap-3">
         <Button variant="secondary" className="flex-1" onClick={() => submit(true)} disabled={submitting}>
           🎲 Random

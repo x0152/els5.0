@@ -2,8 +2,8 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import type { VocabComponents } from '@els/api-client'
 import { emitTargetedEvents } from '@els/core-events'
-import { Button, Input, Spinner, cn, speak } from '@els/ui'
-import { Check, Volume2, X } from 'lucide-react'
+import { Button, Input, SpeakButton, Spinner, cn } from '@els/ui'
+import { Check, X } from 'lucide-react'
 import { api } from '../lib/api.ts'
 import type { ItemResult, StepOutcome, VocabWord } from '../lib/types.ts'
 import { ContinueButton, StepShell } from './StepShell.tsx'
@@ -162,9 +162,7 @@ function CardsQuiz({ cards, onDone }: { cards: Card[]; onDone: (outcome: StepOut
                   ? 'Correct!'
                   : `Correct answer: ${card.direction === 'translation' ? feedback.unit.translation : feedback.unit.text}`}
               </span>
-              <button type="button" onClick={() => speak(feedback.unit.text)} className="text-neutral-400 hover:text-neutral-700">
-                <Volume2 className="h-4 w-4" />
-              </button>
+              <SpeakButton className="p-0 hover:bg-transparent hover:text-neutral-700" text={feedback.unit.text} />
             </p>
             {feedback.unit.example && <p className="mt-1.5 text-sm italic text-neutral-500">{feedback.unit.example}</p>}
             <div className="mt-3 flex justify-end">
@@ -229,12 +227,11 @@ function Flashcards({ words, onDone }: { words: VocabWord[]; onDone: (outcome: S
         >
           <span className="flex items-center gap-2 text-2xl font-bold text-neutral-900">
             {word.text}
-            <Volume2
-              className="h-5 w-5 text-neutral-400 hover:text-brand-600"
-              onClick={(e) => {
-                e.stopPropagation()
-                speak(word.text)
-              }}
+            <SpeakButton
+              className="p-0 hover:bg-transparent"
+              iconClassName="h-5 w-5"
+              text={word.text}
+              onClick={(e) => e.stopPropagation()}
             />
           </span>
           {revealed ? (

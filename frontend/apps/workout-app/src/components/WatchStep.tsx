@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { FilmPlayer } from '@els/ui'
+import { englishTrackIdx, FilmPlayer } from '@els/ui'
 import { useFilmUrl } from '../lib/audio.ts'
 import type { Watch } from '../lib/types.ts'
 import { ContinueButton, StepShell } from './StepShell.tsx'
@@ -8,7 +8,7 @@ export function WatchStep({ watch, onDone }: { watch: Watch; onDone: (score: num
   const { film } = useFilmUrl(watch.film_id)
   const [currentMs, setCurrentMs] = useState(watch.start_ms)
   const [reachedEnd, setReachedEnd] = useState(false)
-  const [audioIdx, setAudioIdx] = useState(0)
+  const [audioIdx, setAudioIdx] = useState<number | null>(null)
   const [subIdx, setSubIdx] = useState<number | null>(null)
 
   const audioTracks = useMemo(() => film?.audio_tracks ?? [], [film])
@@ -16,11 +16,7 @@ export function WatchStep({ watch, onDone }: { watch: Watch; onDone: (score: num
     () => (film?.subtitles ?? []).map((t) => ({ ...t, cues: t.cues ?? [] })),
     [film],
   )
-  const defaultSubIdx = useMemo(() => {
-    const idx = subtitleTracks.findIndex((t) => t.lang?.toLowerCase().startsWith('en'))
-    return idx >= 0 ? idx : 0
-  }, [subtitleTracks])
-  const videoUrl = audioTracks[audioIdx]?.url ?? ''
+  const videoUrl = audioTracks[audioIdx ?? englishTrackIdx(audioTracks)]?.url ?? ''
 
   const progress = Math.min(Math.max((currentMs - watch.start_ms) / Math.max(watch.end_ms - watch.start_ms, 1), 0), 1)
 
@@ -32,8 +28,8 @@ export function WatchStep({ watch, onDone }: { watch: Watch; onDone: (score: num
             videoUrl={videoUrl}
             audioTracks={audioTracks}
             subtitleTracks={subtitleTracks}
-            audioIdx={audioIdx}
-            subIdx={subIdx ?? defaultSubIdx}
+            audioIdx={audioIdx ?? englishTrackIdx(audioTracks)}
+            subIdx={subIdx ?? englishTrackIdx(subtitleTracks)}
             onAudioChange={setAudioIdx}
             onSubChange={setSubIdx}
             startMs={watch.start_ms}

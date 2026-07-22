@@ -18,17 +18,46 @@ export type Node =
   | { t: 'gloss'; raw: string }
   | { t: 'fork'; stem: string; branches: string[] }
 
-export type Gap =
+export type Gap = (
   | { type: 'text'; answers: string[] }
   | { type: 'choice'; choices: string[]; answers: string[] }
+) & { ordinal?: number; fill?: string }
+
+const GAP_RE = /\{\{([^}]*)\}\}/g
+
+// Tags each gap with its source-order ordinal (invisible marker inside the braces),
+// so a fill can later be written back into the exact gap of the original text.
+export function indexGaps(text: string): string {
+  let n = 0
+  return text.replace(GAP_RE, (_, inside: string) => `{{${n++}\u2063${inside}}}`)
+}
+
+// Writes the user's fill into the ordinal-th gap of the original (unindexed) text: {{spec||fill}}.
+export function fillGap(text: string, ordinal: number, answer: string): string {
+  let n = 0
+  return text.replace(GAP_RE, (m, inside: string) => {
+    if (n++ !== ordinal) return m
+    const cut = inside.indexOf('||')
+    return `{{${cut === -1 ? inside : inside.slice(0, cut)}||${answer}}}`
+  })
+}
 
 export function parseGap(inside: string): Gap {
-  const parts = inside.split('|').map((p) => p.trim())
+  let ordinal: number | undefined
+  const om = /^(\d+)\u2063([\s\S]*)$/.exec(inside)
+  if (om) {
+    ordinal = Number(om[1])
+    inside = om[2] ?? ''
+  }
+  const cut = inside.indexOf('||')
+  const spec = cut === -1 ? inside : inside.slice(0, cut)
+  const fill = cut === -1 ? undefined : inside.slice(cut + 2).trim() || undefined
+  const parts = spec.split('|').map((p) => p.trim())
   const starred = parts.filter((p) => p.startsWith('*'))
   if (starred.length > 0) {
-    return { type: 'choice', choices: parts.map((p) => p.replace(/^\*/, '')), answers: starred.map((p) => p.slice(1)) }
+    return { type: 'choice', choices: parts.map((p) => p.replace(/^\*/, '')), answers: starred.map((p) => p.slice(1)), ordinal, fill }
   }
-  return { type: 'text', answers: parts }
+  return { type: 'text', answers: parts, ordinal, fill }
 }
 
 export function gapPrompt(text: string): string {

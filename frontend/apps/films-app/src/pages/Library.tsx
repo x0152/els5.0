@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Captions, Check, Film, FileVideo, Layers, Loader2, Pencil, Plus, Trash2 } from 'lucide-react'
 import {
+  AppInfoButton,
   Badge,
   Button,
   ConfirmDialog,
@@ -64,7 +65,7 @@ export function Library() {
           <div>
             <h1 className="flex items-center gap-2 text-2xl font-bold text-neutral-900">
               <Film className="h-6 w-6 text-brand-600" />
-              Films
+              Films <AppInfoButton />
             </h1>
             <p className="mt-1 text-sm text-neutral-500">Watch films with subtitles</p>
           </div>

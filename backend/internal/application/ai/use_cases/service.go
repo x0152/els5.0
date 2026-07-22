@@ -81,6 +81,30 @@ func (s *Service) Reset(ctx context.Context, actor *iam.Actor) error {
 	return s.repo.ResetContext(ctx, sess.ID, now)
 }
 
+// FillGap stores the user's answer inside the assistant message that contains
+// the exercise, so later agent runs see the fills in their own history.
+func (s *Service) FillGap(ctx context.Context, actor *iam.Actor, messageID string, ordinal int, answer string) error {
+	// 1. Resolve the actor's session.
+	sess, err := s.session(ctx, actor)
+	if err != nil {
+		return err
+	}
+	// 2. Load the message and make sure it is this user's assistant message.
+	msg, err := s.repo.GetMessage(ctx, messageID)
+	if err != nil {
+		return err
+	}
+	if msg.SessionID != sess.ID || msg.Role != agent.RoleAssistant {
+		return shared.ErrNotFound
+	}
+	// 3. Write the fill into the gap.
+	content, ok := agent.FillGap(msg.Content, ordinal, answer)
+	if !ok {
+		return fmt.Errorf("%w: gap %d not found", shared.ErrValidation, ordinal)
+	}
+	return s.repo.UpdateMessageContent(ctx, msg.ID, content)
+}
+
 func (s *Service) Clear(ctx context.Context, actor *iam.Actor) error {
 	sess, err := s.session(ctx, actor)
 	if err != nil {

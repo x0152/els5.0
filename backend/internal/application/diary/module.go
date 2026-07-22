@@ -50,12 +50,13 @@ func Mount(humaAPI huma.API, cfg Config, pool *pgxpool.Pool, rdb *redis.Client, 
 
 	repo := diaryrepo.NewStore(pool)
 	events := corerepo.NewStore(pool)
+	worker := usecases.NewReplyWorker(repo, llmClient)
 
 	api.Register(humaAPI, api.Deps{
 		Authenticator: authn,
-		GetToday:      usecases.NewGetTodayUseCase(repo, nil),
+		GetToday:      usecases.NewGetTodayUseCase(repo, worker, nil),
 		CheckEntry:    usecases.NewCheckEntryUseCase(llmClient),
-		SubmitEntry:   usecases.NewSubmitEntryUseCase(repo, llmClient, events, nil),
+		SubmitEntry:   usecases.NewSubmitEntryUseCase(repo, llmClient, events, worker, nil),
 		ListEntries:   usecases.NewListEntriesUseCase(repo),
 		ResetHistory:  usecases.NewResetHistoryUseCase(repo),
 	})

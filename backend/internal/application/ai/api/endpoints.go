@@ -76,6 +76,19 @@ func Register(api huma.API, deps Deps) {
 	})
 
 	authx.Authed(api, deps.Authenticator, huma.Operation{
+		OperationID: "aiFillGap",
+		Method:      http.MethodPost,
+		Path:        "/api/v1/ai/fill-gap",
+		Summary:     "Store the user's answer inside an exercise message",
+		Tags:        []string{"ai"},
+	}, func(ctx context.Context, actor *iam.Actor, in *FillGapInput) (OKOutput, error) {
+		if err := deps.Service.FillGap(ctx, actor, in.Body.MessageID, in.Body.Ordinal, in.Body.Answer); err != nil {
+			return OKOutput{}, err
+		}
+		return OKOutput{OK: true}, nil
+	})
+
+	authx.Authed(api, deps.Authenticator, huma.Operation{
 		OperationID: "aiClearChat",
 		Method:      http.MethodPost,
 		Path:        "/api/v1/ai/clear",

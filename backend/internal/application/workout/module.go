@@ -52,15 +52,19 @@ func Mount(ctx context.Context, humaAPI huma.API, cfg Config, pool *pgxpool.Pool
 	llmClient := llm.NewWithResolver(cfg.LLM.BaseURL, cfg.LLM.APIKey, cfg.LLM.Model, time.Duration(cfg.LLM.Timeout)*time.Second, resolver)
 
 	store := workoutrepo.NewStore(pool)
+	if err := store.FailStaleGenerating(ctx); err != nil {
+		logger.Warn("workout: fail stale generating lessons", slog.String("err", err.Error()))
+	}
 	films := filmsrepo.NewStore(pool)
 	generate := usecases.NewGenerateLessonUseCase(store, films, accounts, vocabrepo.NewStore(pool), store, llmClient, nil)
 
 	api.Register(humaAPI, api.Deps{
-		Authenticator:  authn,
-		GetToday:       usecases.NewGetTodayUseCase(store, nil),
-		GenerateLesson: generate,
-		GetLesson:      usecases.NewGetLessonUseCase(store),
-		SubmitStep:     usecases.NewSubmitStepUseCase(store, nil),
+		Authenticator: authn,
+		GetToday:      usecases.NewGetTodayUseCase(store, nil),
+		StartLesson:   usecases.NewStartLessonUseCase(store, generate, llmClient, logger, nil),
+		GetLesson:     usecases.NewGetLessonUseCase(store),
+		SubmitStep:    usecases.NewSubmitStepUseCase(store, nil),
+		Reset:         usecases.NewResetUseCase(store),
 	})
 
 	if cfg.Worker.Enabled {

@@ -55,6 +55,23 @@ components:
         - ok
         - error
       type: object
+    FillGapInputBody:
+      additionalProperties: false
+      properties:
+        answer:
+          type: string
+        message_id:
+          minLength: 1
+          type: string
+        ordinal:
+          format: int64
+          minimum: 0
+          type: integer
+      required:
+        - message_id
+        - ordinal
+        - answer
+      type: object
     HealthOutput:
       additionalProperties: false
       properties:
@@ -325,6 +342,38 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Error
       summary: Clear chat history
+      tags:
+        - ai
+  /api/v1/ai/fill-gap:
+    post:
+      operationId: aiFillGap
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FillGapInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyOKOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Store the user's answer inside an exercise message
       tags:
         - ai
   /api/v1/ai/history:

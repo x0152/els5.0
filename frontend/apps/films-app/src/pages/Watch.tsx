@@ -14,6 +14,7 @@ import {
   Button,
   cn,
   CueText,
+  englishTrackIdx,
   ErrorState,
   FilmPlayer,
   LoadingState,
@@ -191,17 +192,16 @@ function WatchInner({ id }: { id: string }) {
 
   useEffect(() => {
     if (!film) return
+    let prefs: { audio?: string; sub?: string } = {}
     try {
-      const raw = localStorage.getItem(prefsKey(id))
-      if (!raw) return
-      const prefs = JSON.parse(raw) as { audio?: string; sub?: string }
-      const a = audioTracks.findIndex((t) => t.lang === prefs.audio)
-      const s = subtitleTracks.findIndex((t) => t.lang === prefs.sub)
-      if (a >= 0) setAudioIdx(a)
-      if (s >= 0) setSubIdx(s)
+      prefs = JSON.parse(localStorage.getItem(prefsKey(id)) ?? '{}') as { audio?: string; sub?: string }
     } catch {
       /* ignore */
     }
+    const a = audioTracks.findIndex((t) => t.lang === prefs.audio)
+    const s = subtitleTracks.findIndex((t) => t.lang === prefs.sub)
+    setAudioIdx(a >= 0 ? a : englishTrackIdx(audioTracks))
+    setSubIdx(s >= 0 ? s : englishTrackIdx(subtitleTracks))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [film?.id, audioTracks, subtitleTracks])
 
@@ -350,16 +350,13 @@ function WatchInner({ id }: { id: string }) {
               </button>
               <Select
                 value={id}
-                onChange={(e) => goEpisode(e.target.value)}
-                className="max-w-[12rem] truncate rounded-md px-2 py-1 text-xs text-neutral-700"
-              >
-                {episodes.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    S{e.season}E{e.episode}
-                    {e.title ? ` · ${e.title}` : ''}
-                  </option>
-                ))}
-              </Select>
+                onChange={goEpisode}
+                options={episodes.map((e) => ({
+                  value: e.id,
+                  label: `S${e.season}E${e.episode}${e.title ? ` · ${e.title}` : ''}`,
+                }))}
+                className="max-w-[12rem] rounded-md px-2 py-1 text-xs text-neutral-700"
+              />
               <button
                 type="button"
                 onClick={() => nextEp && goEpisode(nextEp.id)}

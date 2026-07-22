@@ -10,11 +10,13 @@ import type {
   FilmsPaths,
   LearnPaths,
   ListeningPaths,
+  OnboardingPaths,
   QuestPaths,
   ReaderPaths,
   ReadingPaths,
   SettingsPaths,
   SpeechPaths,
+  StudioPaths,
   VocabPaths,
   WorkoutPaths,
   WritingPaths,
@@ -36,11 +38,13 @@ export interface ApiClient {
   films: Client<FilmsPaths>
   learn: Client<LearnPaths>
   listening: Client<ListeningPaths>
+  onboarding: Client<OnboardingPaths>
   quest: Client<QuestPaths>
   reader: Client<ReaderPaths>
   reading: Client<ReadingPaths>
   settings: Client<SettingsPaths>
   speech: Client<SpeechPaths>
+  studio: Client<StudioPaths>
   vocab: Client<VocabPaths>
   workout: Client<WorkoutPaths>
   writing: Client<WritingPaths>
@@ -73,11 +77,13 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     films: make<FilmsPaths>(),
     learn: make<LearnPaths>(),
     listening: make<ListeningPaths>(),
+    onboarding: make<OnboardingPaths>(),
     quest: make<QuestPaths>(),
     reader: make<ReaderPaths>(),
     reading: make<ReadingPaths>(),
     settings: make<SettingsPaths>(),
     speech: make<SpeechPaths>(),
+    studio: make<StudioPaths>(),
     vocab: make<VocabPaths>(),
     workout: make<WorkoutPaths>(),
     writing: make<WritingPaths>(),

@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { iconify } from './emoji.tsx'
 
 export const PROSE_CLS = 'min-w-0 break-words [overflow-wrap:anywhere] [&_*:first-child]:mt-0 [&_*:last-child]:mb-0'
 
 function h(level: 1 | 2 | 3 | 4, className: string) {
   return ({ children }: { children?: ReactNode }) => {
-    const props = { className, children }
+    const props = { className, children: iconify(children) }
     if (level === 1) return <h1 {...props} />
     if (level === 2) return <h2 {...props} />
     if (level === 3) return <h3 {...props} />
@@ -23,9 +24,9 @@ function makeMdComponents(variant: 'theory' | 'practice'): Components {
     h2: h(2, 'mb-2.5 mt-4 text-lg font-bold text-neutral-900 first:mt-0'),
     h3: h(3, 'mb-2 mt-3 text-base font-semibold text-neutral-800 first:mt-0'),
     h4: h(4, 'mb-1.5 mt-2.5 text-sm font-semibold text-neutral-800 first:mt-0'),
-    p: ({ children }) => <p className={`${body} mb-2 last:mb-0`}>{children}</p>,
-    strong: ({ children }) => <strong className="font-semibold text-neutral-900">{children}</strong>,
-    em: ({ children }) => <em className="italic text-neutral-500">{children}</em>,
+    p: ({ children }) => <p className={`${body} mb-2 last:mb-0`}>{iconify(children)}</p>,
+    strong: ({ children }) => <strong className="font-semibold text-neutral-900">{iconify(children)}</strong>,
+    em: ({ children }) => <em className="italic text-neutral-500">{iconify(children)}</em>,
     a: ({ href, children }) => (
       <a href={href} target="_blank" rel="noreferrer" className="font-medium text-brand-700 underline decoration-brand-300 underline-offset-2 hover:text-brand-800">
         {children}
@@ -41,7 +42,7 @@ function makeMdComponents(variant: 'theory' | 'practice'): Components {
     ol: ({ children }) => (
       <ol className={`list-decimal ${gap} pl-6 marker:font-semibold marker:text-brand-500/70 [&>li]:pl-1`}>{children}</ol>
     ),
-    li: ({ children }) => <li className={body}>{children}</li>,
+    li: ({ children }) => <li className={body}>{iconify(children)}</li>,
     hr: () => <hr className="my-4 border-0 border-t border-neutral-200" />,
     blockquote: ({ children }) => (
       <blockquote className="my-3 rounded-r-xl border-l-[3px] border-brand-400 bg-white px-4 py-2.5 text-sm leading-relaxed text-neutral-700 shadow-sm ring-1 ring-neutral-200/80 [display:flow-root]">
@@ -54,8 +55,8 @@ function makeMdComponents(variant: 'theory' | 'practice'): Components {
       </div>
     ),
     thead: ({ children }) => <thead className="bg-neutral-50">{children}</thead>,
-    th: ({ children }) => <th className="whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500">{children}</th>,
-    td: ({ children }) => <td className="border-t border-neutral-100 px-3 py-2 align-top">{children}</td>,
+    th: ({ children }) => <th className="whitespace-nowrap px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500">{iconify(children)}</th>,
+    td: ({ children }) => <td className="border-t border-neutral-100 px-3 py-2 align-top">{iconify(children)}</td>,
     tr: ({ children }) => <tr className="even:bg-neutral-50/60">{children}</tr>,
     code: ({ className, children }) => {
       const block = className?.includes('language-')
@@ -92,7 +93,7 @@ export function Inline({ text }: { text: string }) {
         if (bold && p.length > 4) {
           return (
             <strong key={i} className="font-semibold text-neutral-900">
-              {p.slice(2, -2)}
+              {iconify(p.slice(2, -2))}
             </strong>
           )
         }
@@ -100,11 +101,11 @@ export function Inline({ text }: { text: string }) {
         if (italic && p.length > 2) {
           return (
             <em key={i} className="italic text-neutral-500">
-              {p.slice(1, -1)}
+              {iconify(p.slice(1, -1))}
             </em>
           )
         }
-        return <span key={i}>{p}</span>
+        return <span key={i}>{iconify(p)}</span>
       })}
     </>
   )

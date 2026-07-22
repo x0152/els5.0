@@ -9,9 +9,14 @@ import (
 )
 
 const (
-	LessonStatusActive    = "active"
-	LessonStatusCompleted = "completed"
+	LessonStatusGenerating = "generating"
+	LessonStatusActive     = "active"
+	LessonStatusCompleted  = "completed"
+	LessonStatusFailed     = "failed"
 )
+
+// GenerationStaleAfter marks an abandoned "generating" row (e.g. the process died) as reclaimable.
+const GenerationStaleAfter = 30 * time.Minute
 
 const CycleLength = 7
 
@@ -65,6 +70,12 @@ type Lesson struct {
 
 // CycleIndex is the lesson's position inside its 7-lesson cycle; index 7 is the review lesson.
 func (l Lesson) CycleIndex() int { return (l.Number-1)%CycleLength + 1 }
+
+// GenerationInFlight reports whether the row is a live generation claim; a stale
+// claim (owner process died) may be reclaimed.
+func (l Lesson) GenerationInFlight(now time.Time) bool {
+	return l.Status == LessonStatusGenerating && now.Sub(l.CreatedAt) < GenerationStaleAfter
+}
 
 func IsReviewNumber(number int) bool { return number%CycleLength == 0 }
 

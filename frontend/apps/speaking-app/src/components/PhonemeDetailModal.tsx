@@ -1,5 +1,4 @@
-import { Volume2 } from 'lucide-react'
-import { Badge, Button, Modal, phonemeImage, speak } from '@els/ui'
+import { Badge, Modal, SpeakButton, phonemeImage } from '@els/ui'
 import { VERDICT_LABELS, type PhonemeInfo, type PhonemeResult, type Verdict, type WordResult } from '../lib/types.ts'
 
 const VERDICT_BADGES: Record<Verdict, 'success' | 'warning' | 'danger' | 'neutral'> = {
@@ -70,10 +69,9 @@ export function PhonemeDetailModal({ word, phoneme, guide, onClose }: Props) {
         <div className="flex items-center gap-3">
           <Badge tone={VERDICT_BADGES[verdict] ?? 'neutral'}>{VERDICT_LABELS[verdict] ?? verdict}</Badge>
           <span className="text-sm tabular-nums text-neutral-500">match {Math.round(phoneme.score * 100)}%</span>
-          <Button variant="secondary" size="sm" onClick={() => speak(word.word)}>
-            <Volume2 className="h-4 w-4" />
+          <SpeakButton variant="button" className="h-8 px-3" text={word.word}>
             Hear the word
-          </Button>
+          </SpeakButton>
         </div>
 
         <SoundCard title="Target sound" symbol={phoneme.expected} info={guide.get(phoneme.expected)} />

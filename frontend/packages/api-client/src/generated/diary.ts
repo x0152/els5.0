@@ -96,6 +96,11 @@ export interface components {
             next_question?: string;
             question?: string;
             reply: string;
+            /**
+             * @description pending while the friend reply is being generated
+             * @enum {string}
+             */
+            status: "pending" | "done";
             text: string;
         };
         ErrorBody: {

@@ -7,11 +7,13 @@ import {
   ProgressCtx,
   ProduceCtx,
   CheckFreeCtx,
+  FillCtx,
   useProgress,
   type PracticeAnswer,
   type ProgressCtxValue,
   type ProduceEvent,
   type CheckFreeFn,
+  type FillEvent,
 } from './state.ts'
 import { PROSE_CLS } from './markdown.tsx'
 import { BlockCtx } from './render/context.ts'
@@ -24,6 +26,7 @@ export type BlocksAdapters = {
   checkFree?: CheckFreeFn
   images?: ImageApi
   produce?: ProduceEvent
+  onFill?: FillEvent
   progress?: {
     answers?: Record<string, PracticeAnswer>
     onChange: (answers: Record<string, PracticeAnswer>, completed: boolean) => void
@@ -84,13 +87,15 @@ export function BlocksProvider({ adapters = {}, children }: { adapters?: BlocksA
   }, [onChange, version])
 
   return (
-    <ProduceCtx.Provider value={adapters.produce ?? null}>
-      <ImageApiCtx.Provider value={adapters.images ?? null}>
-        <CheckFreeCtx.Provider value={adapters.checkFree ?? null}>
-          <ProgressCtx.Provider value={progressValue}>{children}</ProgressCtx.Provider>
-        </CheckFreeCtx.Provider>
-      </ImageApiCtx.Provider>
-    </ProduceCtx.Provider>
+    <FillCtx.Provider value={adapters.onFill ?? null}>
+      <ProduceCtx.Provider value={adapters.produce ?? null}>
+        <ImageApiCtx.Provider value={adapters.images ?? null}>
+          <CheckFreeCtx.Provider value={adapters.checkFree ?? null}>
+            <ProgressCtx.Provider value={progressValue}>{children}</ProgressCtx.Provider>
+          </CheckFreeCtx.Provider>
+        </ImageApiCtx.Provider>
+      </ProduceCtx.Provider>
+    </FillCtx.Provider>
   )
 }
 

@@ -20,6 +20,7 @@
     "@tanstack/react-query": "catalog:",
     "lucide-react": "catalog:",
     "react": "catalog:",
+    "react-icons": "catalog:",
     "react-dom": "catalog:",
     "react-router-dom": "catalog:"
   },

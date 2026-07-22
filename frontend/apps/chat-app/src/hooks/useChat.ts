@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { fillGap } from '@els/blocks'
 import { api } from '../lib/api'
 import { buildItems, streamChat, type ChatItem, type ChatSegment, type ChatStep } from '../lib/chat'
 
@@ -123,6 +124,14 @@ export function useChat(active: boolean) {
       /* aborted */
     }
     patch((m) => ({ ...m, pending: false }))
+    if (!ac.signal.aborted) {
+      try {
+        const h = await api.ai.aiHistory()
+        setItems(buildItems(h?.messages ?? []))
+      } catch {
+        /* keep local items */
+      }
+    }
     setStreaming(false)
   }, [])
 
@@ -158,6 +167,21 @@ export function useChat(active: boolean) {
   useEffect(() => {
     flushAsk()
   }, [flushAsk])
+
+  const fill = useCallback((messageId: string, ordinal: number, raw: string) => {
+    const answer = raw.replace(/[{}]/g, '').replace(/\n/g, ' ').trim()
+    setItems((prev) =>
+      prev.map((m) =>
+        m.kind === 'assistant'
+          ? {
+              ...m,
+              segments: m.segments.map((s) => (s.id === messageId ? { ...s, text: fillGap(s.text, ordinal, answer) } : s)),
+            }
+          : m,
+      ),
+    )
+    api.ai.aiFillGap({ body: { message_id: messageId, ordinal, answer } }).catch(() => {})
+  }, [])
 
   const regenerate = useCallback(async () => {
     if (streaming) return
@@ -197,5 +221,5 @@ export function useChat(active: boolean) {
     [model],
   )
 
-  return { items, model, models, streaming, send, stop, reset, clear, selectModel, regenerate }
+  return { items, model, models, streaming, send, stop, reset, clear, selectModel, regenerate, fill }
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { BookOpen, BookPlus, Check, ChevronDown, CirclePlay, Film, Loader2, MessageCircleQuestion, Mic, Plus, Square, Volume2, X } from 'lucide-react'
-import { cn, CefrBadge, FrequencyBars, PhonemePopover, anchorOf, canonicalPhoneme, speak, useRecorder, type PhonemeAnchor, type PhonemeGuideInfo } from '@els/ui'
+import { BookOpen, BookPlus, Check, ChevronDown, CirclePlay, Film, Loader2, MessageCircleQuestion, Mic, Plus, Square, X } from 'lucide-react'
+import { cn, CefrBadge, FrequencyBars, PhonemePopover, SpeakButton, anchorOf, canonicalPhoneme, useRecorder, type PhonemeAnchor, type PhonemeGuideInfo } from '@els/ui'
 import { type Api, type SpeechComponents } from '@els/api-client'
 import { SpotsDialog } from './SpotsDialog.tsx'
 import { streamAnalyze, type AnalyzeStreamItem } from './analyzeStream.ts'
@@ -191,9 +191,7 @@ function AnalyzeRow({ row, showTranslations, onCheck, onPickPlaces, onSound, ass
             {row.state === 'added' && <Check className="h-4 w-4 text-brand-600" />}
             {row.state === 'dup' && <span className="text-[10px] text-neutral-400">saved</span>}
           </span>
-          <button type="button" onClick={() => speak(row.text)} title="Listen" className={iconBtn}>
-            <Volume2 className="h-4 w-4" />
-          </button>
+          <SpeakButton title="Listen" className={cn(iconBtn, 'rounded-lg p-1.5')} text={row.text} />
           <button
             type="button"
             onClick={recorder.state === 'recording' ? recorder.stop : recorder.start}

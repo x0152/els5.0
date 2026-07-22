@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/els/backend/internal/domain/agent"
+	"github.com/els/backend/internal/domain/shared"
 )
 
 type Store struct {
@@ -91,6 +92,25 @@ func (s *Store) InsertMessage(ctx context.Context, m agent.Message) error {
 		m.PromptTokens, m.CompletionTokens, m.TotalTokens, m.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("insert message: %w", err)
+	}
+	return nil
+}
+
+func (s *Store) GetMessage(ctx context.Context, id string) (agent.Message, error) {
+	msgs, err := s.query(ctx, `WHERE id=$1`, id)
+	if err != nil {
+		return agent.Message{}, err
+	}
+	if len(msgs) == 0 {
+		return agent.Message{}, shared.ErrNotFound
+	}
+	return msgs[0], nil
+}
+
+func (s *Store) UpdateMessageContent(ctx context.Context, id, content string) error {
+	_, err := s.pool.Exec(ctx, `UPDATE ai_messages SET content=$2 WHERE id=$1`, id, content)
+	if err != nil {
+		return fmt.Errorf("update message content: %w", err)
 	}
 	return nil
 }

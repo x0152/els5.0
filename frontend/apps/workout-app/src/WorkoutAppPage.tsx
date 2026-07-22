@@ -1,8 +1,8 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isApiError } from '@els/api-client'
-import { Button, ErrorState, LoadingState, Mascot, Spinner, cn } from '@els/ui'
+import { AppInfoButton, Button, ErrorState, LoadingState, Mascot, Spinner, cn } from '@els/ui'
 import { CalendarDays, Check, Dumbbell, Flame, Play, Sparkles, Trophy } from 'lucide-react'
 import { api } from './lib/api.ts'
 import { STEP_META, stepDetail } from './lib/steps.ts'
@@ -15,15 +15,28 @@ export function WorkoutAppPage() {
   const todayQ = useQuery({
     queryKey: ['workout-today'],
     queryFn: () => api.workout.workoutToday(),
+    refetchInterval: (q) => (q.state.data?.generating && !q.state.data.completed ? 4000 : false),
   })
 
+  const [kickedAt, setKickedAt] = useState<number>()
   const start = useMutation({
     mutationFn: () => api.workout.workoutStartLesson(),
-    onSuccess: (lesson) => {
+    onSuccess: (res) => {
       void queryClient.invalidateQueries({ queryKey: ['workout-today'] })
-      if (lesson) navigate(`lesson/${lesson.id}`)
+      if (res?.lesson) navigate(`lesson/${res.lesson.id}`)
+      else setKickedAt(Date.now())
     },
   })
+
+  const lessonId = todayQ.data?.lesson?.id
+  const genFailed = todayQ.data?.generation_failed
+  const generating =
+    !lessonId && (!!todayQ.data?.generating || (kickedAt !== undefined && todayQ.dataUpdatedAt < kickedAt && !genFailed))
+  const wasGenerating = useRef(false)
+  useEffect(() => {
+    if (generating) wasGenerating.current = true
+    else if (wasGenerating.current && lessonId) navigate(`lesson/${lessonId}`)
+  }, [generating, lessonId, navigate])
 
   if (todayQ.isPending) return <LoadingState className="h-full" />
   if (todayQ.isError)
@@ -55,10 +68,20 @@ export function WorkoutAppPage() {
           <DoneToday lesson={lesson} onOpen={(id) => navigate(`lesson/${id}`)} />
         ) : lesson ? (
           <TodayLesson lesson={lesson} onOpen={() => navigate(`lesson/${lesson.id}`)} />
+        ) : generating ? (
+          <GeneratingCard since={today?.generating_since ? Date.parse(today.generating_since) : kickedAt} />
         ) : (
           <StartCard
             starting={start.isPending}
-            error={start.isError ? (isApiError(start.error) ? start.error.message : 'Failed to build the lesson') : undefined}
+            error={
+              start.isError
+                ? isApiError(start.error)
+                  ? start.error.message
+                  : 'Failed to build the lesson'
+                : genFailed
+                  ? 'The last attempt failed — hit the button to try again.'
+                  : undefined
+            }
             onStart={() => start.mutate()}
           />
         )}
@@ -86,7 +109,9 @@ function Hero({ streak, completedToday }: { streak: number; completedToday: bool
       <Dumbbell className="absolute right-6 top-6 h-10 w-10 text-white/20" />
       <div className="relative">
         <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">{dateLine}</p>
-        <h1 className="mt-1 text-3xl font-extrabold tracking-tight">{greeting()}.</h1>
+        <h1 className="mt-1 flex items-center gap-2 text-3xl font-extrabold tracking-tight">
+          {greeting()}. <AppInfoButton className="text-white/50 hover:bg-white/15 hover:text-white" />
+        </h1>
         <p className="mt-1.5 max-w-md text-sm text-white/80">
           {completedToday
             ? 'Today’s workout is in the bag — the streak lives another day.'
@@ -222,6 +247,47 @@ function DoneToday({ lesson, onOpen }: { lesson?: Lesson; onOpen: (id: string) =
           One more
         </Button>
       )}
+    </section>
+  )
+}
+
+const GEN_PHASES = [
+  'Picking a film scene for you…',
+  'Writing comprehension questions…',
+  'Choosing phrases to speak and dictate…',
+  'Preparing a reading passage…',
+  'Building the writing scenario…',
+  'Putting grammar drills together…',
+  'Polishing the final steps…',
+]
+
+function GeneratingCard({ since }: { since?: number }) {
+  const [seconds, setSeconds] = useState(0)
+  useEffect(() => {
+    const base = since ?? Date.now()
+    const tick = () => setSeconds(Math.max(0, Math.floor((Date.now() - base) / 1000)))
+    tick()
+    const t = setInterval(tick, 1000)
+    return () => clearInterval(t)
+  }, [since])
+  const phase = GEN_PHASES[Math.min(Math.floor(seconds / 20), GEN_PHASES.length - 1)]
+
+  return (
+    <section className="flex flex-col items-center gap-4 rounded-3xl border border-neutral-200 bg-white p-8 text-center shadow-sm">
+      <Mascot className="h-24 w-24" />
+      <div>
+        <h2 className="text-lg font-bold text-neutral-900">Building your lesson…</h2>
+        <p key={phase} className="mx-auto mt-1 max-w-sm animate-pulse text-sm text-neutral-500">
+          {phase}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 rounded-full bg-neutral-100 px-4 py-1.5 text-xs font-medium text-neutral-500">
+        <Spinner className="h-3.5 w-3.5" />
+        {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')} · usually takes 5–10 minutes
+      </div>
+      <p className="max-w-sm text-xs text-neutral-400">
+        Nothing is stuck — the AI is writing every step from scratch. Feel free to leave this page and come back.
+      </p>
     </section>
   )
 }

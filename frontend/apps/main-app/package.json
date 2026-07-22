@@ -28,6 +28,7 @@
     "@els/reading-app": "workspace:*",
     "@els/settings-app": "workspace:*",
     "@els/speaking-app": "workspace:*",
+    "@els/studio-app": "workspace:*",
     "@els/ui": "workspace:*",
     "@els/vocab-app": "workspace:*",
     "@els/wordbook-app": "workspace:*",

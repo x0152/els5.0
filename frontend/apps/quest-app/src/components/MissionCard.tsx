@@ -65,9 +65,10 @@ export function MissionCard({ mission, onOpen, onDelete }: Props) {
       </button>
 
       {generating && (
-        <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/55 text-white">
+        <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-black/55 px-4 text-center text-white">
           <Loader2 className="h-6 w-6 animate-spin" />
           <span className="text-xs font-medium">Creating adventure…</span>
+          <span className="text-[10px] text-white/70">Usually takes 5–10 minutes — check back soon</span>
         </div>
       )}
       {failed && (

@@ -12,11 +12,13 @@ import type {
   FilmsPaths,
   LearnPaths,
   ListeningPaths,
+  OnboardingPaths,
   QuestPaths,
   ReaderPaths,
   ReadingPaths,
   SettingsPaths,
   SpeechPaths,
+  StudioPaths,
   VocabPaths,
   WorkoutPaths,
   WritingPaths,
@@ -39,6 +41,7 @@ export function createApi(options: ApiClientOptions) {
     },
     ai: {
       aiClearChat: (init?: MaybeOptionalInit<AiPaths['/api/v1/ai/clear'], 'post'>) => unwrap(clients.ai.POST('/api/v1/ai/clear', init)),
+      aiFillGap: (init: MaybeOptionalInit<AiPaths['/api/v1/ai/fill-gap'], 'post'>) => unwrap(clients.ai.POST('/api/v1/ai/fill-gap', init)),
       aiHistory: (init?: MaybeOptionalInit<AiPaths['/api/v1/ai/history'], 'get'>) => unwrap(clients.ai.GET('/api/v1/ai/history', init)),
       aiSetModel: (init: MaybeOptionalInit<AiPaths['/api/v1/ai/model'], 'post'>) => unwrap(clients.ai.POST('/api/v1/ai/model', init)),
       aiModels: (init?: MaybeOptionalInit<AiPaths['/api/v1/ai/models'], 'get'>) => unwrap(clients.ai.GET('/api/v1/ai/models', init)),
@@ -100,6 +103,10 @@ export function createApi(options: ApiClientOptions) {
     listening: {
       listeningGenerateDictation: (init: MaybeOptionalInit<ListeningPaths['/api/v1/listening/dictations'], 'post'>) => unwrap(clients.listening.POST('/api/v1/listening/dictations', init)),
     },
+    onboarding: {
+      onboardingAck: (init: MaybeOptionalInit<OnboardingPaths['/api/v1/onboarding/ack'], 'post'>) => unwrap(clients.onboarding.POST('/api/v1/onboarding/ack', init)),
+      onboardingProgress: (init?: MaybeOptionalInit<OnboardingPaths['/api/v1/onboarding/progress'], 'get'>) => unwrap(clients.onboarding.GET('/api/v1/onboarding/progress', init)),
+    },
     quest: {
       listQuestMissions: (init?: MaybeOptionalInit<QuestPaths['/api/v1/quest/missions'], 'get'>) => unwrap(clients.quest.GET('/api/v1/quest/missions', init)),
       createQuestMission: (init: MaybeOptionalInit<QuestPaths['/api/v1/quest/missions'], 'post'>) => unwrap(clients.quest.POST('/api/v1/quest/missions', init)),
@@ -141,6 +148,20 @@ export function createApi(options: ApiClientOptions) {
       speechSynthesize: (init: MaybeOptionalInit<SpeechPaths['/api/v1/speech/tts'], 'post'>) => unwrap(clients.speech.POST('/api/v1/speech/tts', init)),
       listSpeechVoices: (init?: MaybeOptionalInit<SpeechPaths['/api/v1/speech/voices'], 'get'>) => unwrap(clients.speech.GET('/api/v1/speech/voices', init)),
     },
+    studio: {
+      studioListAreas: (init?: MaybeOptionalInit<StudioPaths['/api/v1/studio/areas'], 'get'>) => unwrap(clients.studio.GET('/api/v1/studio/areas', init)),
+      studioCreateArea: (init: MaybeOptionalInit<StudioPaths['/api/v1/studio/areas'], 'post'>) => unwrap(clients.studio.POST('/api/v1/studio/areas', init)),
+      studioDeleteArea: (init: MaybeOptionalInit<StudioPaths['/api/v1/studio/areas/{id}'], 'delete'>) => unwrap(clients.studio.DELETE('/api/v1/studio/areas/{id}', init)),
+      studioListItems: (init: MaybeOptionalInit<StudioPaths['/api/v1/studio/areas/{id}/items'], 'get'>) => unwrap(clients.studio.GET('/api/v1/studio/areas/{id}/items', init)),
+      studioAddItem: (init: MaybeOptionalInit<StudioPaths['/api/v1/studio/areas/{id}/items'], 'post'>) => unwrap(clients.studio.POST('/api/v1/studio/areas/{id}/items', init)),
+      studioCaptureItem: (init: MaybeOptionalInit<StudioPaths['/api/v1/studio/capture'], 'post'>) => unwrap(clients.studio.POST('/api/v1/studio/capture', init)),
+      studioDeleteItem: (init: MaybeOptionalInit<StudioPaths['/api/v1/studio/items/{id}'], 'delete'>) => unwrap(clients.studio.DELETE('/api/v1/studio/items/{id}', init)),
+      studioCheckReply: (init: MaybeOptionalInit<StudioPaths['/api/v1/studio/items/{id}/check'], 'post'>) => unwrap(clients.studio.POST('/api/v1/studio/items/{id}/check', init)),
+      studioRegenExample: (init: MaybeOptionalInit<StudioPaths['/api/v1/studio/items/{id}/example'], 'post'>) => unwrap(clients.studio.POST('/api/v1/studio/items/{id}/example', init)),
+      studioPassReview: (init: MaybeOptionalInit<StudioPaths['/api/v1/studio/items/{id}/review'], 'post'>) => unwrap(clients.studio.POST('/api/v1/studio/items/{id}/review', init)),
+      studioMarkSkill: (init: MaybeOptionalInit<StudioPaths['/api/v1/studio/items/{id}/skill'], 'post'>) => unwrap(clients.studio.POST('/api/v1/studio/items/{id}/skill', init)),
+      studioRegenTask: (init: MaybeOptionalInit<StudioPaths['/api/v1/studio/items/{id}/task'], 'post'>) => unwrap(clients.studio.POST('/api/v1/studio/items/{id}/task', init)),
+    },
     vocab: {
       analyzeVocab: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/analyze'], 'post'>) => unwrap(clients.vocab.POST('/api/v1/vocab/analyze', init)),
       generateVocabCards: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/cards'], 'post'>) => unwrap(clients.vocab.POST('/api/v1/vocab/cards', init)),
@@ -157,6 +178,7 @@ export function createApi(options: ApiClientOptions) {
       updateVocabUnitStatus: (init: MaybeOptionalInit<VocabPaths['/api/v1/vocab/units/{id}/status'], 'patch'>) => unwrap(clients.vocab.PATCH('/api/v1/vocab/units/{id}/status', init)),
     },
     workout: {
+      workoutReset: (init?: MaybeOptionalInit<WorkoutPaths['/api/v1/workout'], 'delete'>) => unwrap(clients.workout.DELETE('/api/v1/workout', init)),
       workoutStartLesson: (init?: MaybeOptionalInit<WorkoutPaths['/api/v1/workout/lessons'], 'post'>) => unwrap(clients.workout.POST('/api/v1/workout/lessons', init)),
       workoutGetLesson: (init: MaybeOptionalInit<WorkoutPaths['/api/v1/workout/lessons/{id}'], 'get'>) => unwrap(clients.workout.GET('/api/v1/workout/lessons/{id}', init)),
       workoutSubmitStep: (init: MaybeOptionalInit<WorkoutPaths['/api/v1/workout/lessons/{id}/steps/{step}'], 'post'>) => unwrap(clients.workout.POST('/api/v1/workout/lessons/{id}/steps/{step}', init)),

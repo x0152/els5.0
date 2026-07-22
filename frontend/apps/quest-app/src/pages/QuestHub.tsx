@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Swords } from 'lucide-react'
-import { Button, ConfirmDialog, EmptyState, LoadingState, useAgentView } from '@els/ui'
+import { AppInfoButton, Button, ConfirmDialog, EmptyState, LoadingState, useAgentView } from '@els/ui'
 import { CreateMissionModal } from '../components/CreateMissionModal.tsx'
 import { MissionCard } from '../components/MissionCard.tsx'
 import { useCreateMission, useDeleteMission, useMissions } from '../store/missions.ts'
@@ -43,7 +43,7 @@ export function QuestHub() {
           <div className="min-w-0">
             <h1 className="flex items-center gap-2 text-2xl font-bold text-neutral-900">
               <Swords className="h-6 w-6 shrink-0 text-brand-600" />
-              Quests
+              Quests <AppInfoButton />
             </h1>
             <p className="mt-1 text-sm text-neutral-500">Interactive missions for language practice</p>
           </div>

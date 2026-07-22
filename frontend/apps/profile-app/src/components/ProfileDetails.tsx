@@ -78,7 +78,6 @@ function DetailsForm({ me }: { me: MeProfile }) {
   return (
     <Widget
       title="Personal details"
-      className="sm:col-span-3"
       action={
         editing ? (
           <div className="flex items-center gap-2">
@@ -127,16 +126,15 @@ function DetailsForm({ me }: { me: MeProfile }) {
           />
         </Field>
         <Field label="Native language">
-          <Select value={nativeLanguage} onChange={(e) => setNativeLanguage(e.target.value)} disabled={!editing}>
-            {!NATIVE_LANGUAGES.includes(nativeLanguage) && nativeLanguage && (
-              <option value={nativeLanguage}>{nativeLanguage}</option>
-            )}
-            {NATIVE_LANGUAGES.map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
-            ))}
-          </Select>
+          <Select
+            value={nativeLanguage}
+            onChange={setNativeLanguage}
+            disabled={!editing}
+            options={(NATIVE_LANGUAGES.includes(nativeLanguage) || !nativeLanguage
+              ? NATIVE_LANGUAGES
+              : [nativeLanguage, ...NATIVE_LANGUAGES]
+            ).map((l) => ({ value: l, label: l }))}
+          />
         </Field>
         <label className="flex items-center gap-2 sm:col-span-2">
           <input

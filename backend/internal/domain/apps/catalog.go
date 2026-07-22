@@ -92,6 +92,15 @@ var Catalog = []App{
 		Access:      AccessPolicy{AllowAll: true},
 	},
 	{
+		ID:          "studio",
+		Name:        "Studio",
+		URI:         "/v1/studio",
+		Description: "Your phrases and words, trained across every skill on one screen",
+		Group:       "practice",
+		Disabled:    false,
+		Access:      AccessPolicy{AllowAll: true},
+	},
+	{
 		ID:          "speaking",
 		Name:        "Speaking",
 		URI:         "/v1/speaking",

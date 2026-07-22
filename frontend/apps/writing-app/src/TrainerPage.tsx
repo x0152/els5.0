@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { isApiError } from '@els/api-client'
 import { emitTextEvents } from '@els/core-events'
-import { Button, Spinner, Textarea, cn, useAgentView } from '@els/ui'
+import { AppInfoButton, Button, Spinner, Textarea, cn, useAgentView } from '@els/ui'
 import { CheckCircle2, MessageSquareText, Pencil, PencilRuler, RotateCcw, Sparkles } from 'lucide-react'
 import { api } from './lib/api'
 import type { TrainerIssue, TrainerVerdict } from './lib/types'
@@ -51,6 +51,14 @@ function toSpans(text: string, issues: TrainerIssue[]): Span[] {
   }
   if (pos < text.length) spans.push({ text: text.slice(pos), issueIdx: null })
   return spans
+}
+
+function StepBadge({ n }: { n: number }) {
+  return (
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white shadow-sm shadow-brand-600/25">
+      {n}
+    </span>
+  )
 }
 
 function HighlightedDraft({ text, issues }: { text: string; issues: TrainerIssue[] }) {
@@ -138,43 +146,69 @@ export function TrainerPage() {
             <PencilRuler className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">Phrase trainer</h1>
+            <h1 className="flex items-center gap-1.5 text-2xl font-bold text-neutral-900">
+              Phrase trainer <AppInfoButton />
+            </h1>
             <p className="text-sm text-neutral-500">It shows where the problem is — rewriting is up to you.</p>
           </div>
         </header>
 
-        <section className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Dialogue (context)</h2>
-            <Button variant="ghost" size="sm" onClick={() => suggest.mutate()} disabled={suggest.isPending}>
-              {suggest.isPending ? <Spinner className="h-4 w-4" /> : <MessageSquareText className="h-4 w-4" />}
-              Suggest a situation
-            </Button>
+        <section className="relative overflow-hidden rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-50 to-white p-5 shadow-sm">
+          <MessageSquareText className="absolute -right-5 -top-5 h-28 w-28 text-brand-100" />
+          <div className="relative flex flex-col gap-3">
+            <div className="flex items-center gap-2.5">
+              <StepBadge n={1} />
+              <div>
+                <h2 className="text-sm font-semibold text-neutral-900">Pick a situation</h2>
+                <p className="text-xs text-neutral-500">Paste a dialogue you want to reply to, or let AI invent one.</p>
+              </div>
+            </div>
+            {scenario && (
+              <p className="rounded-xl bg-white/70 px-4 py-2.5 text-sm italic leading-relaxed text-neutral-600 ring-1 ring-brand-100">
+                {scenario}
+              </p>
+            )}
+            <Textarea
+              value={dialogue}
+              onChange={(e) => setDialogue(e.target.value)}
+              rows={4}
+              placeholder="Paste the dialogue you want to reply to, or let AI suggest one…"
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant={dialogue ? 'secondary' : 'brand'}
+                onClick={() => suggest.mutate()}
+                disabled={suggest.isPending}
+              >
+                {suggest.isPending ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                {suggest.isPending ? 'Inventing…' : dialogue ? 'Another situation' : 'Suggest a situation'}
+              </Button>
+              {suggest.isPending && (
+                <p className="text-sm text-neutral-500">Takes a few seconds — stay on this page.</p>
+              )}
+            </div>
+            {suggest.isError && (
+              <p className="text-sm text-red-600">{isApiError(suggest.error) ? suggest.error.message : 'Generation failed'}</p>
+            )}
           </div>
-          {scenario && <p className="text-xs italic text-neutral-400">{scenario}</p>}
-          <Textarea
-            value={dialogue}
-            onChange={(e) => setDialogue(e.target.value)}
-            rows={4}
-            placeholder="Paste the dialogue you want to reply to, or let AI suggest one…"
-          />
-          {suggest.isError && (
-            <p className="text-sm text-red-600">{isApiError(suggest.error) ? suggest.error.message : 'Generation failed'}</p>
-          )}
         </section>
 
-        <section className="flex flex-col gap-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Strictness level</h2>
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center gap-2.5">
+            <StepBadge n={2} />
+            <h2 className="text-sm font-semibold text-neutral-900">Choose strictness</h2>
+          </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             {LEVELS.map((l) => (
               <button
                 key={l.id}
                 onClick={() => changeLevel(l)}
                 className={cn(
-                  'rounded-xl border p-3 text-left transition-colors',
-                  l.id === level.id ? 'border-brand-500 bg-brand-50' : 'border-neutral-200 bg-white hover:border-neutral-300',
+                  'relative rounded-2xl border p-3.5 text-left shadow-sm transition-all',
+                  l.id === level.id ? 'border-brand-300 bg-brand-50 ring-2 ring-brand-100' : 'border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-md',
                 )}
               >
+                {l.id === level.id && <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-brand-600" />}
                 <p className="text-sm font-semibold text-neutral-900">{l.id}. {l.title}</p>
                 <p className="mt-0.5 text-xs text-neutral-500">{l.desc}</p>
               </button>
@@ -182,9 +216,12 @@ export function TrainerPage() {
           </div>
         </section>
 
-        <section className="flex flex-col gap-2">
+        <section className="flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Your phrase</h2>
+            <div className="flex items-center gap-2.5">
+              <StepBadge n={3} />
+              <h2 className="text-sm font-semibold text-neutral-900">Write your reply</h2>
+            </div>
             {attempts.length > 0 && (
               <div className="flex items-center gap-1.5 text-xs text-neutral-400">
                 {attempts.map((a, i) => (
@@ -228,7 +265,7 @@ export function TrainerPage() {
         {result && !check.isPending && (
           <section className="flex flex-col gap-3">
             {passed ? (
-              <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+              <div className="flex flex-col gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
                 <p className="flex items-center gap-2 font-medium text-emerald-800">
                   <CheckCircle2 className="h-5 w-5" /> {result.verdict.comment}
                 </p>
@@ -248,9 +285,9 @@ export function TrainerPage() {
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-neutral-200 bg-white p-5">
+              <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
                 <p className="text-sm text-neutral-500">{result.verdict.comment}</p>
-                <div className="mt-3 rounded-lg bg-neutral-50 p-3">
+                <div className="mt-3 rounded-xl bg-neutral-50 p-4">
                   <HighlightedDraft text={result.draft} issues={issues} />
                 </div>
                 <ol className="mt-4 flex flex-col gap-2">

@@ -16,6 +16,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/ai/fill-gap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Store the user's answer inside an exercise message */
+        post: operations["aiFillGap"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/ai/history": {
         parameters: {
             query?: never;
@@ -107,6 +124,12 @@ export interface components {
             error: components["schemas"]["ErrorBody"];
             meta?: components["schemas"]["Meta"];
             ok: boolean;
+        };
+        FillGapInputBody: {
+            answer: string;
+            message_id: string;
+            /** Format: int64 */
+            ordinal: number;
         };
         HealthOutput: {
             /** @example auth */
@@ -209,6 +232,7 @@ export type SchemaCheckResult = components['schemas']['CheckResult'];
 export type SchemaErrorBody = components['schemas']['ErrorBody'];
 export type SchemaErrorDetail = components['schemas']['ErrorDetail'];
 export type SchemaErrorResponse = components['schemas']['ErrorResponse'];
+export type SchemaFillGapInputBody = components['schemas']['FillGapInputBody'];
 export type SchemaHealthOutput = components['schemas']['HealthOutput'];
 export type SchemaHistoryOutput = components['schemas']['HistoryOutput'];
 export type SchemaMessageOutput = components['schemas']['MessageOutput'];
@@ -235,6 +259,39 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessBodyOKOutput"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    aiFillGap: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FillGapInputBody"];
+            };
+        };
         responses: {
             /** @description OK */
             200: {

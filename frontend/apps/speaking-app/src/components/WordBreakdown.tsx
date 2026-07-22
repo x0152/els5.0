@@ -20,7 +20,7 @@ export function WordBreakdown({ words, onSelect }: Props) {
         <div
           key={`${word.word}-${i}`}
           className={cn(
-            'rounded-2xl border bg-white px-4 py-3',
+            'rounded-2xl border bg-white px-4 py-3 shadow-sm',
             word.score >= 85 ? 'border-neutral-200' : word.score >= 60 ? 'border-amber-300' : 'border-red-300',
           )}
         >

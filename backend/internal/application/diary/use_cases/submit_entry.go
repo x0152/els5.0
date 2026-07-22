@@ -34,14 +34,15 @@ type SubmitEntryUseCase struct {
 	repo   diary.Repository
 	llm    LLMClient
 	events EventSink
+	worker *ReplyWorker
 	clock  timex.Clock
 }
 
-func NewSubmitEntryUseCase(repo diary.Repository, llm LLMClient, events EventSink, clock timex.Clock) *SubmitEntryUseCase {
+func NewSubmitEntryUseCase(repo diary.Repository, llm LLMClient, events EventSink, worker *ReplyWorker, clock timex.Clock) *SubmitEntryUseCase {
 	if clock == nil {
 		clock = timex.System()
 	}
-	return &SubmitEntryUseCase{repo: repo, llm: llm, events: events, clock: clock}
+	return &SubmitEntryUseCase{repo: repo, llm: llm, events: events, worker: worker, clock: clock}
 }
 
 func (uc *SubmitEntryUseCase) Execute(ctx context.Context, actor *iam.Actor, cmd SubmitEntryCommand) (diary.Entry, error) {
@@ -56,6 +57,7 @@ func (uc *SubmitEntryUseCase) Execute(ctx context.Context, actor *iam.Actor, cmd
 		Question:  cmd.Question,
 		Draft:     cmd.Draft,
 		Text:      cmd.Text,
+		Status:    diary.StatusPending,
 		CreatedAt: now,
 	}
 	if err := entry.Validate(); err != nil {
@@ -72,31 +74,14 @@ func (uc *SubmitEntryUseCase) Execute(ctx context.Context, actor *iam.Actor, cmd
 		return diary.Entry{}, err
 	}
 
-	// 3. Ask the LLM for the friend reply and corrections, with recent entries as context.
-	history, err := uc.repo.Latest(ctx, accountID, 3)
-	if err != nil {
-		return diary.Entry{}, err
-	}
-	system, user := diary.BuildReplyPrompt(cmd.Question, cmd.Text, actor.Account().NativeLanguage(), history)
-	raw, err := uc.llm.Chat(ctx, system, user)
-	if err != nil {
-		return diary.Entry{}, err
-	}
-	reply, err := diary.ParseReply(raw)
-	if err != nil {
-		return diary.Entry{}, err
-	}
-	entry.Reply = reply.Text
-	entry.NextQuestion = reply.NextQuestion
-	entry.NativeSample = reply.NativeSample
-	entry.Corrections = reply.Corrections
-
-	// 4. Persist the entry.
+	// 3. Persist the pending entry and generate the friend reply in the background,
+	// so the user can close the app and come back later.
 	if err := uc.repo.Insert(ctx, entry); err != nil {
 		return diary.Entry{}, err
 	}
+	uc.worker.Kick(entry, actor.Account().NativeLanguage())
 
-	// 5. Publish the entry text into the learn core pipeline (best effort).
+	// 4. Publish the entry text into the learn core pipeline (best effort).
 	if uc.events != nil {
 		event := core.RawEvent{
 			ID:     uuid.NewString(),

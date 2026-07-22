@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { BookOpen, Film, ImageIcon, Loader2, Mic, CirclePlay, Square, Trash2, TriangleAlert, Volume2, X } from 'lucide-react'
-import { Badge, Button, cn, CefrBadge, FrequencyBars, IpaText, Modal, PhonemePopover, canonicalPhoneme, speak, useRecorder, type PhonemeAnchor } from '@els/ui'
+import { BookOpen, Film, ImageIcon, Loader2, Mic, CirclePlay, Square, Trash2, TriangleAlert, X } from 'lucide-react'
+import { Badge, Button, cn, CefrBadge, FrequencyBars, IpaText, Modal, PhonemePopover, SpeakButton, canonicalPhoneme, useRecorder, type PhonemeAnchor } from '@els/ui'
 import { SpotsDialog } from '@els/lookup'
 import { api } from '../lib/api.ts'
 import { pronounced } from '../lib/events.ts'
@@ -87,14 +87,12 @@ export function WordDetailModal({ unit, onClose }: Props) {
           </div>
           <h2 className="mt-2 flex items-center gap-2 text-2xl font-bold text-neutral-900">
             {unit.text}
-            <button
-              type="button"
-              onClick={() => speak(unit.text)}
+            <SpeakButton
               title="Pronounce"
-              className="rounded-full p-1.5 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
-            >
-              <Volume2 className="h-5 w-5" />
-            </button>
+              className="rounded-full p-1.5 hover:text-neutral-700"
+              iconClassName="h-5 w-5"
+              text={unit.text}
+            />
             <button
               type="button"
               onClick={recorder.state === 'recording' ? recorder.stop : recorder.start}
