@@ -130,7 +130,7 @@ minio:
     consolePort: 9001
   persistence:
     enabled: true
-    size: 20Gi
+    size: 40Gi
     storageClass: ""
   resources:
     requests:

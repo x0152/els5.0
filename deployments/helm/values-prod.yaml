@@ -31,6 +31,8 @@ redis:
   enabled: true
 minio:
   enabled: true
+  persistence:
+    size: 40Gi
 
 jobs:
   migration:
