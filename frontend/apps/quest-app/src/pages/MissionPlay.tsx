@@ -90,6 +90,8 @@ export function MissionPlay() {
 
   function reset() {
     setInput('')
+    setStreak(0)
+    streakJobRef.current = null
     native.reset()
     resetM.mutate()
   }

@@ -726,8 +726,20 @@ func (m *CustomMission) Reset() {
 	m.SummarizedUpToTurn = 0
 	m.SkillsEarned = nil
 	m.SkillSignals = map[string]int{}
+	m.TotalXP = 0
 	m.NPCStates = nil
 	m.EnsureNPCStates()
+
+	scene0Image := m.SceneImages["0"]
+	scene0Status := m.SceneImageStatus["0"]
+	m.SceneImages = map[string]string{}
+	m.SceneImageStatus = map[string]string{}
+	m.SceneImageErrors = map[string]string{}
+	m.SceneImageGenStartedAt = map[string]string{}
+	if scene0Image != "" {
+		m.SceneImages["0"] = scene0Image
+		m.SceneImageStatus["0"] = scene0Status
+	}
 
 	for i := range m.PlotPoints {
 		m.PlotPoints[i].Delivered = false
