@@ -324,6 +324,10 @@ function ReadInner({ id }: { id: string }) {
         <p className="flex flex-1 items-center justify-center text-sm text-neutral-500">Book is not available.</p>
       ) : (
         <div ref={scrollRef} onScroll={onScroll} className="relative min-h-0 flex-1 overflow-y-auto px-6 py-8">
+          <div className="mx-auto mb-8 max-w-[42rem] border-b border-neutral-200 pb-6">
+            <h1 className="text-3xl font-extrabold leading-tight text-neutral-900">{book?.title}</h1>
+            {book?.author && <p className="mt-2 text-sm text-neutral-500">{book.author}</p>}
+          </div>
           <div ref={contentRef} className="book-content" dangerouslySetInnerHTML={{ __html: annotatedHtml ?? '' }} />
           <div className="mx-auto mt-10 flex max-w-[42rem] justify-center border-t border-neutral-200 pt-8">
             <button

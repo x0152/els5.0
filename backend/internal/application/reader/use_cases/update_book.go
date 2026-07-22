@@ -5,6 +5,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/els/backend/internal/domain/iam"
 	"github.com/els/backend/internal/domain/media"
 	"github.com/els/backend/internal/domain/reader"
@@ -46,7 +48,7 @@ func (uc *UpdateBookUseCase) Execute(ctx context.Context, actor *iam.Actor, id s
 	}
 
 	if cmd.Cover != nil && len(cmd.Cover.Data) > 0 {
-		path, err := media.NewPath(uc.bucket + "/" + book.ID + "/cover" + ext(cmd.Cover.Filename, ".jpg"))
+		path, err := media.NewPath(uc.bucket + "/" + book.ID + "/cover-" + uuid.NewString() + ext(cmd.Cover.Filename, ".jpg"))
 		if err != nil {
 			return reader.Book{}, err
 		}
