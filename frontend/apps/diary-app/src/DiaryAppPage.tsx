@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isApiError } from '@els/api-client'
 import { AppInfoButton, Button, ErrorState, LoadingState, Spinner, Textarea, cn } from '@els/ui'
-import { CheckCircle2, Eye, Flame, GitCompareArrows, MessageCircleHeart, NotebookPen, Quote, TriangleAlert } from 'lucide-react'
+import { CheckCircle2, Eye, Flame, GitCompareArrows, History as HistoryIcon, MessageCircleHeart, NotebookPen, Quote, TriangleAlert } from 'lucide-react'
 import { api } from './lib/api'
 import { diffWords } from './lib/diff'
 import type { Correction, GrammarError } from './lib/types'
@@ -60,6 +61,7 @@ function EntryDiff({ draft, text }: { draft: string; text: string }) {
 }
 
 export function DiaryAppPage() {
+  const navigate = useNavigate()
   const [text, setText] = useState('')
   const [draft, setDraft] = useState<string | null>(null)
   const [errors, setErrors] = useState<GrammarError[] | null>(null)
@@ -131,11 +133,16 @@ export function DiaryAppPage() {
               </p>
             </div>
           </div>
-          {streak > 0 && (
-            <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3.5 py-1.5 text-sm font-semibold text-white shadow-sm shadow-orange-500/25">
-              <Flame className="h-4 w-4" /> {streak}-day streak
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {streak > 0 && (
+              <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3.5 py-1.5 text-sm font-semibold text-white shadow-sm shadow-orange-500/25">
+                <Flame className="h-4 w-4" /> {streak}-day streak
+              </div>
+            )}
+            <Button variant="secondary" onClick={() => navigate('history')}>
+              <HistoryIcon className="h-4 w-4" /> History
+            </Button>
+          </div>
         </header>
 
         {!entry && warmupGroups.length > 0 && (

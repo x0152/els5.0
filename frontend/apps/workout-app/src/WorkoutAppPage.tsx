@@ -224,9 +224,9 @@ function StepRow({ step, last, active }: { step: Step; last: boolean; active: bo
         {!last && <span className={cn('w-px flex-1', step.done ? 'bg-emerald-200' : 'bg-neutral-200')} />}
       </div>
       <div className={cn('flex min-w-0 flex-1 items-baseline justify-between gap-3 pb-4', !step.done && !active && 'opacity-60')}>
-        <div className="min-w-0">
-          <span className="text-sm font-semibold text-neutral-800">{meta.label}</span>
-          {detail && <span className="ml-2 truncate text-xs text-neutral-400">{detail}</span>}
+        <div className="flex min-w-0 items-baseline">
+          <span className="shrink-0 text-sm font-semibold text-neutral-800">{meta.label}</span>
+          {detail && <span className="ml-2 min-w-0 truncate text-xs text-neutral-400">{detail}</span>}
         </div>
         {step.done && <span className={cn('text-xs font-bold tabular-nums', step.score >= 70 ? 'text-emerald-600' : 'text-rose-500')}>{step.score}</span>}
       </div>

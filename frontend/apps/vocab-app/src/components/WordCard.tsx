@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react'
+import { Loader2, Trash2 } from 'lucide-react'
 import { Badge, cn, CefrBadge, FrequencyBars } from '@els/ui'
 import { useWordImage } from '../hooks/useWordImage.ts'
 import { useShowTranslations } from '../store/me.ts'
@@ -22,11 +22,16 @@ export function WordCard({ unit, onOpen, onDelete }: Props) {
     <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white text-left ring-1 ring-neutral-200 transition hover:-translate-y-0.5 hover:shadow-md">
       <button type="button" onClick={() => onOpen(unit)} className="absolute inset-0 z-10 cursor-pointer" aria-label={unit.text} />
 
-      {hasImage && (
+      {hasImage ? (
         <div className="aspect-[4/3] w-full overflow-hidden bg-neutral-100">
           <img src={image.url} alt="" className="h-full w-full object-cover" />
         </div>
-      )}
+      ) : image.status === 'generating' ? (
+        <div className="flex aspect-[4/3] w-full animate-pulse items-center justify-center gap-2 bg-neutral-100 text-neutral-400">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-xs font-medium">Generating image…</span>
+        </div>
+      ) : null}
 
       <div className="flex flex-1 flex-col p-4">
         <div className="mb-2 flex items-center justify-between">

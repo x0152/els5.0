@@ -15,6 +15,7 @@ import (
 	usecases "github.com/els/backend/internal/application/ai/use_cases"
 	learnworker "github.com/els/backend/internal/application/learn/worker"
 	"github.com/els/backend/internal/domain/agent"
+	"github.com/els/backend/internal/domain/apps"
 	"github.com/els/backend/internal/domain/media"
 	domainsettings "github.com/els/backend/internal/domain/settings"
 	"github.com/els/backend/internal/domain/shared/ports"
@@ -74,6 +75,7 @@ func Mount(humaAPI huma.API, mux *http.ServeMux, cfg Config, pool *pgxpool.Pool,
 
 	ctxPlugins := []agent.ContextPlugin{
 		agent.StaticContext{Prompt: agent.SystemPrompt},
+		agent.StaticContext{Prompt: apps.AgentSummary()},
 		agent.IdentityContext{TZ: cfg.TZ},
 		agent.ViewContext{},
 	}

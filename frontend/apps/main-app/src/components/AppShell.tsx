@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { isApiError } from '@els/api-client'
-import { cn, MiniPlayerProvider } from '@els/ui'
+import { cn, MiniPlayerProvider, useAgentView } from '@els/ui'
 import { VocabLookupProvider } from '@els/lookup'
 import { ChatDock } from '@els/chat-app'
 import { AchievementToaster } from '@els/profile-app'
@@ -19,6 +19,8 @@ export function AppShell() {
   const [chatOpen, setChatOpen] = useState(false)
   const [wizardOpen, setWizardOpen] = useState(() => !isWizardDone())
   const navigate = useNavigate()
+  const [, , app, ...rest] = useLocation().pathname.split('/')
+  useAgentView(app ? { app, screen: rest.join('/') || 'home' } : null)
 
   useEffect(() => {
     const onAsk = () => setChatOpen(true)
@@ -63,7 +65,14 @@ export function AppShell() {
         </div>
         <ChatDock open={chatOpen} onOpen={() => setChatOpen(true)} onClose={() => setChatOpen(false)} />
         <VocabLookupProvider api={api} />
-        {wizardOpen && <OnboardingWizard onDone={() => setWizardOpen(false)} />}
+        {wizardOpen && (
+          <OnboardingWizard
+            onDone={() => {
+              setWizardOpen(false)
+              navigate('/v1/profile')
+            }}
+          />
+        )}
         <AppTour suspended={wizardOpen} />
         {!wizardOpen && <AchievementToaster />}
       </div>

@@ -1,5 +1,24 @@
 package apps
 
+import (
+	"fmt"
+	"strings"
+)
+
+// AgentSummary describes the platform apps for the AI assistant so it can
+// interpret the "Open right now" context and guide the user across apps.
+func AgentSummary() string {
+	var sb strings.Builder
+	sb.WriteString("# Platform apps\nApps the user can open (app ids match the \"Open right now\" context):\n")
+	for _, a := range Catalog {
+		if a.Disabled {
+			continue
+		}
+		fmt.Fprintf(&sb, "- %s — %s (%s, group %s): %s\n", a.ID, a.Name, a.URI, a.Group, a.Description)
+	}
+	return sb.String()
+}
+
 var Catalog = []App{
 	{
 		ID:          "profile",

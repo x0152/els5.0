@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Check, ChevronRight, Rocket } from 'lucide-react'
 import { cn } from '@els/ui'
@@ -16,6 +17,17 @@ const STEPS: Record<string, { title: string; to?: string }> = {
 
 export function GettingStarted() {
   const progressQ = useOnboardingProgress()
+  const [highlight, setHighlight] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const onHighlight = () => {
+      setHighlight(true)
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    window.addEventListener('els:getting-started:highlight', onHighlight)
+    return () => window.removeEventListener('els:getting-started:highlight', onHighlight)
+  }, [])
 
   const items = (progressQ.data ?? []).flatMap((i) => {
     const step = STEPS[i.id]
@@ -26,6 +38,23 @@ export function GettingStarted() {
   const doneCount = items.filter((i) => i.done).length
 
   return (
+    <div ref={ref} className={cn('relative scroll-mt-36 rounded-2xl transition-shadow duration-500', highlight && 'ring-4 ring-brand-300 shadow-lg shadow-brand-200/60')}>
+    {highlight && (
+      <div className="absolute -top-3 left-6 z-20 w-80 max-w-[calc(100%-3rem)] -translate-y-full rounded-2xl bg-brand-600 p-4 text-white shadow-xl shadow-brand-600/30">
+        <p className="text-sm font-semibold">Start here</p>
+        <p className="mt-1 text-xs leading-relaxed text-white/80">
+          The fastest way to get to know the platform: go through these steps one by one — each opens the right app for you.
+        </p>
+        <button
+          type="button"
+          onClick={() => setHighlight(false)}
+          className="mt-3 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-white/25"
+        >
+          Got it
+        </button>
+        <span className="absolute -bottom-1.5 left-8 h-3 w-3 rotate-45 bg-brand-600" />
+      </div>
+    )}
     <Widget
       title="Getting started"
       icon={<Rocket size={16} />}
@@ -97,5 +126,6 @@ export function GettingStarted() {
           })}
       </ul>
     </Widget>
+    </div>
   )
 }

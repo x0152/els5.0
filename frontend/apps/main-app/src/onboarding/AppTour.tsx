@@ -31,10 +31,11 @@ export function AppTour({ suspended }: { suspended: boolean }) {
     markTourDone(appId)
     setForced(false)
     force()
+    if (appId === 'profile') window.dispatchEvent(new Event('els:getting-started:highlight'))
   }
 
   return (
-    <Modal onClose={close} className="max-w-xl overflow-hidden p-0">
+    <Modal onClose={close} className="max-w-xl p-0">
       <TourMedia key={appId} appId={appId} icon={getAppIcon(appId)} />
       <div className="p-6">
         <h2 className="text-lg font-semibold text-neutral-900">{tour.title}</h2>
@@ -66,7 +67,7 @@ function TourMedia({ appId, icon: Icon }: { appId: string; icon: AppIcon }) {
 
   if (!src) {
     return (
-      <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-brand-500 to-brand-700">
+      <div className="flex aspect-video items-center justify-center rounded-t-3xl bg-gradient-to-br from-brand-500 to-brand-700">
         <Icon className="h-16 w-16 text-white/90" />
       </div>
     )
@@ -81,7 +82,7 @@ function TourMedia({ appId, icon: Icon }: { appId: string; icon: AppIcon }) {
       muted
       playsInline
       onError={() => setIdx(idx + 1)}
-      className="aspect-video w-full bg-neutral-100 object-cover"
+      className="aspect-video w-full rounded-t-3xl bg-neutral-100 object-cover"
     />
   ) : (
     <img
@@ -89,7 +90,7 @@ function TourMedia({ appId, icon: Icon }: { appId: string; icon: AppIcon }) {
       src={src}
       alt=""
       onError={() => setIdx(idx + 1)}
-      className="aspect-video w-full bg-neutral-100 object-cover"
+      className="aspect-video w-full rounded-t-3xl bg-neutral-100 object-cover"
     />
   )
 }

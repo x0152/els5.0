@@ -8,8 +8,9 @@ export const TOURS: Record<string, TourInfo> = {
   profile: {
     title: 'Your profile',
     description:
-      'Your personal settings — the whole platform adapts lessons, translations and feedback to them.',
+      'Your personal settings — the whole platform adapts lessons, translations and feedback to them. The best way to get to know the platform is the “Getting started” checklist on this page: go through its steps one by one.',
     features: [
+      'Follow the “Getting started” steps below — they walk you through the key apps',
       'Set your name, English level and a few words about yourself',
       'Pick your native language — translations and AI explanations use it',
       'Toggle translations on or off across the whole platform',

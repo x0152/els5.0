@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { isApiError } from '@els/api-client'
 import { Badge, Button, ConfirmDialog, EmptyState, ErrorState, LoadingState } from '@els/ui'
-import { BookOpen, ChevronDown, MessageCircleHeart, Trash2 } from 'lucide-react'
+import { ArrowLeft, BookOpen, ChevronDown, MessageCircleHeart, Trash2 } from 'lucide-react'
 import { api } from './lib/api'
 import { formatDay, type Entry } from './lib/types'
 import { NotesSection } from './components/NotesSection'
@@ -77,6 +78,13 @@ export function HistoryPage() {
       <div className="mx-auto flex max-w-2xl flex-col gap-6 px-6 py-8">
         <header className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
+            <Link
+              to=".."
+              title="Back to Diary"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-800"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Link>
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-sm">
               <BookOpen className="h-6 w-6" />
             </div>
