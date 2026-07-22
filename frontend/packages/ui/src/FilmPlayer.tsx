@@ -111,13 +111,17 @@ export function FilmPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showOverlay, setShowOverlay] = useState(true)
 
-  // Buffering indicator: the spinner appears only after a short delay so quick
-  // seeks on a fast connection do not flash it.
+  // Buffering indicator. The spinner appears after a short delay and only if
+  // the element still has no playable data (readyState < 3): browsers fire
+  // stray waiting/stalled events during normal playback which must not flash it.
   const [buffering, setBuffering] = useState(false)
   const bufferTimerRef = useRef<number | undefined>(undefined)
   const markBuffering = useCallback(() => {
     window.clearTimeout(bufferTimerRef.current)
-    bufferTimerRef.current = window.setTimeout(() => setBuffering(true), 300)
+    bufferTimerRef.current = window.setTimeout(() => {
+      const v = innerRef.current
+      if (v && (v.seeking || v.readyState < 3)) setBuffering(true)
+    }, 300)
   }, [])
   const clearBuffering = useCallback(() => {
     window.clearTimeout(bufferTimerRef.current)
@@ -203,11 +207,13 @@ export function FilmPlayer({
         className="max-h-full w-full"
         onClick={togglePlay}
         onTimeUpdate={(e) => {
-          const ms = Math.round(e.currentTarget.currentTime * 1000)
+          const v = e.currentTarget
+          const ms = Math.round(v.currentTime * 1000)
           setCurrentMs(ms)
           onTimeChange?.(ms)
+          if (!v.seeking && v.readyState >= 3) clearBuffering()
           if (endMs != null && ms >= endMs) {
-            e.currentTarget.pause()
+            v.pause()
             onWindowEnd?.()
           }
         }}
@@ -220,10 +226,10 @@ export function FilmPlayer({
         }}
         onSeeked={clearBuffering}
         onWaiting={markBuffering}
-        onStalled={markBuffering}
         onLoadStart={markBuffering}
         onCanPlay={clearBuffering}
         onPlaying={clearBuffering}
+        onError={clearBuffering}
         onLoadedMetadata={(e) => {
           const v = e.currentTarget
           setMeasuredMs(Math.round(v.duration * 1000))
@@ -231,7 +237,10 @@ export function FilmPlayer({
           else if (startMs != null) v.currentTime = startMs / 1000
         }}
         onPlay={() => setPaused(false)}
-        onPause={() => setPaused(true)}
+        onPause={() => {
+          setPaused(true)
+          clearBuffering()
+        }}
         onVolumeChange={(e) => {
           setVolume(e.currentTarget.volume)
           setMuted(e.currentTarget.muted)
