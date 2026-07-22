@@ -12,6 +12,7 @@ import {
 import { cn } from './cn.ts'
 import { Select } from './Select.tsx'
 import { CueText } from './CueText.tsx'
+import { Spinner } from './Spinner.tsx'
 
 export interface PlayerCue {
   index: number
@@ -110,6 +111,20 @@ export function FilmPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showOverlay, setShowOverlay] = useState(true)
 
+  // Buffering indicator: the spinner appears only after a short delay so quick
+  // seeks on a fast connection do not flash it.
+  const [buffering, setBuffering] = useState(false)
+  const bufferTimerRef = useRef<number | undefined>(undefined)
+  const markBuffering = useCallback(() => {
+    window.clearTimeout(bufferTimerRef.current)
+    bufferTimerRef.current = window.setTimeout(() => setBuffering(true), 300)
+  }, [])
+  const clearBuffering = useCallback(() => {
+    window.clearTimeout(bufferTimerRef.current)
+    setBuffering(false)
+  }, [])
+  useEffect(() => () => window.clearTimeout(bufferTimerRef.current), [])
+
   const cues = useMemo(() => subtitleTracks[subIdx]?.cues ?? [], [subtitleTracks, subIdx])
   const hasSubtitles = cues.length > 0
   const activeCue = useMemo(() => {
@@ -197,11 +212,18 @@ export function FilmPlayer({
           }
         }}
         onSeeking={(e) => {
+          markBuffering()
           const el = e.currentTarget
           const ms = el.currentTime * 1000
           if (startMs != null && ms < startMs) el.currentTime = startMs / 1000
           else if (endMs != null && ms > endMs) el.currentTime = endMs / 1000
         }}
+        onSeeked={clearBuffering}
+        onWaiting={markBuffering}
+        onStalled={markBuffering}
+        onLoadStart={markBuffering}
+        onCanPlay={clearBuffering}
+        onPlaying={clearBuffering}
         onLoadedMetadata={(e) => {
           const v = e.currentTarget
           setMeasuredMs(Math.round(v.duration * 1000))
@@ -215,6 +237,12 @@ export function FilmPlayer({
           setMuted(e.currentTarget.muted)
         }}
       />
+
+      {buffering && (
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/30">
+          <Spinner className="h-10 w-10 text-white" />
+        </div>
+      )}
 
       {showOverlay && activeCue && (
         <div className="pointer-events-none absolute inset-x-0 bottom-20 flex justify-center px-6">
