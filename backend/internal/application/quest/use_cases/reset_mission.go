@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 
+	"github.com/els/backend/internal/application/quest/runtime"
 	"github.com/els/backend/internal/domain/iam"
 	"github.com/els/backend/internal/domain/quest"
 	"github.com/els/backend/internal/domain/shared"
@@ -10,10 +11,11 @@ import (
 
 type ResetMissionUseCase struct {
 	missions quest.MissionRepository
+	dialog   *runtime.Dialog
 }
 
-func NewResetMissionUseCase(missions quest.MissionRepository) *ResetMissionUseCase {
-	return &ResetMissionUseCase{missions: missions}
+func NewResetMissionUseCase(missions quest.MissionRepository, dialog *runtime.Dialog) *ResetMissionUseCase {
+	return &ResetMissionUseCase{missions: missions, dialog: dialog}
 }
 
 func (uc *ResetMissionUseCase) Execute(ctx context.Context, actor *iam.Actor, missionID string) (*quest.CustomMission, error) {
@@ -32,5 +34,6 @@ func (uc *ResetMissionUseCase) Execute(ctx context.Context, actor *iam.Actor, mi
 	if err := uc.missions.Save(ctx, userID, mission); err != nil {
 		return nil, err
 	}
+	uc.dialog.ClearMission(userID, missionID)
 	return mission, nil
 }

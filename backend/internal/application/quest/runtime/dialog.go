@@ -109,6 +109,21 @@ func (m *dialogJobManager) pruneLocked() {
 	}
 }
 
+// ClearMission drops finished job state after a mission reset so the UI does
+// not resurrect a stale "scene is generating" transition.
+func (m *dialogJobManager) ClearMission(userID, missionID string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	key := runKey(userID, missionID)
+	delete(m.sceneGenerating, key)
+	if id, ok := m.latestMission[key]; ok {
+		delete(m.latestMission, key)
+		if job := m.jobs[id]; job != nil && job.Status != "running" {
+			delete(m.jobs, id)
+		}
+	}
+}
+
 func (m *dialogJobManager) SnapshotByMission(userID, missionID string) *quest.RespondJobStatusResponse {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -260,6 +275,10 @@ func (s *Dialog) Start(ctx context.Context, userID, missionID, text string, stri
 
 func (s *Dialog) SnapshotByMission(userID, missionID string) *quest.RespondJobStatusResponse {
 	return s.jobs.SnapshotByMission(userID, missionID)
+}
+
+func (s *Dialog) ClearMission(userID, missionID string) {
+	s.jobs.ClearMission(userID, missionID)
 }
 
 func (s *Dialog) runRespondJob(ctx context.Context, jobID string) {
@@ -741,8 +760,9 @@ func (s *Dialog) generateNextSceneAsync(ctx context.Context, userID, missionID s
 	}
 	applySceneVoices(mission, nextScene)
 
+	epoch := mission.Epoch
 	err = s.missions.Update(ctx, userID, missionID, func(fresh *quest.CustomMission) error {
-		if fresh.CurrentStage >= nextStage || fresh.IsComplete {
+		if fresh.CurrentStage >= nextStage || fresh.IsComplete || fresh.Epoch != epoch {
 			return fmt.Errorf("mission advanced elsewhere")
 		}
 		fresh.CurrentStage = nextStage

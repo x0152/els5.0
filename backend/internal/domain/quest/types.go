@@ -180,6 +180,10 @@ type CustomMission struct {
 	NPCStates map[string]*NPCState `json:"npcStates,omitempty"`
 
 	TotalXP int `json:"totalXp,omitempty"`
+
+	// Epoch increments on every reset; in-flight async scene generation from a
+	// previous playthrough must not write into the new one.
+	Epoch int `json:"epoch,omitempty"`
 }
 
 type Character struct {
@@ -715,6 +719,7 @@ func (m *CustomMission) Reset() {
 	}
 
 	m.CurrentStage = 0
+	m.Epoch++
 	m.IsComplete = false
 	m.Outcome = ""
 	m.HistorySummary = ""

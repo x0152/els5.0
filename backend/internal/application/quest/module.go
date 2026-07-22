@@ -84,7 +84,7 @@ func Mount(
 		GetMission:       usecases.NewGetMissionUseCase(store, dialog, logger),
 		StartRespond:     usecases.NewStartRespondUseCase(dialog),
 		SuggestNative:    usecases.NewSuggestNativeReplyUseCase(dialog),
-		ResetMission:     usecases.NewResetMissionUseCase(store),
+		ResetMission:     usecases.NewResetMissionUseCase(store, dialog),
 		RegenerateImages: usecases.NewRegenerateImagesUseCase(store, images),
 		DeleteMission:    usecases.NewDeleteMissionUseCase(store, images),
 		MediaURLs:        urls,
