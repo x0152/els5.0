@@ -154,12 +154,25 @@ func (c *Client) callImagesEndpoint(ctx context.Context, prompt string, aspect p
 	if size != "" {
 		reqSize = size
 	}
-	body, _ := json.Marshal(map[string]any{
+	data, err := c.doImagesGenerations(ctx, prompt, reqSize)
+	// Some models (e.g. gemini-*-image) temporarily reject the size parameter;
+	// retry once without it before falling through to chat completions.
+	if err != nil && unsupportedImageSizeErr(err) {
+		return c.doImagesGenerations(ctx, prompt, "")
+	}
+	return data, err
+}
+
+func (c *Client) doImagesGenerations(ctx context.Context, prompt, size string) ([]byte, error) {
+	payload := map[string]any{
 		"model":  c.model,
 		"prompt": prompt,
 		"n":      1,
-		"size":   reqSize,
-	})
+	}
+	if size != "" {
+		payload["size"] = size
+	}
+	body, _ := json.Marshal(payload)
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/images/generations", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -333,7 +346,9 @@ func unsupportedImageSizeErr(err error) bool {
 		strings.Contains(msg, "unsupported size") ||
 		strings.Contains(msg, "size not supported") ||
 		strings.Contains(msg, "size is not supported") ||
-		strings.Contains(msg, "must be one of")
+		strings.Contains(msg, "must be one of") ||
+		strings.Contains(msg, "parameters size") ||
+		(strings.Contains(msg, "size") && strings.Contains(msg, "unavail"))
 }
 
 var _ ports.ImageGenerator = (*Client)(nil)
