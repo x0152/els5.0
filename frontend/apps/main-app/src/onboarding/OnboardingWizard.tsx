@@ -3,7 +3,9 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Avatar, Button, cn, Input, Mascot, Select, Textarea } from '@els/ui'
 import { api } from '../lib/api'
 import { useAuth } from '../auth/AuthContext'
-import { WIZARD_TOUR, markTourDone } from './storage'
+import { SYSTEM_TOUR as SYSTEM_TOUR_ID, WIZARD_TOUR, markTourDone } from './storage'
+import { SystemTourPageView } from './SystemTour'
+import { SYSTEM_TOUR } from './tours'
 
 const LEVELS = [
   { code: 'A1', label: 'Beginner' },
@@ -39,7 +41,8 @@ const STRICTNESS = [
   { value: 2, label: 'Strict', hint: 'exact' },
 ] as const
 
-const TOTAL_STEPS = 7
+const TOTAL_STEPS = 10
+const FIRST_TIP_STEP = 8
 
 export function OnboardingWizard({ onDone }: { onDone: () => void }) {
   const { refresh } = useAuth()
@@ -74,8 +77,8 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
   }, [])
 
   const canNext =
-    (step !== 1 || (!!firstName.trim() && !!lastName.trim())) &&
-    (step !== 3 || !!englishLevel)
+    (step !== 2 || (!!firstName.trim() && !!lastName.trim())) &&
+    (step !== 4 || !!englishLevel)
 
   const uploadPicture = async (file: File) => {
     setErr(null)
@@ -102,8 +105,12 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
 
   const skip = () => {
     markTourDone(WIZARD_TOUR)
+    setStep(FIRST_TIP_STEP)
+  }
+
+  const complete = () => {
+    markTourDone(SYSTEM_TOUR_ID)
     onDone()
-    void refresh()
   }
 
   const finish = async () => {
@@ -123,7 +130,8 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
       })
       markTourDone(WIZARD_TOUR)
       await refresh()
-      onDone()
+      setSaving(false)
+      setStep(FIRST_TIP_STEP)
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Failed to save profile')
       setSaving(false)
@@ -140,19 +148,28 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
           />
         </div>
 
-        <div className="max-h-[70dvh] overflow-y-auto p-6 sm:p-8">
-          {step === 0 && (
+        <div
+          className={cn(
+            'max-h-[70dvh] overflow-y-auto',
+            step === 0 || step >= FIRST_TIP_STEP ? 'pb-6' : 'p-6 sm:p-8',
+          )}
+        >
+          {step === 0 && <SystemTourPageView page={SYSTEM_TOUR[0]!} />}
+          {step === FIRST_TIP_STEP && <SystemTourPageView page={SYSTEM_TOUR[1]!} />}
+          {step === FIRST_TIP_STEP + 1 && <SystemTourPageView page={SYSTEM_TOUR[2]!} />}
+
+          {step === 1 && (
             <div className="flex flex-col items-center py-4 text-center">
               <Mascot className="h-36 w-36" />
-              <h2 className="mt-4 text-2xl font-bold text-neutral-900">Welcome to ELS!</h2>
+              <h2 className="mt-4 text-2xl font-bold text-neutral-900">First, a bit about you</h2>
               <p className="mt-2 max-w-sm text-sm text-neutral-600">
                 Let&apos;s take a minute to set up your profile — the platform adapts lessons,
-                translations and feedback to it.
+                translations and feedback to it. You can skip this and fill it in later.
               </p>
             </div>
           )}
 
-          {step === 1 && (
+          {step === 2 && (
             <div>
               <StepHeader
                 title="What's your name?"
@@ -169,7 +186,7 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
             </div>
           )}
 
-          {step === 2 && (
+          {step === 3 && (
             <div>
               <StepHeader
                 title="Add a photo"
@@ -189,7 +206,7 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <div>
               <StepHeader
                 title="Your English level"
@@ -221,7 +238,7 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
             </div>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <div>
               <StepHeader
                 title="Your native language"
@@ -251,7 +268,7 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
             </div>
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <div>
               <StepHeader
                 title="Pronunciation strictness"
@@ -285,7 +302,7 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
             </div>
           )}
 
-          {step === 6 && (
+          {step === 7 && (
             <div>
               <StepHeader
                 title="About you"
@@ -303,26 +320,34 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
         </div>
 
         <div className="flex items-center justify-between border-t border-neutral-100 px-6 py-4 sm:px-8">
-          <button
-            type="button"
-            onClick={skip}
-            className="text-xs font-medium text-neutral-400 hover:text-neutral-600"
-          >
-            Skip for now
-          </button>
+          {step >= 1 && step < FIRST_TIP_STEP ? (
+            <button
+              type="button"
+              onClick={skip}
+              className="text-xs font-medium text-neutral-400 hover:text-neutral-600"
+            >
+              Skip for now
+            </button>
+          ) : (
+            <div />
+          )}
           <div className="flex items-center gap-2">
-            {step > 0 && (
+            {step > 0 && step !== FIRST_TIP_STEP && (
               <Button variant="ghost" onClick={() => setStep(step - 1)} disabled={saving}>
                 <ArrowLeft className="h-4 w-4" /> Back
               </Button>
             )}
-            {step < TOTAL_STEPS - 1 ? (
-              <Button variant="brand" onClick={() => setStep(step + 1)} disabled={!canNext}>
-                {step === 0 ? "Let's go" : 'Next'}
-              </Button>
-            ) : (
+            {step === FIRST_TIP_STEP - 1 ? (
               <Button variant="brand" onClick={finish} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />} Finish
+              </Button>
+            ) : step === TOTAL_STEPS - 1 ? (
+              <Button variant="brand" onClick={complete}>
+                Got it
+              </Button>
+            ) : (
+              <Button variant="brand" onClick={() => setStep(step + 1)} disabled={!canNext}>
+                {step === 0 ? "Let's go" : 'Next'}
               </Button>
             )}
           </div>

@@ -81,6 +81,63 @@ func (s *Images) GenerateInitialImagesAsync(userID, missionID string) {
 	s.generateCover(userID, missionID, true)
 }
 
+// syncFork: images are shared per mission — only the author generates them.
+// A fork copies the author's file reference for the slot (or clears the slot)
+// and reports true so the caller skips generation.
+func (s *Images) syncFork(userID, missionID, kind, key string) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	origin, authorID, err := s.missions.GetOrigin(ctx, missionID)
+	if err != nil || authorID == userID {
+		return false
+	}
+	_ = s.updateMission(userID, missionID, func(m *quest.CustomMission) {
+		switch kind {
+		case "cover":
+			m.CoverImage = origin.CoverImage
+			m.CoverImageStatus = ""
+			if origin.CoverImage != "" {
+				m.CoverImageStatus = "ready"
+			}
+			m.CoverImageError = ""
+			m.CoverImageGenStartedAt = ""
+		case "scene":
+			delete(m.SceneImageErrors, key)
+			delete(m.SceneImageGenStartedAt, key)
+			if f := origin.SceneImages[key]; f != "" {
+				if m.SceneImages == nil {
+					m.SceneImages = map[string]string{}
+				}
+				if m.SceneImageStatus == nil {
+					m.SceneImageStatus = map[string]string{}
+				}
+				m.SceneImages[key] = f
+				m.SceneImageStatus[key] = "ready"
+			} else {
+				delete(m.SceneImages, key)
+				delete(m.SceneImageStatus, key)
+			}
+		case "avatar":
+			delete(m.CharacterAvatarErrors, key)
+			delete(m.CharacterAvatarGenStartedAt, key)
+			if f := origin.CharacterAvatars[key]; f != "" {
+				if m.CharacterAvatars == nil {
+					m.CharacterAvatars = map[string]string{}
+				}
+				if m.CharacterAvatarStatus == nil {
+					m.CharacterAvatarStatus = map[string]string{}
+				}
+				m.CharacterAvatars[key] = f
+				m.CharacterAvatarStatus[key] = "ready"
+			} else {
+				delete(m.CharacterAvatars, key)
+				delete(m.CharacterAvatarStatus, key)
+			}
+		}
+	})
+	return true
+}
+
 func (s *Images) GenerateCoverAsync(userID, missionID string) {
 	s.generateCover(userID, missionID, false)
 }
@@ -89,6 +146,9 @@ func (s *Images) GenerateCoverAsync(userID, missionID string) {
 // cover; manual retries pass false so only the requested image regenerates.
 func (s *Images) generateCover(userID, missionID string, chain bool) {
 	if !s.IsAvailable() {
+		return
+	}
+	if s.syncFork(userID, missionID, "cover", "") {
 		return
 	}
 	key := userID + ":" + missionID + ":cover"
@@ -196,6 +256,9 @@ func (s *Images) GenerateSceneAsync(userID, missionID string, stage int) {
 	}
 	key := fmt.Sprintf("%s:%s:scene:%d", userID, missionID, stage)
 	stageKey := fmt.Sprintf("%d", stage)
+	if s.syncFork(userID, missionID, "scene", stageKey) {
+		return
+	}
 	mark := func(resetStarted bool) error {
 		return s.updateMission(userID, missionID, func(mission *quest.CustomMission) {
 			if mission.SceneImageStatus == nil {
@@ -338,6 +401,9 @@ func (s *Images) GenerateCharacterAvatarAsync(userID, missionID, characterName s
 	}
 	avatarKey := quest.CharacterAvatarKey(characterName)
 	if avatarKey == "" {
+		return
+	}
+	if s.syncFork(userID, missionID, "avatar", avatarKey) {
 		return
 	}
 	key := fmt.Sprintf("%s:%s:avatar:%s", userID, missionID, avatarKey)

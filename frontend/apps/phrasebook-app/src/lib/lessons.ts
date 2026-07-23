@@ -5,7 +5,7 @@ import { practiceApi } from './practice.ts'
 import type { Lesson } from './types.ts'
 
 export const SERIES = 'phrasebook'
-export const DEFAULT_BOOK = 'demo-collocations'
+export const DEFAULT_BOOK = 'phrasebook'
 
 const BOOK_KEY = `${SERIES}.activeBook`
 let bookListeners: (() => void)[] = []

@@ -108,10 +108,10 @@ func (s *Store) CountDue(ctx context.Context, accountID string, since time.Time)
 	return count, nil
 }
 
-func (s *Store) ExistsText(ctx context.Context, accountID, text string) (bool, error) {
+func (s *Store) ExistsText(ctx context.Context, accountID, text, kind string) (bool, error) {
 	var exists bool
-	err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM vocab_units WHERE account_id = $1 AND lower(text) = lower($2))`,
-		accountID, text).Scan(&exists)
+	err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM vocab_units WHERE account_id = $1 AND lower(text) = lower($2) AND kind = $3)`,
+		accountID, text, kind).Scan(&exists)
 	if err != nil {
 		return false, fmt.Errorf("exists unit: %w", err)
 	}

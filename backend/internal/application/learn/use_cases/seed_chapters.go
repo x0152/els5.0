@@ -19,26 +19,24 @@ func NewSeedChaptersUseCase(chapters book.Repository, books []book.Book, seed []
 }
 
 func (uc *SeedChaptersUseCase) Execute(ctx context.Context) error {
-	// 1. Ensure books (DB entities) exist.
+	// 1. Seed only once — when the books table is empty (first deploy / fresh DB).
+	existing, err := uc.chapters.ListBooks(ctx)
+	if err != nil {
+		return err
+	}
+	if len(existing) > 0 {
+		return nil
+	}
+
+	// 2. Insert books from embed.
 	for _, b := range uc.books {
 		if err := uc.chapters.EnsureBook(ctx, b); err != nil {
 			return err
 		}
 	}
 
-	// 2. Seed starter chapters only into an empty-per-book database.
-	seeded := map[string]bool{}
+	// 3. Insert starter chapters.
 	for _, chapter := range uc.seed {
-		if _, ok := seeded[chapter.Book]; !ok {
-			count, err := uc.chapters.Count(ctx, chapter.Book)
-			if err != nil {
-				return err
-			}
-			seeded[chapter.Book] = count > 0
-		}
-		if seeded[chapter.Book] {
-			continue
-		}
 		chapter.ID = uuid.NewString()
 		if err := uc.chapters.Create(ctx, chapter); err != nil {
 			return err

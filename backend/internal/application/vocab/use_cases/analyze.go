@@ -18,7 +18,7 @@ type LexiconReader interface {
 }
 
 type UnitsReader interface {
-	ExistsText(ctx context.Context, accountID, text string) (bool, error)
+	ExistsText(ctx context.Context, accountID, text, kind string) (bool, error)
 }
 
 type AnalyzeItem struct {
@@ -45,11 +45,11 @@ func NewAnalyzeUseCase(llm LLMClient, lexicon LexiconReader, units UnitsReader) 
 	return &AnalyzeUseCase{llm: llm, lexicon: lexicon, units: units}
 }
 
-func (uc *AnalyzeUseCase) exists(ctx context.Context, accountID, text string) bool {
+func (uc *AnalyzeUseCase) exists(ctx context.Context, accountID, text, kind string) bool {
 	if uc.units == nil || strings.TrimSpace(text) == "" {
 		return false
 	}
-	ok, err := uc.units.ExistsText(ctx, accountID, strings.TrimSpace(text))
+	ok, err := uc.units.ExistsText(ctx, accountID, strings.TrimSpace(text), kind)
 	return err == nil && ok
 }
 
@@ -83,7 +83,7 @@ func (uc *AnalyzeUseCase) Execute(ctx context.Context, actor *iam.Actor, selecti
 	// 3. Merge the parse with occurrences.
 	out := buildAnalyzeItems(items, occurrences)
 	for i := range out {
-		out[i].Existing = uc.exists(ctx, accountID, out[i].Text)
+		out[i].Existing = uc.exists(ctx, accountID, out[i].Text, out[i].Kind)
 	}
 	return out, nil
 }
@@ -150,7 +150,7 @@ func (uc *AnalyzeUseCase) enrich(ctx context.Context, accountID string, it vocab
 	if len(out) > 0 {
 		item = out[0]
 	}
-	item.Existing = uc.exists(ctx, accountID, item.Text)
+	item.Existing = uc.exists(ctx, accountID, item.Text, item.Kind)
 	return item
 }
 

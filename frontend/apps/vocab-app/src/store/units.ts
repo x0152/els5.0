@@ -24,7 +24,7 @@ export function useUnits(search: string, status: StatusFilter) {
 
 export function usePendingAdds(): string[] {
   const { data } = useQuery<string[]>({
-    queryKey: ['vocab', 'pending-adds'],
+    queryKey: ['vocab-pending-adds'],
     queryFn: () => [],
     staleTime: Infinity,
     gcTime: Infinity,

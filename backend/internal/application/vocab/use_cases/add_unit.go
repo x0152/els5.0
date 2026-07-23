@@ -73,7 +73,7 @@ func (uc *AddUnitUseCase) Execute(ctx context.Context, actor *iam.Actor, input s
 	}
 
 	// 4. Skip duplicates in the user's collection.
-	exists, err := uc.units.ExistsText(ctx, accountID, strings.TrimSpace(check.Text))
+	exists, err := uc.units.ExistsText(ctx, accountID, strings.TrimSpace(check.Text), check.Kind)
 	if err != nil {
 		return AddUnitResult{}, err
 	}

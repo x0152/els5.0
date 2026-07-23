@@ -37,16 +37,15 @@ export function AppShell() {
   useEffect(() => {
     loadTours()
       .then(() => {
-        setWizardOpen(!isTourDone(WIZARD_TOUR))
-        setSystemTourOpen(!isTourDone(SYSTEM_TOUR))
+        setWizardOpen(!isTourDone(WIZARD_TOUR) || !isTourDone(SYSTEM_TOUR))
         setToursLoaded(true)
       })
       .catch(() => {})
     const onAsk = () => setChatOpen(true)
     const onReset = () => {
       clearTours()
+      setSystemTourOpen(false)
       setWizardOpen(true)
-      setSystemTourOpen(true)
     }
     const onSystemTour = () => setSystemTourOpen(true)
     document.addEventListener('els:ask', onAsk)

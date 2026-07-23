@@ -5,7 +5,7 @@ import { practiceApi } from './practice.ts'
 import type { Unit } from './types.ts'
 
 export const SERIES = 'grammarbook'
-export const DEFAULT_BOOK = 'demo-grammar'
+export const DEFAULT_BOOK = 'grammarbook'
 
 export type BookInfo = { slug: string; series: string; level?: string; title: string; description?: string }
 
