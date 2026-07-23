@@ -73,7 +73,7 @@ func toStepOutput(s workout.Step) StepOutput {
 	case workout.StepGrammar:
 		var p workout.GrammarPayload
 		if json.Unmarshal(s.Payload, &p) == nil {
-			out.Grammar = &GrammarOutput{Topic: p.Topic, Exercises: p.Exercises}
+			out.Grammar = &GrammarOutput{Topic: p.Topic, Theory: p.Theory, Exercises: p.Exercises}
 		}
 	case workout.StepVocab:
 		var p workout.VocabPayload

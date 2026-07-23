@@ -7,7 +7,7 @@ import type { Watch } from '../lib/types.ts'
 import { ContinueButton, StepShell } from './StepShell.tsx'
 
 export function WatchStep({ watch, onDone }: { watch: Watch; onDone: (score: number) => void }) {
-  const { film } = useFilmUrl(watch.film_id)
+  const { film, error } = useFilmUrl(watch.film_id)
   const [currentMs, setCurrentMs] = useState(watch.start_ms)
   const [reachedEnd, setReachedEnd] = useState(false)
   const [audioIdx, setAudioIdx] = useState<number | null>(null)
@@ -40,7 +40,9 @@ export function WatchStep({ watch, onDone }: { watch: Watch; onDone: (score: num
             onWindowEnd={() => setReachedEnd(true)}
           />
         ) : (
-          <div className="flex flex-1 items-center justify-center text-sm text-neutral-400">Loading video…</div>
+          <div className="flex flex-1 items-center justify-center text-sm text-neutral-400">
+            {error ? 'This film is no longer available — you can skip this step.' : 'Loading video…'}
+          </div>
         )}
       </div>
 

@@ -84,8 +84,18 @@ function ClickableText({
   }
   if (pos < text.length) parts.push({ text: text.slice(pos) })
 
+  const onMouseUp = () => {
+    if (disabled) return
+    const sel = window.getSelection()
+    if (!sel || sel.isCollapsed) return
+    const words = (sel.toString().match(WORD_RE) ?? []).map(wordKey)
+    if (words.length < 2 || words.length > 8) return
+    const r = sel.getRangeAt(0).getBoundingClientRect()
+    onSelect(words.join(' '), { top: r.top, bottom: r.bottom, left: r.left, width: r.width })
+  }
+
   return (
-    <p className="font-serif text-[18px] leading-8 text-neutral-800">
+    <p onMouseUp={onMouseUp} className="font-serif text-[18px] leading-8 text-neutral-800">
       {parts.map((p, i) =>
         p.key ? (
           <span
@@ -147,6 +157,7 @@ export function ReadingPage() {
   const chunks = useMemo(() => (text ? parseBody(text.body) : []), [text])
   const paragraphs = useMemo(() => chunks.filter((c) => c.kind === 'paragraph').map((c) => c.text), [chunks])
   const learnerWords = useMemo(() => new Set((text?.words ?? []).map(wordKey)), [text])
+  const unknownWords = useMemo(() => new Set([...unknown].flatMap((k) => k.split(' '))), [unknown])
   const wordCount = useMemo(() => paragraphs.join(' ').match(WORD_RE)?.length ?? 0, [paragraphs])
 
   useAgentView({
@@ -233,9 +244,11 @@ export function ReadingPage() {
                   <ClickableText
                     key={i}
                     text={chunk.text}
-                    unknown={unknown}
+                    unknown={unknownWords}
                     learner={learnerWords}
-                    onSelect={(word, anchor) => setSelected({ word, context: sentenceOf(chunk.text, word), anchor })}
+                    onSelect={(word, anchor) =>
+                      setSelected({ word, context: sentenceOf(chunk.text, word) || sentenceOf(chunk.text, word.split(' ')[0]!), anchor })
+                    }
                     disabled={finished}
                   />
                 ),

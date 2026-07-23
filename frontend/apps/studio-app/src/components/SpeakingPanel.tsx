@@ -43,7 +43,15 @@ export function SpeakingPanel({ item, onDone }: { item: Item; onDone: () => void
     onSuccess: (data) => {
       if (!data) return
       setAssessment(data)
-      if (data.overall >= PASS_SCORE) onDone()
+      if (data.overall >= PASS_SCORE) {
+        onDone()
+      } else {
+        void api.core
+          .ingestCoreEvents({
+            body: { events: [{ skill: 'speaking', target, outcome: 'fail', source: { app: 'studio' } }] },
+          })
+          .catch(() => {})
+      }
     },
   })
 

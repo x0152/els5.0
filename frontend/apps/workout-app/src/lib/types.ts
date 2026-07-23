@@ -4,7 +4,7 @@ export type Question = { text: string; options: string[]; answer: number }
 export type Phrase = { text: string; film_id?: string; start_ms?: number; end_ms?: number }
 export type Reading = { title: string; body: string; words?: string[] }
 export type Writing = { scenario: string; dialogue: string }
-export type Grammar = { topic: string; exercises: string }
+export type Grammar = { topic: string; theory?: string; exercises: string }
 export type VocabWord = { text: string; translation?: string; definition?: string; example?: string }
 
 export type Step = {

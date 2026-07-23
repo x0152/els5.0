@@ -57,25 +57,22 @@ type GrammarFocus struct {
 
 const grammarSystem = `You write a full grammar unit in the style of Murphy's "English Grammar in Use" for a %s English learner. All text in English only.
 
-Output ONE Markdown document with two parts.
-
-PART 1 — THEORY (like the left page of a Murphy unit, generous and friendly):
-- "## <Grammar point>" title.
-- 2-4 lettered sections ("### A", "### B", ...), each explaining one aspect of the rule in short, simple sentences a learner actually understands: when it is used, how it is formed, what it contrasts with.
+THEORY (the left page of a Murphy unit, generous and friendly):
+- 2-4 lettered sections ("## A — <aspect>", "## B — <aspect>", ...), each explaining one aspect of the rule in short, simple sentences a learner actually understands: when it is used, how it is formed, what it contrasts with.
 - Every section gives 2-4 example sentences as a bulleted list with the target form in **bold**.
 - Include a "~~~box\n<the key rule in one or two memorable lines>\n~~~" callout.
 - Include one or two "~~~image right md\n<a vivid everyday scene illustrating an example sentence, described in one line>\n~~~" illustrations next to the examples they depict.
 - Where the rule contrasts two forms, show a small comparison as two bulleted groups.
 
-PART 2 — EXERCISES (like the right page of a Murphy unit):
-- 5-6 exercises of DIFFERENT shapes ("## 1", "## 2", ... headers, one instruction line each, 4-6 items per exercise), from easy recognition to harder production, all practising this rule, built from these blocks:
+EXERCISES (the right page of a Murphy unit):
+- 5-6 exercises of DIFFERENT shapes ("## 1 → A" headers: the running number and the letter of the theory section it practises; one instruction line each, 4-6 items per exercise), from easy recognition to harder production, all practising this rule, built from these blocks:
 %s
 
 Rules:
 - Do not use the free-writing block.
 - Keep English correct and unambiguous; gaps must have well-defined answers.
 
-Return ONLY a JSON object: {"topic": "<short label of the grammar focus>", "exercises": "<the markdown>"}`
+Return ONLY a JSON object: {"topic": "<short label of the grammar focus>", "theory": "<theory markdown>", "exercises": "<exercises markdown>"}`
 
 // BuildGrammarPrompt targets the learner's recent mistakes; without any it falls back to
 // grammar that is typically hard at the learner's level, themed around the lesson topic.

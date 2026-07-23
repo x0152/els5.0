@@ -28,6 +28,7 @@ export type BookSpreadProps = {
   page: number
   footer?: string
   exercisesTitle?: string
+  spread?: boolean
   adapters?: BlocksAdapters
   practiceApi?: PracticeApi
   practiceKey?: PracticeKey
@@ -42,6 +43,7 @@ export function BookSpread({
   page,
   footer,
   exercisesTitle = 'Exercises',
+  spread = true,
   adapters = {},
   practiceApi,
   practiceKey,
@@ -54,8 +56,8 @@ export function BookSpread({
 
   return (
     <BlocksProvider adapters={adapters}>
-    <div className="h-full min-h-0 w-full overflow-y-auto bg-neutral-200">
-      <div className="mx-auto w-full max-w-[1700px] p-3 md:p-6">
+    <div className={spread ? 'h-full min-h-0 w-full overflow-y-auto bg-neutral-200' : 'w-full'}>
+      <div className={`mx-auto w-full max-w-[1700px] ${spread ? 'p-3 md:p-6' : ''}`}>
         {onBack && (
           <header className="mb-3 flex items-center">
             <Button variant="ghost" size="sm" onClick={onBack}>
@@ -64,8 +66,12 @@ export function BookSpread({
           </header>
         )}
 
-        <div className="grid rounded-xl shadow-2xl ring-1 ring-neutral-300 lg:grid-cols-2">
-          <section className="flex flex-col rounded-t-xl border-neutral-200 bg-[#f4faf7] p-4 sm:p-6 lg:rounded-l-xl lg:rounded-tr-none lg:border-r lg:p-10">
+        <div className={`grid rounded-xl shadow-2xl ring-1 ring-neutral-300 ${spread ? 'lg:grid-cols-2' : ''}`}>
+          <section
+            className={`flex flex-col rounded-t-xl border-neutral-200 bg-[#f4faf7] p-4 sm:p-6 ${
+              spread ? 'lg:rounded-l-xl lg:rounded-tr-none lg:border-r lg:p-10' : 'lg:p-8'
+            }`}
+          >
             {heading && (
               <h1 className="mb-5 border-b border-brand-200/80 pb-3 text-xl font-bold tracking-tight text-brand-800 md:text-2xl">{heading}</h1>
             )}
@@ -80,7 +86,7 @@ export function BookSpread({
             </footer>
           </section>
 
-          <section className="flex flex-col rounded-b-xl bg-white p-4 sm:p-6 lg:rounded-r-xl lg:rounded-bl-none lg:p-10">
+          <section className={`flex flex-col rounded-b-xl bg-white p-4 sm:p-6 ${spread ? 'lg:rounded-r-xl lg:rounded-bl-none lg:p-10' : 'lg:p-8'}`}>
             <h2 className="mb-5 border-b border-brand-200/80 pb-3 text-xl font-bold tracking-tight text-brand-800 md:text-2xl">{exercisesTitle}</h2>
             <ExercisesSection mainExercises={exercises} meta={meta} checkAnswer={checkAnswer} onTheory={scrollToTheory} />
             <footer className="mt-6 flex justify-end border-t border-neutral-200 pt-3">

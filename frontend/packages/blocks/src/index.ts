@@ -9,7 +9,7 @@ export type { BookSpreadProps } from './BookSpread.tsx'
 export { mockCheckAnswer, checkLocal } from './check.ts'
 export { iconify } from './emoji.tsx'
 export type { CheckFn, CheckResult } from './check.ts'
-export { DeferredBlocks } from './Deferred.tsx'
+export { DeferredBlocks, DeferredProvider } from './Deferred.tsx'
 export type { DeferredResult } from './Deferred.tsx'
 export {
   parseBlocks,

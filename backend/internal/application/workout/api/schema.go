@@ -47,6 +47,7 @@ type WritingOutput struct {
 
 type GrammarOutput struct {
 	Topic     string `json:"topic"`
+	Theory    string `json:"theory,omitempty"`
 	Exercises string `json:"exercises"`
 }
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import type { SpeechComponents } from '@els/api-client'
-import { emitTextEvents } from '@els/core-events'
+import { emitTargetedEvents, emitTextEvents } from '@els/core-events'
 import { Button, SpeakButton, Spinner, cn, useRecorder } from '@els/ui'
 import { Check, Mic, Play, Snail, Square } from 'lucide-react'
 import { api } from '../lib/api.ts'
@@ -137,7 +137,10 @@ function SpeakTask({ item, onScore }: { item: PhraseTask; onScore: (score: numbe
       form.append('text', item.text)
       return api.speech.assessSpeech({ body: form as unknown as never })
     },
-    onSuccess: (data) => setAssessment(data ?? null),
+    onSuccess: (data) => {
+      setAssessment(data ?? null)
+      if (data) emitTargetedEvents(api, 'speaking', [{ target: item.text, outcome: data.overall >= 60 ? 'ok' : 'fail' }], { app: 'workout' })
+    },
   })
   const recorder = useRecorder((blob) => assess.mutate(blob))
   const recording = recorder.state === 'recording'

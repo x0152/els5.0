@@ -9,7 +9,7 @@ export function useFilmUrl(filmId?: string) {
     enabled: !!filmId,
     staleTime: Infinity,
   })
-  return { film: query.data, videoUrl: query.data?.audio_tracks?.[0]?.url ?? '' }
+  return { film: query.data, videoUrl: query.data?.audio_tracks?.[0]?.url ?? '', error: query.isError }
 }
 
 let clipEl: HTMLVideoElement | null = null
