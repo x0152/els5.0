@@ -370,7 +370,10 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
     }
     const onSelectionChange = () => refresh(false)
     const onTouchEnd = () => refresh(false)
-    const onScroll = () => setPill(null)
+    const onScroll = () => {
+      setPill(null)
+      refresh(false)
+    }
     document.addEventListener('mouseup', onMouseUp)
     document.addEventListener('keyup', onKeyUp)
     document.addEventListener('selectionchange', onSelectionChange)

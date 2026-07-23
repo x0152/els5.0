@@ -2,8 +2,8 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { isApiError } from '@els/api-client'
 import { emitTextEvents } from '@els/core-events'
-import { AppInfoButton, Button, Spinner, Textarea, cn, useAgentView } from '@els/ui'
-import { CheckCircle2, MessageSquareText, Pencil, PencilRuler, RotateCcw, Sparkles } from 'lucide-react'
+import { AppInfoButton, Button, Modal, Spinner, Textarea, cn, useAgentView } from '@els/ui'
+import { CheckCircle2, Maximize2, MessageSquareText, Pencil, PencilRuler, RotateCcw, Sparkles } from 'lucide-react'
 import { api } from './lib/api'
 import type { TrainerIssue, TrainerVerdict } from './lib/types'
 
@@ -89,6 +89,7 @@ export function TrainerPage() {
   const [draft, setDraft] = useState('')
   const [level, setLevel] = useState<Level>(LEVELS[0])
   const [attempts, setAttempts] = useState<Attempt[]>([])
+  const [editorOpen, setEditorOpen] = useState(false)
 
   const suggest = useMutation({
     mutationFn: () => api.writing.writingGenerateSituation({ body: {} }),
@@ -168,12 +169,23 @@ export function TrainerPage() {
                 {scenario}
               </p>
             )}
-            <Textarea
-              value={dialogue}
-              onChange={(e) => setDialogue(e.target.value)}
-              rows={4}
-              placeholder="Paste the dialogue you want to reply to, or let AI suggest one…"
-            />
+            <div className="relative">
+              <Textarea
+                value={dialogue}
+                onChange={(e) => setDialogue(e.target.value)}
+                rows={4}
+                placeholder="Paste the dialogue you want to reply to, or let AI suggest one…"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                title="Open large editor"
+                onClick={() => setEditorOpen(true)}
+                className="absolute right-2 top-2 rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </button>
+            </div>
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 variant={dialogue ? 'secondary' : 'brand'}
@@ -307,6 +319,25 @@ export function TrainerPage() {
           </section>
         )}
       </div>
+
+      {editorOpen && (
+        <Modal onClose={() => setEditorOpen(false)} className="max-w-3xl">
+          <h2 className="text-lg font-semibold text-neutral-900">Dialogue</h2>
+          <p className="mt-1 text-sm text-neutral-500">Paste or edit the dialogue you want to reply to.</p>
+          <Textarea
+            value={dialogue}
+            onChange={(e) => setDialogue(e.target.value)}
+            autoFocus
+            className="mt-4 h-[60vh] resize-none"
+            placeholder="Paste the dialogue you want to reply to…"
+          />
+          <div className="mt-4 flex justify-end">
+            <Button variant="brand" onClick={() => setEditorOpen(false)}>
+              Done
+            </Button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

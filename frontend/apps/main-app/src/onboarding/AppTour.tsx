@@ -61,7 +61,7 @@ export function AppTour({ suspended }: { suspended: boolean }) {
 }
 
 export function TourMedia({ appId, icon: Icon }: { appId: string; icon: AppIcon }) {
-  const sources = [`/tours/${appId}.mp4`, `/tours/${appId}.gif`]
+  const sources = [`/tours/${appId}.mp4`, `/tours/${appId}.gif`, `/tours/${appId}.png`]
   const [idx, setIdx] = useState(0)
   const src = sources[idx]
 
@@ -94,7 +94,7 @@ export function TourMedia({ appId, icon: Icon }: { appId: string; icon: AppIcon 
       title="Click to watch full screen"
       onClick={(e) => void e.currentTarget.requestFullscreen?.()}
       onError={() => setIdx(idx + 1)}
-      className="aspect-video w-full cursor-zoom-in rounded-t-3xl bg-neutral-100 object-cover"
+      className="max-h-[60vh] w-full cursor-zoom-in rounded-t-3xl object-contain"
     />
   )
 }

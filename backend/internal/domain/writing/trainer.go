@@ -53,7 +53,7 @@ Levels — what counts as a problem:
 Report ONLY problems allowed at the requested level. If the draft is fine for this level, pass it.
 
 Return ONLY a JSON object:
-{"pass": boolean, "comment": "1-2 sentences in %s: overall verdict and encouragement, no corrections", "issues": [{"fragment": "exact substring copied verbatim from the draft", "severity": "grammar" | "style" | "native", "hint": "1-2 sentences in %s: what kind of problem it is and a nudge (rule name, category), WITHOUT the answer"}]}
+{"pass": boolean, "comment": "1-2 sentences in English: overall verdict and encouragement, no corrections", "issues": [{"fragment": "exact substring copied verbatim from the draft", "severity": "grammar" | "style" | "native", "hint": "1-2 sentences in English: what kind of problem it is and a nudge (rule name, category), WITHOUT the answer"}]}
 
 Rules:
 - "fragment" must be an exact contiguous substring of the draft (copy character-for-character), as short as possible while unambiguous.
@@ -66,7 +66,7 @@ func BuildTrainerPrompt(dialogue, draft, nativeLanguage string, level TrainerLev
 		dialogue = "(no context)"
 	}
 	user = fmt.Sprintf("Level: %d\n\nDialogue:\n%s\n\nDraft reply:\n%s", level, dialogue, draft)
-	return fmt.Sprintf(trainerSystem, nativeLanguage, nativeLanguage, nativeLanguage), user
+	return fmt.Sprintf(trainerSystem, nativeLanguage), user
 }
 
 func ParseTrainerVerdict(raw, draft string) (TrainerVerdict, error) {

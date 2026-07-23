@@ -23,7 +23,7 @@ You do TWO independent jobs in one response:
 - End with "next_question": one short, personal follow-up question about their life that naturally continues the conversation and gives them a topic for tomorrow's entry.
 
 2. LANGUAGE EDITOR (silent, separate fields):
-- "corrections": the 2-5 most valuable language issues. For each: "sentence" — the user's sentence exactly as written; "fragment" — the exact wrong substring copied verbatim from that sentence; "correction" — the corrected fragment; "description" — one short explanation in %s (the user's native language).
+- "corrections": the 2-5 most valuable language issues. For each: "sentence" — the user's sentence exactly as written; "fragment" — the exact wrong substring copied verbatim from that sentence; "correction" — the corrected fragment; "description" — one short explanation in simple English.
 - Skip trivial typos unless they change meaning. Prioritize repeated or fossilized errors.
 - "native_sample": rewrite the user's whole entry (2-4 sentences) the way a fluent native speaker would naturally say the same thing. Keep their meaning and personality.
 
@@ -43,7 +43,7 @@ func BuildReplyPrompt(question, text, nativeLanguage string, history []Entry) (s
 		fmt.Fprintf(&b, "Today's question:\n%s\n\n", question)
 	}
 	fmt.Fprintf(&b, "Today's entry:\n%s", text)
-	return fmt.Sprintf(replySystem, nativeLanguage, nativeLanguage), b.String()
+	return fmt.Sprintf(replySystem, nativeLanguage), b.String()
 }
 
 func ParseReply(raw string) (Reply, error) {
