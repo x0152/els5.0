@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
+import { emitTextEvents } from '@els/core-events'
 import { englishTrackIdx, FilmPlayer } from '@els/ui'
+import { api } from '../lib/api.ts'
 import { useFilmUrl } from '../lib/audio.ts'
 import type { Watch } from '../lib/types.ts'
 import { ContinueButton, StepShell } from './StepShell.tsx'
@@ -46,7 +48,18 @@ export function WatchStep({ watch, onDone }: { watch: Watch; onDone: (score: num
         <div className="h-full rounded-full bg-brand-500 transition-[width]" style={{ width: `${progress * 100}%` }} />
       </div>
 
-      <ContinueButton onClick={() => onDone(100)} label={reachedEnd ? 'Continue' : 'I watched it'} />
+      <ContinueButton
+        onClick={() => {
+          const cues = subtitleTracks[englishTrackIdx(subtitleTracks)]?.cues ?? []
+          const text = cues
+            .filter((c) => c.start_ms >= watch.start_ms && c.end_ms <= watch.end_ms)
+            .map((c) => c.text.replace(/<[^>]+>/g, ' '))
+            .join(' ')
+          emitTextEvents(api, 'listening', [text], { app: 'workout', film_id: watch.film_id })
+          onDone(100)
+        }}
+        label={reachedEnd ? 'Continue' : 'I watched it'}
+      />
     </StepShell>
   )
 }

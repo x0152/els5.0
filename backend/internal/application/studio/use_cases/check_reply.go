@@ -2,13 +2,39 @@ package usecases
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
+
+	"github.com/els/backend/internal/domain/core"
 	"github.com/els/backend/internal/domain/iam"
 	"github.com/els/backend/internal/domain/shared"
 	"github.com/els/backend/internal/domain/studio"
 	"github.com/els/backend/internal/utils/timex"
 )
+
+type EventSink interface {
+	InsertRaw(ctx context.Context, e core.RawEvent) error
+}
+
+func emitItemEvent(ctx context.Context, sink EventSink, now time.Time, userID string, item studio.Item, skill, outcome, usage string) {
+	if sink == nil {
+		return
+	}
+	e := core.RawEvent{
+		ID:      uuid.NewString(),
+		UserID:  userID,
+		Skill:   skill,
+		Target:  item.Text,
+		Outcome: outcome,
+		Context: usage,
+		Source:  json.RawMessage(`{"app":"studio"}`),
+	}
+	core.Normalize(&e, now)
+	_ = sink.InsertRaw(ctx, e)
+}
 
 type CheckReplyCommand struct {
 	ItemID string
@@ -16,16 +42,17 @@ type CheckReplyCommand struct {
 }
 
 type CheckReplyUseCase struct {
-	repo  studio.Repository
-	llm   LLMClient
-	clock timex.Clock
+	repo   studio.Repository
+	llm    LLMClient
+	events EventSink
+	clock  timex.Clock
 }
 
-func NewCheckReplyUseCase(repo studio.Repository, llm LLMClient, clock timex.Clock) *CheckReplyUseCase {
+func NewCheckReplyUseCase(repo studio.Repository, llm LLMClient, events EventSink, clock timex.Clock) *CheckReplyUseCase {
 	if clock == nil {
 		clock = timex.System()
 	}
-	return &CheckReplyUseCase{repo: repo, llm: llm, clock: clock}
+	return &CheckReplyUseCase{repo: repo, llm: llm, events: events, clock: clock}
 }
 
 func (uc *CheckReplyUseCase) Execute(ctx context.Context, actor *iam.Actor, cmd CheckReplyCommand) (studio.ReplyCheck, error) {
@@ -60,5 +87,13 @@ func (uc *CheckReplyUseCase) Execute(ctx context.Context, actor *iam.Actor, cmd 
 			return studio.ReplyCheck{}, err
 		}
 	}
+
+	// 4. Publish the attempt into the learn core pipeline (best effort).
+	outcome := "fail"
+	if check.OK {
+		outcome = "ok"
+	}
+	emitItemEvent(ctx, uc.events, uc.clock.Now(), actor.AccountID().String(), item, core.SkillWriting, outcome, cmd.Reply)
+
 	return check, nil
 }

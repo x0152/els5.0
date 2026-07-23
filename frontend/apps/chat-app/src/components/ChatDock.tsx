@@ -21,14 +21,14 @@ export function ChatDock({ open, onOpen, onClose }: { open: boolean; onOpen: () 
           title="Assistant"
           aria-label="Open assistant"
           className={cn(
-            'group fixed z-40 flex items-center justify-center bg-brand-600 text-white transition-all duration-300 hover:bg-brand-700',
-            'right-0 top-1/2 h-9 w-8 -translate-y-1/2 rounded-l-lg rounded-r-none shadow-md active:scale-95',
-            'md:h-auto md:w-auto md:flex-col md:gap-2 md:rounded-l-xl md:px-1.5 md:py-4',
+            'group fixed z-40 hidden items-center justify-center bg-brand-600 text-white transition-all duration-300 hover:bg-brand-700',
+            'right-0 top-1/2 -translate-y-1/2 rounded-l-xl rounded-r-none px-1.5 py-4 shadow-md active:scale-95',
+            'md:flex md:flex-col md:gap-2',
             open && 'pointer-events-none scale-90 opacity-0',
           )}
         >
-          <MessageCircle className="h-4 w-4 md:h-5 md:w-5" />
-          <span className="hidden text-[10px] font-semibold uppercase tracking-widest md:inline md:[writing-mode:vertical-rl]">
+          <MessageCircle className="h-5 w-5" />
+          <span className="text-[10px] font-semibold uppercase tracking-widest [writing-mode:vertical-rl]">
             Assistant
           </span>
         </button>

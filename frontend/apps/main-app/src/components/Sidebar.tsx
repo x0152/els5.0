@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { NavLink } from 'react-router-dom'
-import { LogOut } from 'lucide-react'
+import { NavLink, useLocation } from 'react-router-dom'
+import { LogOut, MessageCircle } from 'lucide-react'
 import { Avatar, cn } from '@els/ui'
 import { groupNames, groupOrder, type Section } from '../config/sections'
 import { groupSections, useApps } from '../hooks/useApps'
@@ -83,6 +83,7 @@ function DesktopSidebar() {
 }
 
 function MobileTopBar() {
+  const onChatPage = useLocation().pathname.startsWith('/v1/chat')
   return (
     <header className="md:hidden fixed left-0 right-0 top-0 z-40 h-14 bg-white/95 backdrop-blur border-b border-neutral-200">
       <div
@@ -96,7 +97,19 @@ function MobileTopBar() {
         >
           <Logo />
         </NavLink>
-        <MobileProfileMenu />
+        <div className="flex items-center gap-2">
+          {!onChatPage && (
+            <button
+              type="button"
+              aria-label="Open assistant"
+              onClick={() => document.dispatchEvent(new Event('els:ask'))}
+              className="grid h-9 w-9 place-items-center rounded-full bg-brand-600 text-white shadow-sm active:scale-95 transition-transform"
+            >
+              <MessageCircle size={18} />
+            </button>
+          )}
+          <MobileProfileMenu />
+        </div>
       </div>
     </header>
   )

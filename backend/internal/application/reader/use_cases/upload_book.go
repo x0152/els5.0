@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	gohtml "html"
 	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -119,7 +121,7 @@ func (uc *UploadBookUseCase) convert(ctx context.Context, book *reader.Book, cmd
 		return err
 	}
 
-	html := conv.HTML
+	html := stripLeadingTitle(conv.HTML, book.Title)
 	for _, m := range conv.Media {
 		path, err := uc.putFile(ctx, book.ID+"/"+m.Ref, m.LocalPath, m.ContentType)
 		if err != nil {
@@ -193,6 +195,30 @@ func (uc *UploadBookUseCase) put(ctx context.Context, key string, r io.Reader, s
 		return media.Path{}, err
 	}
 	return path, nil
+}
+
+var (
+	titleBlockRe = regexp.MustCompile(`(?is)^\s*<header[^>]*id="title-block-header"[^>]*>.*?</header>`)
+	leadingH1Re  = regexp.MustCompile(`(?is)^\s*<h1[^>]*>(.*?)</h1>`)
+	tagRe        = regexp.MustCompile(`<[^>]+>`)
+)
+
+// The reader UI always renders the book title above the content, so drop
+// pandoc's generated title block and a leading H1 that repeats the title.
+func stripLeadingTitle(html, title string) string {
+	html = titleBlockRe.ReplaceAllString(html, "")
+	for {
+		m := leadingH1Re.FindStringSubmatch(html)
+		if m == nil {
+			break
+		}
+		text := strings.TrimSpace(gohtml.UnescapeString(tagRe.ReplaceAllString(m[1], "")))
+		if !strings.EqualFold(text, strings.TrimSpace(title)) {
+			break
+		}
+		html = html[len(m[0]):]
+	}
+	return strings.TrimSpace(html)
 }
 
 func bookTitle(cmd UploadBookCommand) string {

@@ -18,6 +18,7 @@ import (
 	"github.com/els/backend/internal/infrastructure/adapters/llm"
 	"github.com/els/backend/internal/infrastructure/adapters/providercfg"
 	"github.com/els/backend/internal/infrastructure/adapters/redissession"
+	corerepo "github.com/els/backend/internal/infrastructure/repositories/core"
 	iamrepo "github.com/els/backend/internal/infrastructure/repositories/iam"
 	settingsrepo "github.com/els/backend/internal/infrastructure/repositories/settings"
 	studiorepo "github.com/els/backend/internal/infrastructure/repositories/studio"
@@ -53,6 +54,7 @@ func Mount(humaAPI huma.API, cfg Config, pool *pgxpool.Pool, rdb *redis.Client, 
 	llmClient := llm.NewWithResolver(cfg.LLM.BaseURL, cfg.LLM.APIKey, cfg.LLM.Model, time.Duration(cfg.LLM.Timeout)*time.Second, resolver)
 
 	repo := studiorepo.NewStore(pool)
+	events := corerepo.NewStore(pool)
 
 	api.Register(humaAPI, api.Deps{
 		Authenticator: authn,
@@ -63,11 +65,11 @@ func Mount(humaAPI huma.API, cfg Config, pool *pgxpool.Pool, rdb *redis.Client, 
 		AddItem:       usecases.NewAddItemUseCase(repo, llmClient, nil),
 		CaptureItem:   usecases.NewCaptureItemUseCase(repo, llmClient, nil),
 		DeleteItem:    usecases.NewDeleteItemUseCase(repo),
-		MarkSkill:     usecases.NewMarkSkillUseCase(repo, nil),
-		PassReview:    usecases.NewPassReviewUseCase(repo, nil),
+		MarkSkill:     usecases.NewMarkSkillUseCase(repo, events, nil),
+		PassReview:    usecases.NewPassReviewUseCase(repo, events, nil),
 		RegenExample:  usecases.NewRegenExampleUseCase(repo, llmClient),
 		RegenTask:     usecases.NewRegenTaskUseCase(repo, llmClient),
-		CheckReply:    usecases.NewCheckReplyUseCase(repo, llmClient, nil),
+		CheckReply:    usecases.NewCheckReplyUseCase(repo, llmClient, events, nil),
 	})
 }
 

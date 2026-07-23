@@ -9,15 +9,16 @@ import (
 )
 
 type PassReviewUseCase struct {
-	repo  studio.Repository
-	clock timex.Clock
+	repo   studio.Repository
+	events EventSink
+	clock  timex.Clock
 }
 
-func NewPassReviewUseCase(repo studio.Repository, clock timex.Clock) *PassReviewUseCase {
+func NewPassReviewUseCase(repo studio.Repository, events EventSink, clock timex.Clock) *PassReviewUseCase {
 	if clock == nil {
 		clock = timex.System()
 	}
-	return &PassReviewUseCase{repo: repo, clock: clock}
+	return &PassReviewUseCase{repo: repo, events: events, clock: clock}
 }
 
 func (uc *PassReviewUseCase) Execute(ctx context.Context, actor *iam.Actor, itemID string) (studio.Item, error) {
@@ -36,5 +37,9 @@ func (uc *PassReviewUseCase) Execute(ctx context.Context, actor *iam.Actor, item
 	if err := uc.repo.Update(ctx, item); err != nil {
 		return studio.Item{}, err
 	}
+
+	// 4. Publish the successful review into the learn core pipeline (best effort).
+	emitItemEvent(ctx, uc.events, uc.clock.Now(), actor.AccountID().String(), item, "", "ok", "")
+
 	return item, nil
 }
