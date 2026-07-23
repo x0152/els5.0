@@ -27,14 +27,19 @@ function StepIcon({ icon, running }: { icon?: string; running: boolean }) {
   return <Wrench size={12} className="shrink-0" />
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 function argsSummary(raw?: string): string {
   if (!raw) return ''
   try {
     const obj = JSON.parse(raw) as Record<string, unknown>
-    const first = Object.values(obj)[0]
-    if (first === undefined) return ''
-    const s = typeof first === 'string' ? first : JSON.stringify(first)
-    return s.length > 48 ? s.slice(0, 45) + '…' : s
+    for (const [key, value] of Object.entries(obj)) {
+      if (/(^|_)id$/.test(key)) continue
+      const s = typeof value === 'string' ? value : JSON.stringify(value)
+      if (!s || UUID_RE.test(s)) continue
+      return s.length > 48 ? s.slice(0, 45) + '…' : s
+    }
+    return ''
   } catch {
     return ''
   }

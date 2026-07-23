@@ -49,6 +49,11 @@ export function useChat(active: boolean) {
     setInitializing(true)
     let alive = true
     const pendingBubble: ChatItem = { kind: 'assistant', id: 'pending', segments: [], pending: true }
+    const withPending = (built: ChatItem[]): ChatItem[] => {
+      const last = built[built.length - 1]
+      if (last?.kind === 'assistant') return [...built.slice(0, -1), { ...last, pending: true }]
+      return [...built, pendingBubble]
+    }
     const pollWhileGenerating = async () => {
       setStreaming(true)
       try {
@@ -59,7 +64,7 @@ export function useChat(active: boolean) {
           if (!alive) return
           const built = buildItems(h?.messages ?? [])
           if (h?.generating) {
-            setItems([...built, pendingBubble])
+            setItems(withPending(built))
           } else {
             setItems(built)
             break
@@ -76,7 +81,7 @@ export function useChat(active: boolean) {
         const h = await api.ai.aiHistory()
         if (!alive) return
         const built = buildItems(h?.messages ?? [])
-        setItems(h?.generating ? [...built, pendingBubble] : built)
+        setItems(h?.generating ? withPending(built) : built)
         setModel(h?.model ?? '')
         if (h?.generating) void pollWhileGenerating()
         else setStreaming(false)

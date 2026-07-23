@@ -83,7 +83,7 @@ export function AppShell() {
         <div
           className={cn(
             'md:pl-28 pt-14 md:pt-0 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] md:pb-0 h-dvh overflow-y-auto transition-[padding] duration-300 ease-out',
-            chatOpen && 'sm:pr-[460px]',
+            chatOpen && app !== 'chat' && 'sm:pr-[460px]',
           )}
         >
           <ImpersonationBanner />

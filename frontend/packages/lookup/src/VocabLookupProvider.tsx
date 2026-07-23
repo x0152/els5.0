@@ -320,6 +320,7 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
   const [rows, setRows] = useState<Row[]>([])
   const [places, setPlaces] = useState<Occurrence | null>(null)
   const [sound, setSound] = useState<{ symbol: string; anchor: PhonemeAnchor } | null>(null)
+  const [addedToast, setAddedToast] = useState(false)
   const [guide, setGuide] = useState<Map<string, PhonemeGuideInfo> | null>(null)
   const [fsEl, setFsEl] = useState<Element | null>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -449,9 +450,20 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
   const addSelected = useCallback(() => {
     const targets = rows.filter((r) => r.checked && (r.state === 'idle' || r.state === 'error'))
     if (targets.length === 0) return
-    void Promise.allSettled(targets.map(({ text }) => api.vocab.addVocabUnit({ body: { text } }))).then(() =>
-      qc.invalidateQueries({ queryKey: ['vocab'] }),
-    )
+    const texts = targets.map((t) => t.text)
+    qc.setQueryData<string[]>(['vocab', 'pending-adds'], (old = []) => [...new Set([...old, ...texts])])
+    for (const text of texts) {
+      void api.vocab
+        .addVocabUnit({ body: { text } })
+        .catch(() => {})
+        .finally(() => {
+          void qc.invalidateQueries({ queryKey: ['vocab'] }).then(() => {
+            qc.setQueryData<string[]>(['vocab', 'pending-adds'], (old = []) => old.filter((t) => t !== text))
+          })
+        })
+    }
+    setAddedToast(true)
+    window.setTimeout(() => setAddedToast(false), 3000)
     close()
   }, [api, close, qc, rows])
 
@@ -498,6 +510,15 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
 
   return createPortal(
     <div ref={rootRef}>
+      {addedToast && (
+        <div
+          style={{ zIndex: 2147483646 }}
+          className="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white shadow-lg ring-1 ring-black/10"
+        >
+          <Check size={15} className="text-brand-400" />
+          Added to My Vocabulary
+        </div>
+      )}
       {pill && (
         <div
           style={{
