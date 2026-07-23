@@ -81,6 +81,44 @@ func (s *Store) SaveAcks(ctx context.Context, accountID string, itemIDs []string
 	return nil
 }
 
+func (s *Store) Tours(ctx context.Context, accountID string) ([]string, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT tour_id FROM onboarding_tours WHERE account_id = $1::uuid`, accountID)
+	if err != nil {
+		return nil, fmt.Errorf("select onboarding tours: %w", err)
+	}
+	defer rows.Close()
+	out := []string{}
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("scan onboarding tour: %w", err)
+		}
+		out = append(out, id)
+	}
+	return out, rows.Err()
+}
+
+func (s *Store) SaveTour(ctx context.Context, accountID, tourID string, now time.Time) error {
+	_, err := s.pool.Exec(ctx,
+		`INSERT INTO onboarding_tours (account_id, tour_id, done_at) VALUES ($1::uuid, $2, $3)
+		 ON CONFLICT (account_id, tour_id) DO NOTHING`,
+		accountID, tourID, now)
+	if err != nil {
+		return fmt.Errorf("insert onboarding tour %s: %w", tourID, err)
+	}
+	return nil
+}
+
+func (s *Store) DeleteTours(ctx context.Context, accountID string) error {
+	_, err := s.pool.Exec(ctx,
+		`DELETE FROM onboarding_tours WHERE account_id = $1::uuid`, accountID)
+	if err != nil {
+		return fmt.Errorf("delete onboarding tours: %w", err)
+	}
+	return nil
+}
+
 func (s *Store) LiveCounts(ctx context.Context, accountID string) (map[string]int, error) {
 	var workouts, vocab, chat, diary, quests, films, articles, chapters int
 	// $1 is uuid, $2 the same id as text: vocab_units.account_id, quest_missions.user_id,

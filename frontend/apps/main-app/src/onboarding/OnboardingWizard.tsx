@@ -3,7 +3,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Avatar, Button, cn, Input, Mascot, Select, Textarea } from '@els/ui'
 import { api } from '../lib/api'
 import { useAuth } from '../auth/AuthContext'
-import { markWizardDone } from './storage'
+import { WIZARD_TOUR, markTourDone } from './storage'
 
 const LEVELS = [
   { code: 'A1', label: 'Beginner' },
@@ -101,7 +101,7 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
   }
 
   const skip = () => {
-    markWizardDone()
+    markTourDone(WIZARD_TOUR)
     onDone()
     void refresh()
   }
@@ -121,7 +121,7 @@ export function OnboardingWizard({ onDone }: { onDone: () => void }) {
           speech_strictness: speechStrictness,
         },
       })
-      markWizardDone()
+      markTourDone(WIZARD_TOUR)
       await refresh()
       onDone()
     } catch (e) {

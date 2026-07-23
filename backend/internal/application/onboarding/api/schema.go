@@ -30,3 +30,26 @@ type AckItemsInput struct {
 }
 
 type AckItemsOutput struct{}
+
+type GetToursInput struct {
+	authx.BearerInput
+}
+
+type ToursOutput struct {
+	IDs []string `json:"ids"`
+}
+
+type MarkTourInput struct {
+	authx.BearerInput
+	Body struct {
+		ID string `json:"id" minLength:"1" maxLength:"64" doc:"Tour id to mark as completed"`
+	}
+}
+
+type MarkTourOutput struct{}
+
+type ResetToursInput struct {
+	authx.BearerInput
+}
+
+type ResetToursOutput struct{}

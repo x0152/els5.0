@@ -11,4 +11,7 @@ type Repository interface {
 	LiveCounts(ctx context.Context, accountID string) (map[string]int, error)
 	Acks(ctx context.Context, accountID string) (map[string]bool, error)
 	SaveAcks(ctx context.Context, accountID string, itemIDs []string, now time.Time) error
+	Tours(ctx context.Context, accountID string) ([]string, error)
+	SaveTour(ctx context.Context, accountID, tourID string, now time.Time) error
+	DeleteTours(ctx context.Context, accountID string) error
 }

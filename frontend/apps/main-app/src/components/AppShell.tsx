@@ -9,7 +9,17 @@ import { api } from '../lib/api'
 import { useApps } from '../hooks/useApps'
 import { AppTour } from '../onboarding/AppTour'
 import { OnboardingWizard } from '../onboarding/OnboardingWizard'
-import { ONBOARDING_RESET_EVENT, isWizardDone } from '../onboarding/storage'
+import { SystemTour } from '../onboarding/SystemTour'
+import {
+  ONBOARDING_RESET_EVENT,
+  SYSTEM_TOUR,
+  SYSTEM_TOUR_OPEN_EVENT,
+  WIZARD_TOUR,
+  clearTours,
+  isTourDone,
+  loadTours,
+  markTourDone,
+} from '../onboarding/storage'
 import { ErrorPage } from './ErrorPage'
 import { ImpersonationBanner } from './ImpersonationBanner'
 import { Sidebar } from './Sidebar'
@@ -17,19 +27,35 @@ import { Sidebar } from './Sidebar'
 export function AppShell() {
   const { isError, error, refetch } = useApps()
   const [chatOpen, setChatOpen] = useState(false)
-  const [wizardOpen, setWizardOpen] = useState(() => !isWizardDone())
+  const [toursLoaded, setToursLoaded] = useState(false)
+  const [wizardOpen, setWizardOpen] = useState(false)
+  const [systemTourOpen, setSystemTourOpen] = useState(false)
   const navigate = useNavigate()
   const [, , app, ...rest] = useLocation().pathname.split('/')
   useAgentView(app ? { app, screen: rest.join('/') || 'home' } : null)
 
   useEffect(() => {
+    loadTours()
+      .then(() => {
+        setWizardOpen(!isTourDone(WIZARD_TOUR))
+        setSystemTourOpen(!isTourDone(SYSTEM_TOUR))
+        setToursLoaded(true)
+      })
+      .catch(() => {})
     const onAsk = () => setChatOpen(true)
-    const onReset = () => setWizardOpen(true)
+    const onReset = () => {
+      clearTours()
+      setWizardOpen(true)
+      setSystemTourOpen(true)
+    }
+    const onSystemTour = () => setSystemTourOpen(true)
     document.addEventListener('els:ask', onAsk)
     window.addEventListener(ONBOARDING_RESET_EVENT, onReset)
+    window.addEventListener(SYSTEM_TOUR_OPEN_EVENT, onSystemTour)
     return () => {
       document.removeEventListener('els:ask', onAsk)
       window.removeEventListener(ONBOARDING_RESET_EVENT, onReset)
+      window.removeEventListener(SYSTEM_TOUR_OPEN_EVENT, onSystemTour)
     }
   }, [])
 
@@ -73,7 +99,15 @@ export function AppShell() {
             }}
           />
         )}
-        <AppTour suspended={wizardOpen} />
+        {!wizardOpen && systemTourOpen && (
+          <SystemTour
+            onClose={() => {
+              markTourDone(SYSTEM_TOUR)
+              setSystemTourOpen(false)
+            }}
+          />
+        )}
+        <AppTour suspended={!toursLoaded || wizardOpen || systemTourOpen} />
         {!wizardOpen && <AchievementToaster />}
       </div>
     </MiniPlayerProvider>

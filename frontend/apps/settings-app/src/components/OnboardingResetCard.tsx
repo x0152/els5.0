@@ -1,12 +1,11 @@
 import { useState } from 'react'
+import { api } from '../lib/api'
 
 export function OnboardingResetCard() {
   const [done, setDone] = useState(false)
 
-  const reset = () => {
-    Object.keys(localStorage)
-      .filter((k) => k.startsWith('els.onboarding.'))
-      .forEach((k) => localStorage.removeItem(k))
+  const reset = async () => {
+    await api.onboarding.onboardingResetTours()
     window.dispatchEvent(new Event('els:onboarding:reset'))
     setDone(true)
     window.setTimeout(() => setDone(false), 2000)
@@ -18,7 +17,7 @@ export function OnboardingResetCard() {
         <div>
           <h2 className="text-base font-semibold text-neutral-900">Onboarding</h2>
           <p className="mt-1 text-sm text-neutral-500">
-            Reset the welcome wizard and app tours on this device so they show again.
+            Reset the welcome wizard and app tours so they show again.
           </p>
         </div>
         <button

@@ -19,3 +19,10 @@ func toProgressOutput(statuses []onboarding.Status) OnboardingProgressOutput {
 	}
 	return OnboardingProgressOutput{Items: items}
 }
+
+func toToursOutput(ids []string) ToursOutput {
+	if ids == nil {
+		ids = []string{}
+	}
+	return ToursOutput{IDs: ids}
+}

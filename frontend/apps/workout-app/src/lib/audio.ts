@@ -21,6 +21,7 @@ export function playClip(videoUrl: string, startMs: number, endMs: number, opts?
   stopClip()
   if (!clipEl) {
     clipEl = document.createElement('video')
+    clipEl.preload = 'metadata'
     clipEl.style.display = 'none'
     document.body.appendChild(clipEl)
   }

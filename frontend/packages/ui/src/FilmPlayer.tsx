@@ -298,6 +298,7 @@ export function FilmPlayer({
         ref={setVideoRef}
         src={videoUrl}
         playsInline
+        preload="metadata"
         className="max-h-full w-full"
         onClick={() => {
           if (!coarsePointer) togglePlay()

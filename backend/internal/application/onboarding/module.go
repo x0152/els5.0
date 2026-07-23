@@ -42,5 +42,8 @@ func Mount(humaAPI huma.API, cfg Config, pool *pgxpool.Pool, rdb *redis.Client, 
 		Authenticator: authn,
 		GetProgress:   usecases.NewGetProgressUseCase(repo, nil),
 		AckItems:      usecases.NewAckItemsUseCase(repo, nil),
+		GetTours:      usecases.NewGetToursUseCase(repo),
+		MarkTour:      usecases.NewMarkTourUseCase(repo, nil),
+		ResetTours:    usecases.NewResetToursUseCase(repo),
 	})
 }

@@ -91,6 +91,20 @@ components:
         - status
         - time
       type: object
+    MarkTourInputBody:
+      additionalProperties: false
+      properties:
+        id:
+          description: Tour id to mark as completed
+          maxLength: 64
+          minLength: 1
+          type: string
+      required:
+        - id
+      type: object
+    MarkTourOutput:
+      additionalProperties: false
+      type: object
     Meta:
       additionalProperties: false
       properties:
@@ -184,6 +198,9 @@ components:
         - ready
         - time
       type: object
+    ResetToursOutput:
+      additionalProperties: false
+      type: object
     SuccessBodyAckItemsOutput:
       additionalProperties: false
       properties:
@@ -202,6 +219,19 @@ components:
       properties:
         data:
           $ref: "#/components/schemas/HealthOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyMarkTourOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/MarkTourOutput"
         meta:
           $ref: "#/components/schemas/Meta"
         ok:
@@ -235,6 +265,44 @@ components:
       required:
         - ok
         - data
+      type: object
+    SuccessBodyResetToursOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ResetToursOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    SuccessBodyToursOutput:
+      additionalProperties: false
+      properties:
+        data:
+          $ref: "#/components/schemas/ToursOutput"
+        meta:
+          $ref: "#/components/schemas/Meta"
+        ok:
+          type: boolean
+      required:
+        - ok
+        - data
+      type: object
+    ToursOutput:
+      additionalProperties: false
+      properties:
+        ids:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - ids
       type: object
 info:
   title: onboarding
@@ -297,6 +365,88 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
           description: Error
       summary: Getting-started checklist and achievements with accumulated progress
+      tags:
+        - onboarding
+  /api/v1/onboarding/tours:
+    delete:
+      operationId: onboardingResetTours
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyResetToursOutput"
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Reset onboarding tours so they show again
+      tags:
+        - onboarding
+    get:
+      operationId: onboardingTours
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyToursOutput"
+          description: OK
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Completed onboarding tour ids
+      tags:
+        - onboarding
+    post:
+      operationId: onboardingMarkTour
+      parameters:
+        - description: Bearer <token>
+          in: header
+          name: Authorization
+          schema:
+            description: Bearer <token>
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkTourInputBody"
+        required: true
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessBodyMarkTourOutput"
+          description: No Content
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+          description: Error
+      summary: Mark an onboarding tour as completed
       tags:
         - onboarding
   /health:

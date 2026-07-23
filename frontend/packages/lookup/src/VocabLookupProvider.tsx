@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { BookOpen, BookPlus, Check, ChevronDown, CirclePlay, Film, Loader2, MessageCircleQuestion, Mic, Plus, Square, X } from 'lucide-react'
 import { cn, CefrBadge, FrequencyBars, PhonemePopover, SpeakButton, anchorOf, canonicalPhoneme, useRecorder, type PhonemeAnchor, type PhonemeGuideInfo } from '@els/ui'
 import { type Api, type SpeechComponents } from '@els/api-client'
@@ -308,6 +309,7 @@ function readSelection(): Picked | null {
 }
 
 export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account' | 'speech' | 'core'> }) {
+  const qc = useQueryClient()
   const rootRef = useRef<HTMLDivElement>(null)
   const [showTranslations, setShowTranslations] = useState(true)
   const [pill, setPill] = useState<Picked | null>(null)
@@ -447,11 +449,11 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
   const addSelected = useCallback(() => {
     const targets = rows.filter((r) => r.checked && (r.state === 'idle' || r.state === 'error'))
     if (targets.length === 0) return
-    for (const { text } of targets) {
-      void api.vocab.addVocabUnit({ body: { text } }).catch(() => {})
-    }
+    void Promise.allSettled(targets.map(({ text }) => api.vocab.addVocabUnit({ body: { text } }))).then(() =>
+      qc.invalidateQueries({ queryKey: ['vocab'] }),
+    )
     close()
-  }, [api, close, rows])
+  }, [api, close, qc, rows])
 
   const pendingCount = rows.filter((r) => r.checked && (r.state === 'idle' || r.state === 'error')).length
 

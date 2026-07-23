@@ -106,6 +106,9 @@ export function createApi(options: ApiClientOptions) {
     onboarding: {
       onboardingAck: (init: MaybeOptionalInit<OnboardingPaths['/api/v1/onboarding/ack'], 'post'>) => unwrap(clients.onboarding.POST('/api/v1/onboarding/ack', init)),
       onboardingProgress: (init?: MaybeOptionalInit<OnboardingPaths['/api/v1/onboarding/progress'], 'get'>) => unwrap(clients.onboarding.GET('/api/v1/onboarding/progress', init)),
+      onboardingTours: (init?: MaybeOptionalInit<OnboardingPaths['/api/v1/onboarding/tours'], 'get'>) => unwrap(clients.onboarding.GET('/api/v1/onboarding/tours', init)),
+      onboardingMarkTour: (init: MaybeOptionalInit<OnboardingPaths['/api/v1/onboarding/tours'], 'post'>) => unwrap(clients.onboarding.POST('/api/v1/onboarding/tours', init)),
+      onboardingResetTours: (init?: MaybeOptionalInit<OnboardingPaths['/api/v1/onboarding/tours'], 'delete'>) => unwrap(clients.onboarding.DELETE('/api/v1/onboarding/tours', init)),
     },
     quest: {
       listQuestMissions: (init?: MaybeOptionalInit<QuestPaths['/api/v1/quest/missions'], 'get'>) => unwrap(clients.quest.GET('/api/v1/quest/missions', init)),

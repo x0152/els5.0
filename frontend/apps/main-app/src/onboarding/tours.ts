@@ -4,6 +4,55 @@ export interface TourInfo {
   features: string[]
 }
 
+export interface SystemTourPage {
+  id: string
+  title: string
+  description: string
+  steps: string[]
+}
+
+/** Cross-app tour shown once after the welcome wizard. Media (optional):
+ *  public/tours/{page.id}.mp4 or .gif. */
+export const SYSTEM_TOUR: SystemTourPage[] = [
+  {
+    id: 'system',
+    title: 'Welcome to ELS',
+    description:
+      'ELS is your English learning studio: you learn from real content — films, books, articles, quests — and the whole platform adapts to your level, native language and mistakes.',
+    steps: [
+      'Watch films, read books and articles, play story quests, keep a diary',
+      'A daily Workout builds a lesson from film scenes and your recent mistakes',
+      'Everything you look up lands in My Vocabulary and comes back in training',
+      'Select any text anywhere — two key actions, Analyze and Ask, are always at hand',
+    ],
+  },
+  {
+    id: 'analyze',
+    title: 'Analyze: from an article to a film scene',
+    description:
+      'Turn anything you read into vocabulary — and meet it again in real scenes.',
+    steps: [
+      'Open an article in Reader and select an interesting phrase',
+      'Press “Analyze” — meaning, grammar and words are broken down',
+      'Add a word to My Vocabulary in one click',
+      'Every word shows where it appears — jump to watch the exact film fragment or read it in the book',
+      'Select text right in the subtitles too — selection works everywhere',
+    ],
+  },
+  {
+    id: 'assistant',
+    title: 'Assistant: from a question to feedback',
+    description:
+      'The assistant is more than answers — turn it into your personal coach.',
+    steps: [
+      'Select a phrase and press “Ask” — it lands in the chat',
+      'Ask the assistant to generate a practice task about it in English',
+      'Do the task right in the chat',
+      'Ask for feedback: what was good and what to improve',
+    ],
+  },
+]
+
 export const TOURS: Record<string, TourInfo> = {
   profile: {
     title: 'Your profile',

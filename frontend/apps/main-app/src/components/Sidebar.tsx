@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { LogOut, MessageCircle } from 'lucide-react'
+import { Info, LogOut, MessageCircle } from 'lucide-react'
 import { Avatar, cn } from '@els/ui'
 import { groupNames, groupOrder, type Section } from '../config/sections'
 import { groupSections, useApps } from '../hooks/useApps'
 import { Logo } from './Logo'
 import { useAuth } from '../auth/AuthContext'
+import { SYSTEM_TOUR_OPEN_EVENT } from '../onboarding/storage'
 
 /**
  * Primary app navigation.
@@ -74,7 +75,16 @@ function DesktopSidebar() {
 
         <div className="mx-4 border-t border-neutral-100" />
 
-        <div className="shrink-0 p-3">
+        <div className="shrink-0 p-3 space-y-1">
+          <button
+            type="button"
+            title="Platform tour"
+            onClick={() => window.dispatchEvent(new Event(SYSTEM_TOUR_OPEN_EVENT))}
+            className="w-full flex flex-col items-center gap-1 py-1.5 rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+          >
+            <Info size={18} />
+            <span className="text-[10px] font-medium leading-none">Tour</span>
+          </button>
           <ProfileMenu />
         </div>
       </div>
