@@ -453,21 +453,15 @@ export function VocabLookupProvider({ api }: { api: Pick<Api, 'vocab' | 'account
   const addSelected = useCallback(() => {
     const targets = rows.filter((r) => r.checked && (r.state === 'idle' || r.state === 'error'))
     if (targets.length === 0) return
-    const texts = targets.map((t) => t.text)
-    qc.setQueryData<string[]>(['vocab-pending-adds'], (old = []) => [...new Set([...old, ...texts])])
-    const addOne = async (text: string) => {
-      try {
-        const res = await api.vocab.addVocabUnit({ body: { text } })
-        if (res && !res.correct && res.correction && res.correction.toLowerCase() !== text.toLowerCase()) {
-          await api.vocab.addVocabUnit({ body: { text: res.correction } })
-        }
-      } catch {
-        // duplicate or transient failure — nothing new to show
-      }
-      await qc.invalidateQueries({ queryKey: ['vocab'] })
-      qc.setQueryData<string[]>(['vocab-pending-adds'], (old = []) => old.filter((t) => t !== text))
-    }
-    for (const text of texts) void addOne(text)
+    void Promise.allSettled(
+      targets.map((r) =>
+        api.vocab.addVocabUnit({
+          body: r.kind
+            ? { text: r.text, kind: r.kind, translation: r.translation, description: r.description, frequency: r.frequency, cefr: r.cefr }
+            : { text: r.text },
+        }),
+      ),
+    ).then(() => qc.invalidateQueries({ queryKey: ['vocab'] }))
     setAddedToast(true)
     window.setTimeout(() => setAddedToast(false), 3000)
     close()

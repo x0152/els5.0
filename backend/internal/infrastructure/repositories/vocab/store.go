@@ -118,6 +118,15 @@ func (s *Store) ExistsText(ctx context.Context, accountID, text, kind string) (b
 	return exists, nil
 }
 
+func (s *Store) UpdateDetails(ctx context.Context, u vocab.Unit) error {
+	_, err := s.pool.Exec(ctx, `UPDATE vocab_units SET transcription = $1, translation = $2, definition = $3, example = $4 WHERE id = $5 AND account_id = $6`,
+		u.Transcription, u.Translation, u.Definition, u.Example, u.ID, u.AccountID)
+	if err != nil {
+		return fmt.Errorf("update unit details: %w", err)
+	}
+	return nil
+}
+
 func (s *Store) UpdateStatus(ctx context.Context, accountID, id string, status vocab.Status) (vocab.Unit, error) {
 	unit, err := scanUnit(s.pool.QueryRow(ctx, `UPDATE vocab_units SET status = $1 WHERE id = $2 AND account_id = $3
 		RETURNING `+columns, string(status), id, accountID))

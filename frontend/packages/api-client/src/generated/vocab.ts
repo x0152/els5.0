@@ -193,8 +193,21 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         AddUnitInputBody: {
+            /** @description Known CEFR level from analyze */
+            cefr?: string;
+            /** @description Known short definition from analyze */
+            description?: string;
+            /**
+             * Format: int64
+             * @description Known frequency from analyze
+             */
+            frequency?: number;
+            /** @description Known kind from analyze; when set the unit is stored instantly and enriched in the background */
+            kind?: string;
             /** @description Word, phrase, phrasal verb or idiom to add */
             text: string;
+            /** @description Known translation from analyze */
+            translation?: string;
         };
         AddUnitOutput: {
             correct: boolean;

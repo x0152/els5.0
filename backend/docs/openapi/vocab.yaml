@@ -3,10 +3,32 @@ components:
     AddUnitInputBody:
       additionalProperties: false
       properties:
+        cefr:
+          description: Known CEFR level from analyze
+          maxLength: 2
+          type: string
+        description:
+          description: Known short definition from analyze
+          maxLength: 1000
+          type: string
+        frequency:
+          description: Known frequency from analyze
+          format: int64
+          maximum: 5
+          minimum: 0
+          type: integer
+        kind:
+          description: Known kind from analyze; when set the unit is stored instantly and enriched in the background
+          maxLength: 20
+          type: string
         text:
           description: Word, phrase, phrasal verb or idiom to add
           maxLength: 200
           minLength: 1
+          type: string
+        translation:
+          description: Known translation from analyze
+          maxLength: 500
           type: string
       required:
         - text

@@ -22,7 +22,12 @@ type UnitOutput struct {
 type AddUnitInput struct {
 	authx.BearerInput
 	Body struct {
-		Text string `json:"text" minLength:"1" maxLength:"200" doc:"Word, phrase, phrasal verb or idiom to add"`
+		Text        string `json:"text" minLength:"1" maxLength:"200" doc:"Word, phrase, phrasal verb or idiom to add"`
+		Kind        string `json:"kind,omitempty" maxLength:"20" doc:"Known kind from analyze; when set the unit is stored instantly and enriched in the background"`
+		Translation string `json:"translation,omitempty" maxLength:"500" doc:"Known translation from analyze"`
+		Description string `json:"description,omitempty" maxLength:"1000" doc:"Known short definition from analyze"`
+		Frequency   int    `json:"frequency,omitempty" minimum:"0" maximum:"5" doc:"Known frequency from analyze"`
+		Cefr        string `json:"cefr,omitempty" maxLength:"2" doc:"Known CEFR level from analyze"`
 	}
 }
 

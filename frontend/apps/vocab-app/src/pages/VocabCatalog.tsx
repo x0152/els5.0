@@ -7,7 +7,7 @@ import { AppInfoButton, Button, cn, ConfirmDialog, EmptyState, Input, LoadingSta
 import { AddWordModal } from '../components/AddWordModal.tsx'
 import { WordCard } from '../components/WordCard.tsx'
 import { WordDetailModal } from '../components/WordDetailModal.tsx'
-import { useDeleteUnit, usePendingAdds, useUnits } from '../store/units.ts'
+import { useDeleteUnit, useUnits } from '../store/units.ts'
 import { STATUS_LABELS } from '../lib/types.ts'
 import type { Unit, UnitStatus } from '../lib/types.ts'
 
@@ -38,11 +38,6 @@ export function VocabCatalog() {
 
   const items = useMemo(() => unitsQ.data?.pages.flatMap((p) => p?.items ?? []) ?? [], [unitsQ.data])
   const total = unitsQ.data?.pages[0]?.total ?? 0
-  const pendingAdds = usePendingAdds()
-  const pending = useMemo(
-    () => pendingAdds.filter((t) => !items.some((u) => u.text.toLowerCase() === t.toLowerCase())),
-    [pendingAdds, items],
-  )
 
   useAgentView(
     active
@@ -146,22 +141,11 @@ export function VocabCatalog() {
 
         {unitsQ.isLoading ? (
           <LoadingState className="py-24 text-neutral-400" />
-        ) : items.length === 0 && pending.length === 0 ? (
+        ) : items.length === 0 ? (
           <CatalogEmpty searching={!!query || !!status} onAdd={() => setShowAdd(true)} />
         ) : (
           <>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {pending.map((t) => (
-                <div
-                  key={t}
-                  className="flex min-h-[120px] flex-col justify-between rounded-2xl border border-dashed border-neutral-300 bg-white p-4"
-                >
-                  <h3 className="truncate text-base font-semibold text-neutral-900">{t}</h3>
-                  <span className="mt-2 flex items-center gap-1.5 text-xs font-medium text-neutral-400">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Processing…
-                  </span>
-                </div>
-              ))}
               {items.map((u) => (
                 <WordCard key={u.id} unit={u} onOpen={setActive} onDelete={setDeleting} />
               ))}

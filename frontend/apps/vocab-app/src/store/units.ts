@@ -22,16 +22,6 @@ export function useUnits(search: string, status: StatusFilter) {
   })
 }
 
-export function usePendingAdds(): string[] {
-  const { data } = useQuery<string[]>({
-    queryKey: ['vocab-pending-adds'],
-    queryFn: () => [],
-    staleTime: Infinity,
-    gcTime: Infinity,
-  })
-  return data ?? []
-}
-
 export function useUnitOccurrences(text: string) {
   return useQuery({
     queryKey: ['vocab', 'occurrences', text],

@@ -37,7 +37,17 @@ func Register(api huma.API, deps Deps) {
 		Summary:     "Add a vocabulary item; the LLM validates it and writes its description",
 		Tags:        []string{"vocab"},
 	}, func(ctx context.Context, actor *iam.Actor, in *AddUnitInput) (AddUnitOutput, error) {
-		res, err := deps.AddUnit.Execute(ctx, actor, in.Body.Text)
+		var meta *usecases.AddUnitMeta
+		if in.Body.Kind != "" {
+			meta = &usecases.AddUnitMeta{
+				Kind:        in.Body.Kind,
+				Translation: in.Body.Translation,
+				Description: in.Body.Description,
+				Frequency:   in.Body.Frequency,
+				Cefr:        in.Body.Cefr,
+			}
+		}
+		res, err := deps.AddUnit.Execute(ctx, actor, in.Body.Text, meta)
 		if err != nil {
 			return AddUnitOutput{}, err
 		}
