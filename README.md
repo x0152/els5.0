@@ -22,9 +22,6 @@ A self-hosted studio for learning a language the fun way: watch films, play stor
 ### Analyze
 ![Analyze](docs/screenshots/analyze.gif)
 
-### Film + on-screen subtitles
-![Film](docs/screenshots/02-film.png)
-
 ### Grammar unit
 ![Grammar](docs/screenshots/03-grammar.png)
 
