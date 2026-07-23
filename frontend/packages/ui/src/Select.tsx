@@ -18,6 +18,7 @@ export interface SelectProps {
   dark?: boolean
   className?: string
   title?: string
+  up?: boolean
 }
 
 export function Select({
@@ -29,6 +30,7 @@ export function Select({
   dark,
   className,
   title,
+  up: forceUp,
 }: SelectProps) {
   const btnRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -42,7 +44,7 @@ export function Select({
     const r = btnRef.current!.getBoundingClientRect()
     const estimate = Math.min(280, options.length * 34 + 10)
     const below = window.innerHeight - r.bottom
-    const up = below < estimate && r.top > below
+    const up = forceUp ?? (below < estimate && r.top > below)
     const alignRight = r.left + r.width / 2 > window.innerWidth / 2
     setStyle({
       minWidth: r.width,

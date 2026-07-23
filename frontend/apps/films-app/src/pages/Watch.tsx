@@ -438,7 +438,7 @@ function WatchInner({ id }: { id: string }) {
                   type="button"
                   onClick={() => prevEp && goEpisode(prevEp.id)}
                   disabled={!prevEp}
-                  className="transition-colors hover:text-brand-400 disabled:opacity-30"
+                  className="hidden transition-colors hover:text-brand-400 disabled:opacity-30 sm:block"
                   title="Previous episode"
                 >
                   <SkipBack size={18} />
@@ -447,7 +447,7 @@ function WatchInner({ id }: { id: string }) {
                   type="button"
                   onClick={() => nextEp && goEpisode(nextEp.id)}
                   disabled={!nextEp}
-                  className="transition-colors hover:text-brand-400 disabled:opacity-30"
+                  className="hidden transition-colors hover:text-brand-400 disabled:opacity-30 sm:block"
                   title="Next episode"
                 >
                   <SkipForward size={18} />
@@ -466,7 +466,7 @@ function WatchInner({ id }: { id: string }) {
                 type="button"
                 onClick={popOut}
                 title="Pop out (floating window)"
-                className="transition-colors hover:text-brand-400"
+                className="hidden transition-colors hover:text-brand-400 sm:block"
               >
                 <PictureInPicture2 size={18} />
               </button>

@@ -48,7 +48,7 @@ export function englishTrackIdx(tracks: { lang: string; label: string }[]): numb
   return idx >= 0 ? idx : 0
 }
 
-const darkSelectClass = 'w-auto rounded-md px-2 py-1 text-xs'
+const darkSelectClass = 'w-auto min-w-0 rounded-md px-1.5 py-1 text-[11px] sm:px-2 sm:text-xs'
 
 function formatTime(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000))
@@ -129,6 +129,7 @@ export function FilmPlayer({
   // stick while playback is actually progressing.
   const [seeking, setSeeking] = useState(false)
   const [waiting, setWaiting] = useState(false)
+  const lastTimeRef = useRef(-1)
   const stalled = seeking || (!paused && waiting)
   const [spinner, setSpinner] = useState(false)
   useEffect(() => {
@@ -139,6 +140,24 @@ export function FilmPlayer({
       setSpinner(false)
     }
   }, [stalled])
+
+  const [error, setError] = useState(false)
+
+  // Controls auto-hide: shown on activity, hidden after 3s of playback.
+  // On touch devices tapping the video toggles them.
+  const coarsePointer = useMemo(() => window.matchMedia('(hover: none)').matches, [])
+  const [controlsVisible, setControlsVisible] = useState(true)
+  const hideTimerRef = useRef<number | undefined>(undefined)
+  const scrubbingRef = useRef(false)
+  const showControls = useCallback(() => {
+    setControlsVisible(true)
+    window.clearTimeout(hideTimerRef.current)
+    hideTimerRef.current = window.setTimeout(() => {
+      const v = innerRef.current
+      if (v && !v.paused && !scrubbingRef.current) setControlsVisible(false)
+    }, 3000)
+  }, [])
+  useEffect(() => () => window.clearTimeout(hideTimerRef.current), [])
 
   const cues = useMemo(() => subtitleTracks[subIdx]?.cues ?? [], [subtitleTracks, subIdx])
   const hasSubtitles = cues.length > 0
@@ -179,8 +198,9 @@ export function FilmPlayer({
       const v = innerRef.current
       if (!v) return
       v.currentTime = clamp(ms, rangeMin, rangeMax || ms) / 1000
+      showControls()
     },
-    [rangeMin, rangeMax],
+    [rangeMin, rangeMax, showControls],
   )
 
   const togglePlay = useCallback(() => {
@@ -191,11 +211,16 @@ export function FilmPlayer({
       resumeAfterSeekRef.current = false
       v.pause()
     }
-  }, [])
+    showControls()
+  }, [showControls])
 
   const toggleFullscreen = useCallback(() => {
     if (document.fullscreenElement) void document.exitFullscreen()
-    else void containerRef.current?.requestFullscreen()
+    else if (containerRef.current?.requestFullscreen) void containerRef.current.requestFullscreen()
+    else {
+      const v = innerRef.current as (HTMLVideoElement & { webkitEnterFullscreen?: () => void }) | null
+      v?.webkitEnterFullscreen?.()
+    }
   }, [])
 
   useEffect(() => {
@@ -259,20 +284,33 @@ export function FilmPlayer({
   return (
     <div
       ref={containerRef}
-      className={cn('group relative flex min-h-0 flex-1 items-center justify-center bg-black', className)}
+      onMouseMove={coarsePointer ? undefined : showControls}
+      onMouseLeave={() => {
+        if (!coarsePointer && innerRef.current && !innerRef.current.paused && !scrubbingRef.current) setControlsVisible(false)
+      }}
+      className={cn(
+        'group relative flex min-h-0 flex-1 items-center justify-center bg-black',
+        !controlsVisible && 'cursor-none',
+        className,
+      )}
     >
       <video
         ref={setVideoRef}
         src={videoUrl}
         playsInline
         className="max-h-full w-full"
-        onClick={togglePlay}
+        onClick={() => {
+          if (!coarsePointer) togglePlay()
+          else if (controlsVisible) setControlsVisible(false)
+          else showControls()
+        }}
         onTimeUpdate={(e) => {
           const v = e.currentTarget
           const ms = Math.round(v.currentTime * 1000)
           setCurrentMs(ms)
           onTimeChange?.(ms)
-          if (!v.seeking && v.readyState >= 3) setWaiting(false)
+          if (!v.seeking && v.currentTime !== lastTimeRef.current) setWaiting(false)
+          lastTimeRef.current = v.currentTime
           updateBuffered(v)
           if (endMs != null && ms >= endMs) {
             v.pause()
@@ -306,11 +344,13 @@ export function FilmPlayer({
           setSeeking(false)
           setWaiting(false)
           setBufferedMs(0)
+          setError(false)
           resumeAfterSeekRef.current = false
         }}
         onError={() => {
           setSeeking(false)
           setWaiting(false)
+          setError(true)
         }}
         onLoadedMetadata={(e) => {
           const v = e.currentTarget
@@ -318,8 +358,15 @@ export function FilmPlayer({
           if (onLoadedMetadata) onLoadedMetadata(v)
           else if (startMs != null) v.currentTime = startMs / 1000
         }}
-        onPlay={() => setPaused(false)}
-        onPause={() => setPaused(true)}
+        onPlay={() => {
+          setPaused(false)
+          showControls()
+        }}
+        onPause={() => {
+          setPaused(true)
+          window.clearTimeout(hideTimerRef.current)
+          setControlsVisible(true)
+        }}
         onVolumeChange={(e) => {
           setVolume(e.currentTarget.volume)
           setMuted(e.currentTarget.muted)
@@ -332,16 +379,45 @@ export function FilmPlayer({
         </div>
       )}
 
-      {paused && !stalled && (
+      {error && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60">
+          <p className="text-sm text-white">Playback error</p>
+          <button
+            type="button"
+            onClick={() => {
+              setError(false)
+              innerRef.current?.load()
+            }}
+            className="rounded-lg bg-white/10 px-3 py-1.5 text-sm text-white transition-colors hover:bg-white/20"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!error && !stalled && (paused || (coarsePointer && controlsVisible)) && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="rounded-full bg-black/50 p-5 backdrop-blur-sm">
-            <Play size={36} className="text-white" fill="currentColor" />
-          </div>
+          <button
+            type="button"
+            onClick={togglePlay}
+            className="pointer-events-auto rounded-full bg-black/50 p-5 backdrop-blur-sm"
+          >
+            {paused ? (
+              <Play size={36} className="text-white" fill="currentColor" />
+            ) : (
+              <Pause size={36} className="text-white" fill="currentColor" />
+            )}
+          </button>
         </div>
       )}
 
       {showOverlay && activeCue && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-20 flex justify-center px-6 transition-[bottom] duration-200 [@media(hover:hover)]:bottom-4 [@media(hover:hover)]:group-hover:bottom-20">
+        <div
+          className={cn(
+            'pointer-events-none absolute inset-x-0 flex justify-center px-6 transition-[bottom] duration-200',
+            controlsVisible ? 'bottom-20' : 'bottom-4',
+          )}
+        >
           {renderCueOverlay ? (
             renderCueOverlay(activeCue)
           ) : (
@@ -352,7 +428,12 @@ export function FilmPlayer({
         </div>
       )}
 
-      <div className="absolute inset-x-0 bottom-0 flex flex-col gap-2 bg-gradient-to-t from-black/80 to-transparent px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-10 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100">
+      <div
+        className={cn(
+          'absolute inset-x-0 bottom-0 flex flex-col gap-2 bg-gradient-to-t from-black/80 to-transparent px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-10 transition-opacity',
+          controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0',
+        )}
+      >
         <div
           ref={barRef}
           className="group/bar relative flex h-4 cursor-pointer touch-none items-center"
@@ -362,6 +443,7 @@ export function FilmPlayer({
             } catch {
               /* synthetic events have no active pointer */
             }
+            scrubbingRef.current = true
             setScrubMs(msFromPointer(e))
           }}
           onPointerMove={(e) => {
@@ -370,13 +452,17 @@ export function FilmPlayer({
             else setHoverMs(ms)
           }}
           onPointerUp={() => {
+            scrubbingRef.current = false
             if (scrubMs != null) {
               seekTo(scrubMs)
               setCurrentMs(scrubMs)
               setScrubMs(null)
             }
           }}
-          onPointerCancel={() => setScrubMs(null)}
+          onPointerCancel={() => {
+            scrubbingRef.current = false
+            setScrubMs(null)
+          }}
           onPointerLeave={() => setHoverMs(null)}
         >
           {tooltipMs != null && (
@@ -399,7 +485,7 @@ export function FilmPlayer({
             )}
           />
         </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-white">
+        <div className="flex items-center gap-2 text-white sm:gap-3">
           {controlsStart}
           <button type="button" onClick={togglePlay} className="transition-colors hover:text-brand-400">
             {paused ? <Play size={20} /> : <Pause size={20} />}
@@ -407,7 +493,7 @@ export function FilmPlayer({
           <button
             type="button"
             onClick={() => innerRef.current && (innerRef.current.muted = !innerRef.current.muted)}
-            className="transition-colors hover:text-brand-400"
+            className="hidden transition-colors hover:text-brand-400 sm:block"
           >
             {muted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
           </button>
@@ -420,13 +506,14 @@ export function FilmPlayer({
             onChange={(e) => innerRef.current && (innerRef.current.volume = Number(e.target.value))}
             className="hidden h-1 w-20 cursor-pointer accent-brand-500 sm:block"
           />
-          <span className="text-xs tabular-nums text-neutral-300">
+          <span className="shrink-0 text-[11px] tabular-nums text-neutral-300 sm:text-xs">
             {formatTime(shownMs - rangeMin)} / {formatTime(rangeMax - rangeMin)}
           </span>
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
             {audioTracks.length > 1 && (
               <Select
                 dark
+                up
                 value={String(audioIdx)}
                 onChange={(v) => onAudioChange?.(Number(v))}
                 options={audioTracks.map((t, i) => ({ value: String(i), label: t.label }))}
@@ -437,6 +524,7 @@ export function FilmPlayer({
             {subtitleTracks.length > 0 && (
               <Select
                 dark
+                up
                 value={String(subIdx)}
                 onChange={(v) => onSubChange?.(Number(v))}
                 options={subtitleTracks.map((t, i) => ({ value: String(i), label: t.label }))}
