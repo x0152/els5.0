@@ -325,10 +325,10 @@ export function ListeningPage() {
                   AI writes fresh sentences and reads them aloud — you type what you hear.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-x-8 gap-y-4">
+              <div className="flex max-w-xl flex-wrap justify-between gap-x-8 gap-y-4">
                 <div>
                   <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-400">Difficulty</p>
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-2">
                     {LEVELS.map((l) => (
                       <button
                         key={l.id}
@@ -346,8 +346,8 @@ export function ListeningPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-400">Sentences</p>
-                  <div className="flex gap-1.5">
+                  <p className="mb-1.5 text-right text-xs font-semibold uppercase tracking-wide text-neutral-400">Sentences</p>
+                  <div className="flex gap-2">
                     {COUNTS.map((c) => (
                       <button
                         key={c}
@@ -371,7 +371,7 @@ export function ListeningPage() {
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="Optional — e.g. travel, work, small talk…"
-                  className="max-w-sm"
+                  className="max-w-xl"
                 />
               </div>
               <div className="flex flex-wrap items-center gap-4">

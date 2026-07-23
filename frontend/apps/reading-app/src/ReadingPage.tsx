@@ -330,10 +330,10 @@ export function ReadingPage() {
                   AI writes a short story at your level — tap the words you don't know while reading.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-x-8 gap-y-4">
+              <div className="flex max-w-xl flex-wrap justify-between gap-x-8 gap-y-4">
                 <div>
                   <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-400">Difficulty</p>
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-2">
                     {LEVELS.map((l) => (
                       <button
                         key={l.id}
@@ -351,8 +351,8 @@ export function ReadingPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-400">Length</p>
-                  <div className="flex gap-1.5">
+                  <p className="mb-1.5 text-right text-xs font-semibold uppercase tracking-wide text-neutral-400">Length</p>
+                  <div className="flex gap-2">
                     {LENGTHS.map((l) => (
                       <button
                         key={l.id}
@@ -360,7 +360,7 @@ export function ReadingPage() {
                         className={cn(
                           'rounded-full px-3.5 py-1.5 text-sm font-medium ring-1 transition-colors',
                           length === l.id
-                            ? 'bg-neutral-900 text-white ring-neutral-900'
+                            ? 'bg-brand-600 text-white ring-brand-600 shadow-sm shadow-brand-600/25'
                             : 'bg-white text-neutral-600 ring-neutral-200 hover:bg-neutral-50',
                         )}
                       >
@@ -376,7 +376,7 @@ export function ReadingPage() {
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                   placeholder="Optional — e.g. space, cooking, startups…"
-                  className="max-w-sm"
+                  className="max-w-xl"
                 />
               </div>
               <div className="flex flex-wrap items-center gap-4">
